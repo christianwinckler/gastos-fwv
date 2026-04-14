@@ -598,7 +598,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         </div>
         <div class="ppto-global-bar"><div class="ppto-global-fill" id="ppto-global-fill" style="width:0%"></div></div>
       </div>
-      <div id="ppto-lista" style="padding:8px 12px 80px;"></div>
+      <div style="padding:8px 12px 4px;">
+        <input id="ppto-search" type="search" placeholder="Buscar subcategoría..."
+          style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;outline:none;background:#fafafa;" />
+      </div>
+      <div id="ppto-lista" style="padding:4px 12px 80px;"></div>
     </div>
 
     <!-- ADMIN -->
@@ -736,7 +740,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
   `
 
-  const jsContent = `
+  const jsContent_UNUSED = `
+// ── EXPONER FUNCIONES GLOBALES (primero, antes de cualquier código DOM) ──────
+window.switchScreen=switchScreen;
+window.cerrarDrawer=cerrarDrawer;
+window.cerrar=cerrar;
+window.abrirNuevoGasto=abrirNuevoGasto;
+window.cargarDatos=cargarDatos;
+window.togglePptoCat=togglePptoCat;
+window.toggleFijo=toggleFijo;
+window.actualizarPpto=actualizarPpto;
+window.abrirCat=abrirCat;
+window.abrirGasto=abrirGasto;
+window.toggleAdminCat=toggleAdminCat;
+window.eliminarSubcat=eliminarSubcat;
+window.agregarSubcat=agregarSubcat;
+window.aplicarAlcance=aplicarAlcance;
+
 const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const mesesC=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const catColores={'Hogar':'#1a73e8','Supermercado':'#2e7d32','Auto':'#e65100','Banco':'#c62828','Salud':'#6a1b9a','Cuentas':'#00695c','Entretenimiento':'#f57f17','Mall':'#bf360c','Ingresos':'#2e7d32'};
@@ -790,7 +810,7 @@ function normalizarFecha(val){
   if(!val)return '';
   const s=String(val).trim();
   if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
-  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)){const[d,m,y]=s.split('/');return y+'-'+m.padStart(2,'0')+'-'+d.padStart(2,'0');}
+  if(/^\d{1,2}\\/\d{1,2}\\/\d{4}$/.test(s)){const[d,m,y]=s.split('/');return y+'-'+m.padStart(2,'0')+'-'+d.padStart(2,'0');}
   if(!isNaN(s)&&s!==''){const d=new Date(Math.round((parseFloat(s)-25569)*86400000));return d.toISOString().slice(0,10);}
   return s;
 }
@@ -852,20 +872,6 @@ function computarDashData(){
   return result;
 }
 
-// ── EXPONER FUNCIONES GLOBALES ───────────────────────────────
-window.switchScreen=switchScreen;
-window.cerrarDrawer=cerrarDrawer;
-window.cerrar=cerrar;
-window.abrirNuevoGasto=abrirNuevoGasto;
-window.cargarDatos=cargarDatos;
-window.togglePptoCat=togglePptoCat;
-window.toggleFijo=toggleFijo;
-window.actualizarPpto=actualizarPpto;
-window.abrirCat=abrirCat;
-window.abrirGasto=abrirGasto;
-window.toggleAdminCat=toggleAdminCat;
-window.eliminarSubcat=eliminarSubcat;
-window.agregarSubcat=agregarSubcat;
 
 // ── DRAWER ──────────────────────────────────────────────
 document.getElementById('btn-hamburger').addEventListener('click',()=>{
@@ -1198,12 +1204,11 @@ cargarDatos();
   `
 
   useEffect(() => {
+    if (document.getElementById('app-script')) return
     const script = document.createElement('script')
-    script.textContent = jsContent
+    script.id = 'app-script'
+    script.src = '/app-script.js?v=8'
     document.body.appendChild(script)
-    return () => {
-      try { document.body.removeChild(script) } catch(e) {}
-    }
   }, [])
 
   return (
