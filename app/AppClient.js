@@ -21,32 +21,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .navbar-brand { font-size: 16px; font-weight: 600; color: #111; }
 .navbar-brand span { color: #1a73e8; }
 
-/* Desktop nav links */
-.nav-links {
-  display: none;
-  gap: 4px; align-items: center;
-}
-.nav-link {
-  padding: 7px 14px; border-radius: 8px;
-  font-size: 14px; color: #555; cursor: pointer;
-  border: none; background: none; font-family: inherit;
-  display: flex; align-items: center; gap: 6px;
-  transition: background 0.1s;
-}
-.nav-link:hover { background: #f5f5f5; }
-.nav-link.active { background: #e8f0fe; color: #1a73e8; font-weight: 500; }
-.nav-link-icon { font-size: 16px; }
-
 .navbar-right { display: flex; align-items: center; gap: 8px; }
-
-/* Desktop add button */
-.btn-add-desktop {
-  display: none;
-  padding: 8px 16px; background: #111; color: #fff;
-  border: none; border-radius: 8px; font-size: 14px;
-  font-weight: 500; cursor: pointer; font-family: inherit;
-  align-items: center; gap: 6px;
-}
 
 .btn-settings {
   width: 34px; height: 34px; border-radius: 50%;
@@ -102,6 +77,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .drawer-link.active { background: #e8f0fe; color: #1a73e8; font-weight: 500; }
 .drawer-link-icon { font-size: 20px; width: 24px; text-align: center; }
 .drawer-divider { height: 0.5px; background: #e0e0e0; margin: 8px 0; }
+.drawer-section-label { font-size: 10px; font-weight: 500; color: #888; letter-spacing: 0.06em; padding: 10px 20px 4px; }
+.drawer-item-indent { padding-left: 40px; }
 
 /* ── CONTENT ───────────────────────────────────────────── */
 .content {
@@ -158,6 +135,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .resumen-valor.bal-pos { color: #2e7d32; }
 .resumen-valor.bal-neg { color: #c62828; }
 .resumen-sub { font-size: 11px; }
+.resumen-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 12px 12px; background:#f5f5f5; }
+.res-card-accent { background:#fff; border-radius:10px; padding:10px 12px; border-left:3px solid transparent; }
 
 /* ── CAT LIST ──────────────────────────────────────────── */
 .section-header {
@@ -446,11 +425,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 /* ── DESKTOP RESPONSIVE ────────────────────────────────── */
 @media (min-width: 768px) {
-  .nav-links { display: flex; }
-  .btn-add-desktop { display: flex; }
   .fab { display: none; }
   .content { padding: 0 24px 40px; }
-  .resumen-grid { grid-template-columns: repeat(4, 1fr); }
+  .resumen-grid-2 { border-radius: 10px; margin: 0; padding: 8px 0 0; background: transparent; gap: 12px; }
+  .resumen-grid-2:first-of-type { margin-top: 12px; }
   .cat-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 0 0 16px; }
   .cat-list .cat-card { margin-bottom: 0; }
   .lista { padding: 8px 0 24px; }
@@ -486,27 +464,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       </button>
       <span class="navbar-brand">Gastos <span>FWV</span></span>
     </div>
+    <button id="btn-add-nav" onclick="abrirNuevoGasto()" style="width:32px;height:32px;background:#111;color:#fff;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;font-family:inherit;">+</button>
 
-    <div class="nav-links" id="nav-links">
-      <button class="nav-link active" data-screen="dashboard" onclick="switchScreen('dashboard')">
-        <span class="nav-link-icon">📊</span> Dashboard
-      </button>
-      <button class="nav-link" data-screen="detalle" onclick="switchScreen('detalle')">
-        <span class="nav-link-icon">📋</span> Detalle
-      </button>
-      <button class="nav-link" data-screen="presupuesto" onclick="switchScreen('presupuesto')">
-        <span class="nav-link-icon">💰</span> Presupuesto
-      </button>
-      <button class="nav-link" data-screen="admin" onclick="switchScreen('admin')">
-        <span class="nav-link-icon">🗂</span> Admin
-      </button>
-    </div>
-
-    <div class="navbar-right">
-      <button class="btn-add-desktop" id="btn-add-desktop" onclick="abrirNuevoGasto()">
-        + Nuevo gasto
-      </button>
-    </div>
   </nav>
 
   <!-- DRAWER (mobile) -->
@@ -520,19 +479,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="drawer-link active" data-screen="dashboard" onclick="switchScreen('dashboard');cerrarDrawer()">
         <span class="drawer-link-icon">📊</span> Dashboard
       </button>
-      <button class="drawer-link" data-screen="detalle" onclick="switchScreen('detalle');cerrarDrawer()">
+      <div class="drawer-divider"></div>
+      <div class="drawer-section-label">GASTOS</div>
+      <button class="drawer-link drawer-item-indent" data-screen="detalle" onclick="switchScreen('detalle');cerrarDrawer()">
         <span class="drawer-link-icon">📋</span> Detalle
       </button>
-      <div class="drawer-divider"></div>
-      <button class="drawer-link" data-screen="presupuesto" onclick="switchScreen('presupuesto');cerrarDrawer()">
-        <span class="drawer-link-icon">💰</span> Presupuesto
-      </button>
-      <button class="drawer-link" data-screen="admin" onclick="switchScreen('admin');cerrarDrawer()">
-        <span class="drawer-link-icon">🗂</span> Admin
+      <button class="drawer-link drawer-item-indent" data-screen="presupuesto" onclick="switchScreen('presupuesto');cerrarDrawer()">
+        <span class="drawer-link-icon">💰</span> Presupuestos
       </button>
       <div class="drawer-divider"></div>
-      <button class="drawer-link" onclick="document.getElementById('ov-ajustes').classList.add('open');cerrarDrawer()">
-        <span class="drawer-link-icon">⚙️</span> Ajustes
+      <div class="drawer-section-label">ADMINISTRADOR</div>
+      <button class="drawer-link drawer-item-indent" data-screen="admin" onclick="switchScreen('admin');cerrarDrawer()">
+        <span class="drawer-link-icon">🗂</span> Categorías
       </button>
     </div>
     <div style="padding:16px;">
@@ -550,13 +508,41 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <span class="mes-label" id="dash-mes">Abril 2026</span>
         <button class="mes-arrow" id="dash-next">›</button>
       </div>
-      <div class="resumen-grid">
-        <div class="resumen-card"><span class="resumen-label">INGRESOS</span><span class="resumen-valor ing" id="d-ing">$0</span></div>
-        <div class="resumen-card"><span class="resumen-label">EGRESOS</span><span class="resumen-valor egr" id="d-egr">$0</span></div>
-        <div class="resumen-card"><span class="resumen-label">BALANCE</span><span class="resumen-valor" id="d-bal">$0</span></div>
-        <div class="resumen-card"><span class="resumen-label">PRESUPUESTO</span><span class="resumen-valor" id="d-ppto">$0</span><span class="resumen-sub" id="d-libre"></span></div>
+      <div class="resumen-grid-2" style="padding-top:12px;">
+        <div class="res-card-accent" style="border-left-color:#2e7d32;">
+          <span class="resumen-label">INGRESOS / EGRESOS</span>
+          <div style="display:flex;align-items:baseline;gap:5px;margin-top:4px;">
+            <span class="resumen-valor ing" id="d-ing">$0</span>
+            <span style="color:#bbb;font-size:13px;">/</span>
+            <span class="resumen-valor egr" id="d-egr">$0</span>
+          </div>
+          <span class="resumen-sub" id="d-bal" style="margin-top:3px;display:block;"></span>
+        </div>
+        <div class="res-card-accent" style="border-left-color:#1a73e8;">
+          <span class="resumen-label">PRESUPUESTO</span>
+          <span class="resumen-valor" id="d-ppto" style="display:block;margin-top:4px;">$0</span>
+          <span class="resumen-sub" id="d-libre" style="margin-top:3px;display:block;"></span>
+        </div>
+      </div>
+      <div class="resumen-grid-2">
+        <div class="res-card-accent" style="border-left-color:#1a73e8;">
+          <span class="resumen-label">AHORRO ESTE MES</span>
+          <span class="resumen-valor" id="d-ahorro" style="display:block;margin-top:4px;">$0</span>
+          <span class="resumen-sub" style="color:#888;margin-top:3px;display:block;">Cuenta Vista</span>
+        </div>
+        <div class="res-card-accent" style="border-left-color:#e65100;">
+          <span class="resumen-label">PAGO TC MES ANT.</span>
+          <span class="resumen-valor" id="d-tc" style="display:block;margin-top:4px;">$0</span>
+          <span class="resumen-sub" id="d-tc-mes" style="color:#888;margin-top:3px;display:block;"></span>
+        </div>
       </div>
       <div class="section-header">EGRESOS POR CATEGORÍA</div>
+      <div style="padding:0 12px 8px;display:flex;gap:6px;align-items:center;">
+        <input id="dash-cat-search" placeholder="Buscar categoría..." style="flex:1;padding:7px 10px;border:0.5px solid #e0e0e0;border-radius:8px;font-size:13px;background:#fff;font-family:inherit;outline:none;color:#111;" />
+        <button id="dash-sort-btn" style="padding:7px 10px;border:0.5px solid #e0e0e0;border-radius:8px;font-size:12px;background:#fff;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;color:#555;" title="Ordenar">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M4 8h8M6 12h4" stroke="#666" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+      </div>
       <div class="cat-list" id="cat-list"></div>
     </div>
 
@@ -567,13 +553,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <span style="font-size:13px;color:#999;">▼</span>
       </div>
       <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input class="search-input" id="buscador" placeholder="Buscar gasto..." />
+        <div style="display:flex;gap:6px;align-items:center;">
+          <div style="position:relative;flex:1;">
+            <span class="search-icon">🔍</span>
+            <input class="search-input" id="buscador" placeholder="Buscar gasto..." />
+          </div>
+          <button id="det-orden-pill" style="padding:6px 10px;border-radius:8px;font-size:12px;border:0.5px solid #1a73e8;background:#e8f0fe;color:#1a73e8;cursor:pointer;font-family:inherit;white-space:nowrap;">Reciente</button>
+          <button id="det-filtro-btn" style="width:32px;height:32px;border:0.5px solid #e0e0e0;border-radius:8px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M5 8h6M7 12h2" stroke="#666" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
       </div>
+      <div id="det-filter-panel" style="display:none;background:#fff;padding:12px 16px;border-bottom:0.5px solid #e0e0e0;z-index:20;position:relative;"></div>
       <div class="resumen-strip">
+        <div class="strip-item"><span class="strip-label">INGRESOS</span><span class="strip-valor i" id="s-i">$0</span></div>
+        <div class="strip-sep"></div>
         <div class="strip-item"><span class="strip-label">EGRESOS</span><span class="strip-valor e" id="s-e">$0</span></div>
         <div class="strip-sep"></div>
-        <div class="strip-item"><span class="strip-label">INGRESOS</span><span class="strip-valor i" id="s-i">$0</span></div>
+        <div class="strip-item"><span class="strip-label">EGRESO REAL</span><span class="strip-valor e" id="s-e-real">$0</span></div>
         <div class="strip-sep"></div>
         <div class="strip-item"><span class="strip-label">MOVIMIENTOS</span><span class="strip-valor" id="s-n" style="color:#111">0</span></div>
       </div>
@@ -598,9 +595,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         </div>
         <div class="ppto-global-bar"><div class="ppto-global-fill" id="ppto-global-fill" style="width:0%"></div></div>
       </div>
-      <div style="padding:8px 12px 4px;">
+      <div style="padding:8px 12px 4px;display:flex;gap:6px;align-items:center;">
         <input id="ppto-search" type="search" placeholder="Buscar subcategoría..."
-          style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;outline:none;background:#fafafa;" />
+          style="flex:1;padding:9px 12px;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;outline:none;background:#fafafa;" />
+        <button id="ppto-sort-btn" onclick="togglePptoSort()"
+          style="width:36px;height:36px;border:0.5px solid #e0e0e0;border-radius:10px;background:#f5f5f5;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">↓</button>
       </div>
       <div id="ppto-lista" style="padding:4px 12px 80px;"></div>
     </div>
@@ -723,6 +722,33 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="alcance-btn solo-mes" id="alcance-solo-mes"><span class="alcance-icon">📅</span><div class="alcance-txt"><span class="alcance-txt-main">Solo este mes</span><span class="alcance-txt-sub" id="alcance-mes-label"></span></div></button>
       <button class="alcance-btn todos" id="alcance-todos"><span class="alcance-icon">🔁</span><div class="alcance-txt"><span class="alcance-txt-main">Este y todos los meses futuros</span><span class="alcance-txt-sub">Actualiza el presupuesto base</span></div></button>
       <button class="alcance-btn cancelar-alcance" id="alcance-cancelar"><span class="alcance-icon">✕</span><div class="alcance-txt"><span class="alcance-txt-main">Cancelar</span></div></button>
+    </div>
+  </div>
+</div>
+
+<div class="alcance-overlay" id="ov-add-ppto">
+  <div class="alcance-card" style="max-width:360px;">
+    <div class="alcance-titulo">Agregar presupuesto</div>
+    <div style="font-size:13px;color:#1a73e8;font-weight:500;margin-bottom:14px;" id="add-ppto-cat-nombre"></div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div>
+        <label style="font-size:11px;color:#888;font-weight:500;letter-spacing:0.04em;display:block;margin-bottom:4px;">MONTO</label>
+        <div class="monto-wrap"><span class="monto-prefix">$</span><input type="number" id="add-ppto-monto" placeholder="0" min="0" style="width:100%;padding:10px 12px 10px 28px;border:0.5px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;" /></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;">
+          <label style="font-size:11px;color:#888;font-weight:500;letter-spacing:0.04em;display:block;margin-bottom:4px;">DESDE</label>
+          <input type="month" id="add-ppto-desde" style="width:100%;padding:9px 10px;border:0.5px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;" />
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:11px;color:#888;font-weight:500;letter-spacing:0.04em;display:block;margin-bottom:4px;">HASTA</label>
+          <input type="month" id="add-ppto-hasta" style="width:100%;padding:9px 10px;border:0.5px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;" />
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:18px;">
+      <button onclick="cerrar('ov-add-ppto')" style="flex:1;padding:12px;background:#f5f5f5;color:#666;border:none;border-radius:10px;font-size:14px;cursor:pointer;font-family:inherit;">Cancelar</button>
+      <button id="add-ppto-guardar" style="flex:2;padding:12px;background:#111;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;">Guardar</button>
     </div>
   </div>
 </div>
@@ -1207,7 +1233,7 @@ cargarDatos();
     if (document.getElementById('app-script')) return
     const script = document.createElement('script')
     script.id = 'app-script'
-    script.src = '/app-script.js?v=8'
+    script.src = '/app-script.js?v=11'
     document.body.appendChild(script)
   }, [])
 
