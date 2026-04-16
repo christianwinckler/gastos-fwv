@@ -476,11 +476,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="drawer-close" onclick="cerrarDrawer()">✕</button>
     </div>
     <div class="drawer-links">
-      <button class="drawer-link active" data-screen="dashboard" onclick="switchScreen('dashboard');cerrarDrawer()">
-        <span class="drawer-link-icon">📊</span> Dashboard
-      </button>
-      <div class="drawer-divider"></div>
       <div class="drawer-section-label">GASTOS</div>
+      <button class="drawer-link drawer-item-indent active" data-screen="dashboard" onclick="switchScreen('dashboard');cerrarDrawer()">
+        <span class="drawer-link-icon">📊</span> Resumen
+      </button>
       <button class="drawer-link drawer-item-indent" data-screen="detalle" onclick="switchScreen('detalle');cerrarDrawer()">
         <span class="drawer-link-icon">📋</span> Detalle
       </button>
@@ -643,6 +642,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title" id="cat-sheet-title"></div>
+    <div id="cat-ppto-resumen"></div>
     <div id="cat-sheet-items"></div>
   </div>
 </div>
@@ -731,6 +731,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div class="alcance-titulo">Agregar presupuesto</div>
     <div style="font-size:13px;color:#1a73e8;font-weight:500;margin-bottom:14px;" id="add-ppto-cat-nombre"></div>
     <div style="display:flex;flex-direction:column;gap:10px;">
+      <div>
+        <label style="font-size:11px;color:#888;font-weight:500;letter-spacing:0.04em;display:block;margin-bottom:4px;">SUBCATEGORÍA</label>
+        <select id="add-ppto-subcat" style="width:100%;padding:10px 12px;border:0.5px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;"></select>
+      </div>
       <div>
         <label style="font-size:11px;color:#888;font-weight:500;letter-spacing:0.04em;display:block;margin-bottom:4px;">MONTO</label>
         <div class="monto-wrap"><span class="monto-prefix">$</span><input type="number" id="add-ppto-monto" placeholder="0" min="0" style="width:100%;padding:10px 12px 10px 28px;border:0.5px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;" /></div>

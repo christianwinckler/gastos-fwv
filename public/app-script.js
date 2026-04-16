@@ -9,6 +9,7 @@ window.togglePptoCat=togglePptoCat;
 window.toggleFijo=toggleFijo;
 window.actualizarPpto=actualizarPpto;
 window.abrirCat=abrirCat;
+window.guardarPptoDesdeCat=guardarPptoDesdeCat;
 window.abrirGasto=abrirGasto;
 window.toggleAdminCat=toggleAdminCat;
 window.eliminarSubcat=eliminarSubcat;
@@ -44,6 +45,7 @@ let detFiltros={tipo:'todos',cats:[],banco:'todos',orden:'reciente'};
 let dashSortAsc=false;
 let pptoSortAsc=false;
 let catPptoPendiente=null;
+let catAlcancePendiente=null;
 const EXCLUDED_CATS=['Ahorro en Cuenta Vista','Pago Tarjeta Crédito Limited Visa'];
 
 function fmt(n){return '$'+Math.round(Math.abs(n)).toLocaleString('es-CL');}
@@ -93,15 +95,13 @@ function buildPptoForMonth(mes,anio){
   const key=String(mes+1).padStart(2,'0')+'-'+anio;
   const rows=presupuestoAllRows.filter(r=>r&&r[0]===key);
   pptoData={};
-  pptoSubcats=[];
   rows.forEach(r=>{
     const sub=(r[1]||'').trim();
-    const cat=(r[2]||sub).trim();
     const monto=parseMonto(r[3]);
     if(!sub)return;
     pptoData[sub]={monto:isNaN(monto)?0:monto,fijo:false};
-    pptoSubcats.push({sub,cat,ie:'E'});
   });
+  pptoSubcats=subcats.filter(s=>s.ie==='E');
 }
 
 // ── CARGA DE DATOS ───────────────────────────────────────────
@@ -270,13 +270,80 @@ document.getElementById('dash-sort-btn').addEventListener('click',()=>{dashSortA
 function abrirCat(i,key){
   const c=dashData[key].categorias[i];
   document.getElementById('cat-sheet-title').textContent=c.nombre;
-  document.getElementById('cat-sheet-items').innerHTML=c.gastos.map(g=>`
+
+  const subcatsCat=[...pptoSubcats.filter(s=>s.cat===c.nombre)].sort((a,b)=>(pptoData[b.sub]?.monto||0)-(pptoData[a.sub]?.monto||0));
+  const ppto=subcatsCat.reduce((s,sc)=>s+(pptoData[sc.sub]?.monto||0),0);
+  const rawPct=ppto>0?Math.round((c.monto/ppto)*100):0;
+  const status=ppto>0?getStatus(rawPct):'ok';
+  const multiples=subcatsCat.length>1;
+  const catSafe=c.nombre.replace(/'/g,"\\'");
+  const headerLabel=ppto>0
+    ?`<span style="font-weight:500;font-size:13px;">Presupuesto</span><span class="ppto-pct ${status}" style="margin-left:8px;">${rawPct}% usado</span>`
+    :`<span style="font-weight:500;font-size:13px;">Presupuesto</span><span style="margin-left:8px;font-size:12px;color:#999;">Sin presupuesto</span><span style="margin-left:6px;font-size:12px;color:#1a73e8;font-weight:500;cursor:pointer;" onclick="event.stopPropagation();document.getElementById('cat-ppto-detalle').style.display='block';document.getElementById('cat-ppto-detalle').previousElementSibling.querySelector('.cat-ppto-chevron').textContent='▲';">+ Agregar</span>`;
+  const resumenEl=document.getElementById('cat-ppto-resumen');
+  resumenEl.innerHTML=`
+    <div style="margin-bottom:8px;">
+      <div onclick="const d=document.getElementById('cat-ppto-detalle');const open=d.style.display==='none'||d.style.display==='';d.style.display=open?'block':'none';this.querySelector('.cat-ppto-chevron').textContent=open?'▲':'▼';"
+        style="display:flex;align-items:center;background:#f5f5f5;border-radius:8px;padding:10px 12px;cursor:pointer;user-select:none;">
+        ${headerLabel}
+        <span class="cat-ppto-chevron" style="margin-left:auto;font-size:11px;color:#888;">▼</span>
+      </div>
+      <div id="cat-ppto-detalle" style="display:none;padding:12px;border:0.5px solid #e8e8e8;border-radius:8px;margin-top:4px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+          <span style="font-size:13px;color:#555;">Gastado: <strong>${fmt(c.monto)}</strong></span>
+          <span style="font-size:13px;color:#555;">Ppto: <strong>${fmt(ppto)}</strong></span>
+        </div>
+        <div class="bar-wrap"><div class="bar-fill ${status}" style="width:${Math.min(rawPct,100)}%;"></div></div>
+        <div style="margin-top:4px;margin-bottom:${multiples?'10':'4'}px;">
+          <span class="ppto-pct ${status}">${ppto>0?rawPct+'% usado':''}</span>
+        </div>
+        ${multiples?`
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+          ${subcatsCat.map(sc=>{
+            const label=sc.sub.includes(' - ')?sc.sub.split(' - ').slice(1).join(' - '):sc.sub;
+            const val=pptoData[sc.sub]?.monto||0;
+            return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+              <span style="font-size:12px;color:#666;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</span>
+              <div class="ppto-monto-wrap" style="flex-shrink:0;"><span class="ppto-monto-prefix">$</span>
+                <input class="ppto-monto-input" type="number" value="${val}" min="0" data-sub="${sc.sub}" style="width:90px;" />
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`:
+        `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;">
+          <span style="font-size:12px;color:#666;">${subcatsCat[0]?.sub.includes(' - ')?subcatsCat[0].sub.split(' - ').slice(1).join(' - '):subcatsCat[0]?.sub||''}</span>
+          <div class="ppto-monto-wrap" style="flex-shrink:0;"><span class="ppto-monto-prefix">$</span>
+            <input class="ppto-monto-input" type="number" value="${ppto}" min="0" data-sub="${subcatsCat[0]?.sub||''}" style="width:90px;" />
+          </div>
+        </div>`}
+        ${subcatsCat.length?`<button onclick="guardarPptoDesdeCat('${catSafe}',${i},'${key}')" style="width:100%;padding:10px;background:#111;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;">Guardar cambios</button>`:''}
+      </div>
+    </div>`;
+
+  document.getElementById('cat-sheet-items').innerHTML=[...c.gastos].sort((a,b)=>b.monto-a.monto).map(g=>`
     <div class="gasto-item" style="cursor:default;">
       <div class="gasto-cat-dot" style="background:${catColores[c.nombre]||'#999'};"></div>
       <div class="gasto-info"><div class="gasto-desc">${g.desc}</div><div class="gasto-meta">${g.sub?g.sub.includes(' - ')?g.sub.split(' - ').slice(1).join(' - '):g.sub:''}${g.sub&&g.fecha?' · ':''}${g.fecha}</div></div>
       <div class="gasto-monto e">- ${fmt(g.monto)}</div>
     </div>`).join('');
   document.getElementById('ov-cat').classList.add('open');
+}
+
+function guardarPptoDesdeCat(cat,catIdx,key){
+  const inputs=document.querySelectorAll('#cat-ppto-resumen [data-sub]');
+  const entries=[];
+  inputs.forEach(input=>{
+    const sub=input.dataset.sub;
+    if(!sub)return;
+    entries.push({sub,monto:parseInt(input.value)||0});
+  });
+  catAlcancePendiente={cat,catIdx,key,entries,mes:dashMes,anio:dashAnio};
+  const label=entries.length===1
+    ?(entries[0].sub.includes(' - ')?entries[0].sub.split(' - ').slice(1).join(' - '):entries[0].sub)+' → '+fmt(entries[0].monto)
+    :`${cat} — ${entries.length} subcategorías`;
+  document.getElementById('alcance-sub').textContent=label;
+  document.getElementById('alcance-mes-label').textContent=`${meses[dashMes]} ${dashAnio}`;
+  document.getElementById('ov-alcance').classList.add('open');
 }
 
 document.getElementById('dash-prev').addEventListener('click',()=>{dashMes--;if(dashMes<0){dashMes=11;dashAnio--;}renderDashboard();});
@@ -465,6 +532,7 @@ function renderPresupuesto(){
   const gastosMes=dashData[key]?dashData[key].categorias:[];
   let totalPptoConReal=0,totalRealConPpto=0;
   subcatsE.forEach(sc=>{
+    if(EXCLUDED_CATS.includes(sc.cat))return;
     const p=pptoData[sc.sub]?.monto||0;
     if(p===0)return;
     const catReal=gastosMes.find(c=>c.nombre===sc.cat);
@@ -483,13 +551,16 @@ function renderPresupuesto(){
   document.getElementById('ppto-global-fill').style.width=pct+'%';
   const grupos={};
   subcatsE.forEach(sc=>{if(!grupos[sc.cat])grupos[sc.cat]=[];grupos[sc.cat].push(sc);});
-  const html=Object.entries(grupos).map(([cat,subs])=>{
-    const filteredSubs=q?subs.filter(sc=>sc.sub.toLowerCase().includes(q)||cat.toLowerCase().includes(q)):subs;
+  const entries=Object.entries(grupos)
+    .map(([cat,subs])=>{
+      const filteredSubs=q?subs.filter(sc=>sc.sub.toLowerCase().includes(q)||cat.toLowerCase().includes(q)):subs;
+      const totalCat=filteredSubs.reduce((s,sc)=>{const p=pptoData[sc.sub];return s+(p?p.monto:0);},0);
+      return{cat,filteredSubs,totalCat};
+    })
+    .sort((a,b)=>pptoSortAsc?a.totalCat-b.totalCat:b.totalCat-a.totalCat);
+  const html=entries.map(({cat,filteredSubs,totalCat})=>{
     if(!filteredSubs.length)return '';
-    const sortedSubs=pptoSortAsc
-      ?[...filteredSubs].sort((a,b)=>(pptoData[a.sub]?.monto||0)-(pptoData[b.sub]?.monto||0))
-      :[...filteredSubs].sort((a,b)=>(pptoData[b.sub]?.monto||0)-(pptoData[a.sub]?.monto||0));
-    const totalCat=filteredSubs.reduce((s,sc)=>{const p=pptoData[sc.sub];return s+(p?p.monto:0);},0);
+    const sortedSubs=filteredSubs;
     return `<div class="ppto-cat-group">
       <div class="ppto-cat-header" onclick="togglePptoCat(this)">
         <div class="ppto-cat-icon" style="background:${catBgs[cat]||'#f5f5f5'};color:${catColores[cat]||'#666'}">${cat.charAt(0)}</div>
@@ -530,6 +601,43 @@ function actualizarPpto(sub,val,inputEl){
   document.getElementById('ov-alcance').classList.add('open');
 }
 async function aplicarAlcance(soloMes){
+  if(catAlcancePendiente){
+    const{cat,catIdx,key,entries,mes,anio}=catAlcancePendiente;
+    entries.forEach(({sub,monto})=>{if(!pptoData[sub])pptoData[sub]={monto:0,fijo:false};pptoData[sub].monto=monto;});
+    mostrarLoading('Guardando presupuesto...');
+    try{
+      if(soloMes){
+        const periodo=String(mes+1).padStart(2,'0')+'-'+anio;
+        entries.forEach(({sub,monto})=>{
+          const idx=presupuestoAllRows.findIndex(r=>r[0]===periodo&&r[1]===sub);
+          if(idx>=0)presupuestoAllRows[idx]=[periodo,sub,cat,monto];
+          else presupuestoAllRows.push([periodo,sub,cat,monto]);
+        });
+      }else{
+        for(let m=mes;m<=11;m++){
+          const periodo=String(m+1).padStart(2,'0')+'-'+anio;
+          entries.forEach(({sub,monto})=>{
+            const idx=presupuestoAllRows.findIndex(r=>r[0]===periodo&&r[1]===sub);
+            if(idx>=0)presupuestoAllRows[idx]=[periodo,sub,cat,monto];
+            else presupuestoAllRows.push([periodo,sub,cat,monto]);
+          });
+        }
+      }
+      const res=await fetch('/api/presupuesto',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows:presupuestoAllRows})});
+      if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'Error '+res.status);}
+      mostrarToast(soloMes?`Actualizado para ${meses[mes]} ${anio}`:`Actualizado hasta dic ${anio}`);
+    }catch(e){
+      mostrarToast('Error al guardar: '+e.message);
+    }finally{
+      ocultarLoading();
+    }
+    cerrar('ov-alcance');catAlcancePendiente=null;
+    buildPptoForMonth(mes,anio);
+    dashData=computarDashData();
+    renderDashboard();
+    abrirCat(catIdx,key);
+    return;
+  }
   if(!alcancePendiente)return;
   const{sub,nuevoMonto}=alcancePendiente;
   if(!pptoData[sub])pptoData[sub]={monto:0,fijo:false};
@@ -564,7 +672,11 @@ async function aplicarAlcance(soloMes){
 }
 document.getElementById('alcance-solo-mes').addEventListener('click',()=>aplicarAlcance(true));
 document.getElementById('alcance-todos').addEventListener('click',()=>aplicarAlcance(false));
-document.getElementById('alcance-cancelar').addEventListener('click',()=>{renderPresupuesto();cerrar('ov-alcance');alcancePendiente=null;});
+document.getElementById('alcance-cancelar').addEventListener('click',()=>{
+  cerrar('ov-alcance');
+  if(catAlcancePendiente){catAlcancePendiente=null;return;}
+  renderPresupuesto();alcancePendiente=null;
+});
 document.getElementById('ppto-prev').addEventListener('click',()=>{pptoPanelMes--;if(pptoPanelMes<0){pptoPanelMes=11;pptoPanelAnio--;}buildPptoForMonth(pptoPanelMes,pptoPanelAnio);renderPresupuesto();});
 document.getElementById('ppto-next').addEventListener('click',()=>{pptoPanelMes++;if(pptoPanelMes>11){pptoPanelMes=0;pptoPanelAnio++;}buildPptoForMonth(pptoPanelMes,pptoPanelAnio);renderPresupuesto();});
 document.getElementById('ppto-search').addEventListener('input',()=>renderPresupuesto());
@@ -710,34 +822,32 @@ function abrirModalPpto(cat){
   document.getElementById('add-ppto-desde').value=val;
   document.getElementById('add-ppto-hasta').value=val;
   document.getElementById('add-ppto-monto').value='';
+  const subcatsCat=subcats.filter(s=>s.cat===cat);
+  const sel=document.getElementById('add-ppto-subcat');
+  sel.innerHTML=subcatsCat.map(sc=>{
+    const label=sc.sub.includes(' - ')?sc.sub.split(' - ').slice(1).join(' - '):sc.sub;
+    return `<option value="${sc.sub}">${label}</option>`;
+  }).join('');
   document.getElementById('ov-add-ppto').classList.add('open');
 }
 document.getElementById('add-ppto-guardar').addEventListener('click',async()=>{
   const monto=parseInt(document.getElementById('add-ppto-monto').value)||0;
+  const subSeleccionada=document.getElementById('add-ppto-subcat').value;
   if(!monto||!catPptoPendiente){mostrarToast('Completa el monto');return;}
+  if(!subSeleccionada){mostrarToast('Selecciona una subcategoría');return;}
   const desdeStr=document.getElementById('add-ppto-desde').value;
   const hastaStr=document.getElementById('add-ppto-hasta').value;
   if(!desdeStr||!hastaStr){mostrarToast('Completa el rango de fechas');return;}
   const [dA,dM]=desdeStr.split('-').map(Number);
   const [hA,hM]=hastaStr.split('-').map(Number);
   const cat=catPptoPendiente;
-  const subcatsCat=subcats.filter(s=>s.cat===cat);
-  const sub=subcatsCat.length>0?subcatsCat[0].sub:cat;
   const nuevasFilas=[];
   let m=dM,a=dA;
   while(a<hA||(a===hA&&m<=hM)){
     const periodo=String(m).padStart(2,'0')+'-'+a;
-    if(subcatsCat.length>0){
-      subcatsCat.forEach(sc=>{
-        const idx=presupuestoAllRows.findIndex(r=>r[0]===periodo&&r[1]===sc.sub);
-        if(idx>=0)presupuestoAllRows[idx]=[periodo,sc.sub,cat,monto];
-        else nuevasFilas.push([periodo,sc.sub,cat,monto]);
-      });
-    }else{
-      const idx=presupuestoAllRows.findIndex(r=>r[0]===periodo&&r[1]===sub);
-      if(idx>=0)presupuestoAllRows[idx]=[periodo,sub,cat,monto];
-      else nuevasFilas.push([periodo,sub,cat,monto]);
-    }
+    const idx=presupuestoAllRows.findIndex(r=>r[0]===periodo&&r[1]===subSeleccionada);
+    if(idx>=0)presupuestoAllRows[idx]=[periodo,subSeleccionada,cat,monto];
+    else nuevasFilas.push([periodo,subSeleccionada,cat,monto]);
     m++;if(m>12){m=1;a++;}
   }
   const allRows=[...presupuestoAllRows,...nuevasFilas];
