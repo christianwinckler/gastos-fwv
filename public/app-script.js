@@ -174,10 +174,12 @@ function computarDashData(){
 document.getElementById('btn-hamburger').addEventListener('click',()=>{
   document.getElementById('drawer').classList.add('open');
   document.getElementById('drawer-overlay').classList.add('open');
+  document.getElementById('btn-add-nav').style.display='none';
 });
 function cerrarDrawer(){
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('drawer-overlay').classList.remove('open');
+  document.getElementById('btn-add-nav').style.display='flex';
 }
 
 // ── NAVEGACIÓN ──────────────────────────────────────────

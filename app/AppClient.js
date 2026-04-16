@@ -447,6 +447,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   .cat-list { grid-template-columns: repeat(3, 1fr); }
 }
 
+/* Prevenir zoom en Safari iOS al enfocar inputs (requiere font-size >= 16px) */
+@media (max-width: 768px) {
+  input, select, textarea { font-size: 16px !important; }
+}
+
 @keyframes spin { to { transform: rotate(360deg); } }
 
   `
@@ -464,6 +469,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       </button>
       <span class="navbar-brand">Gastos <span>FWV</span></span>
     </div>
+    <button id="btn-add-nav" onclick="abrirNuevoGasto()" style="width:32px;height:32px;background:#111;color:#fff;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;font-family:inherit;">+</button>
   </nav>
 
   <!-- DRAWER (mobile) -->
@@ -615,8 +621,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
   </main>
 
-  <!-- FAB (mobile) -->
-  <button class="fab" id="fab" onclick="abrirNuevoGasto()">+</button>
 
 </div>
 
