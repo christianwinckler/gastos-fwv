@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../auth/[...nextauth]/route'
-import { getParametros } from '@/lib/sheetsService'
+import { getParametros, updateParametros, renameSubcatEnDetalle, moverGastosSubcat } from '@/lib/sheetsService'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -8,6 +8,26 @@ export async function GET() {
   try {
     const data = await getParametros()
     return Response.json(data)
+  } catch (e) {
+    return Response.json({ error: e.message }, { status: 500 })
+  }
+}
+
+export async function PUT(request) {
+  const session = await getServerSession(authOptions)
+  if (!session) return Response.json({ error: 'No autorizado' }, { status: 401 })
+  try {
+    const body = await request.json()
+    if (body.move && body.move.oldSub && body.move.newSub) {
+      await moverGastosSubcat(body.move.oldSub, body.move.newSub)
+    }
+    if (body.rename && body.rename.oldSub !== body.rename.newSub) {
+      await renameSubcatEnDetalle(body.rename.oldSub, body.rename.newSub)
+    }
+    if (body.rows) {
+      await updateParametros(body.rows)
+    }
+    return Response.json({ ok: true })
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 })
   }

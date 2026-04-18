@@ -13,8 +13,18 @@ window.guardarPptoDesdeCat=guardarPptoDesdeCat;
 window.abrirGasto=abrirGasto;
 window.abrirGastoById=abrirGastoById;
 window.toggleAdminCat=toggleAdminCat;
-window.eliminarSubcat=eliminarSubcat;
-window.agregarSubcat=agregarSubcat;
+window.abrirEditSubcat=abrirEditSubcat;
+window.cerrarAdminModal=cerrarAdminModal;
+window.guardarEditSubcat=guardarEditSubcat;
+window.eliminarSubcatAdmin=eliminarSubcatAdmin;
+window.confirmarEliminarSubcat=confirmarEliminarSubcat;
+window.abrirAgregarSubcat=abrirAgregarSubcat;
+window.guardarNuevaSubcat=guardarNuevaSubcat;
+window.abrirRenombrarCat=abrirRenombrarCat;
+window.guardarRenombrarCat=guardarRenombrarCat;
+window.selAdminModo=selAdminModo;
+window.selAdminIE=selAdminIE;
+window.agregarNuevaCategoria=agregarNuevaCategoria;
 window.aplicarAlcance=aplicarAlcance;
 window.togglePptoSort=togglePptoSort;
 window.abrirModalPpto=abrirModalPpto;
@@ -47,6 +57,9 @@ let pptoSubcats=[];
 let dashData={};
 let detalleData={};
 // Estado
+let adminEditandoSubcat=null;
+let adminEditandoCat=null;
+let adminCatParaAgregar=null;
 let totalFilasGastos=0;
 let dashMes=3,dashAnio=2026,pptoPanelMes=3,pptoPanelAnio=2026;
 let rangoDesde={mes:3,anio:2026},rangoHasta={mes:3,anio:2026};
@@ -777,37 +790,303 @@ document.getElementById('ppto-search').addEventListener('input',()=>renderPresup
 
 // ── ADMIN ────────────────────────────────────────────────
 function renderAdmin(){
-  const grupos={};subcats.forEach(s=>{if(!grupos[s.cat])grupos[s.cat]=[];grupos[s.cat].push(s);});
-  document.getElementById('admin-cat-lista').innerHTML=Object.entries(grupos).map(([cat,subs])=>`
-    <div class="admin-cat-card">
-      <div class="admin-cat-header" onclick="toggleAdminCat(this)">
-        <div class="cat-icon" style="width:28px;height:28px;font-size:12px;background:${catBgs[cat]||'#f5f5f5'};color:${catColores[cat]||'#666'};border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;">${cat.charAt(0)}</div>
+  const grupos={};
+  subcats.forEach(s=>{if(!grupos[s.cat])grupos[s.cat]=[];grupos[s.cat].push(s);});
+  const catColoresDefault='#666';
+  const catBgsDefault='#f5f5f5';
+  document.getElementById('admin-cat-lista').innerHTML=Object.entries(grupos).map(([cat,subs])=>{
+    const catId='admincat_'+cat.replace(/[^a-zA-Z0-9]/g,'_');
+    const catSafe=cat.replace(/'/g,"\\'");
+    return `<div class="admin-cat-card">
+      <div class="admin-cat-header" onclick="toggleAdminCat('${catId}',this)">
+        <div class="cat-icon" style="width:32px;height:32px;font-size:13px;background:${catBgs[cat]||catBgsDefault};color:${catColores[cat]||catColoresDefault};border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;">${cat.charAt(0)}</div>
         <span class="admin-cat-nombre">${cat}</span>
         <span class="admin-cat-count">${subs.length} subcats</span>
-        <span class="admin-cat-chevron">▼</span>
+        <button onclick="event.stopPropagation();abrirRenombrarCat('${catSafe}')" style="padding:4px 10px;border-radius:6px;border:0.5px solid #e0e0e0;background:#f9f9f9;color:#666;font-size:11px;cursor:pointer;font-family:inherit;">Renombrar</button>
+        <span class="admin-cat-chevron open">▼</span>
       </div>
-      <div class="admin-subcat-list">
-        ${subs.map(s=>`
-          <div class="admin-subcat-item">
-            <span class="admin-subcat-nombre">${s.sub.includes(' - ')?s.sub.split(' - ').slice(1).join(' - '):s.sub}</span>
-            <span class="admin-ie-badge admin-ie-${s.ie}">${s.ie==='E'?'Egreso':'Ingreso'}</span>
-            <button class="admin-edit-btn">✏️</button>
-            <button class="admin-del-btn" onclick="eliminarSubcat('${s.sub}')">✕</button>
-          </div>`).join('')}
+      <div class="admin-subcat-list open" id="${catId}">
+        ${subs.map(s=>{
+          const subSafe=s.sub.replace(/'/g,"\\'");
+          const label=s.sub.includes(' - ')?s.sub.split(' - ').slice(1).join(' - '):s.sub;
+          const modoBadge=s.modo==='Transferencia'
+            ?`<span style="background:#e8f0fe;color:#1a73e8;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:500;">Transferencia</span>`
+            :s.modo==='Tarjeta Crédito'
+            ?`<span style="background:#fff8e1;color:#f57f17;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:500;">Tarjeta Crédito</span>`
+            :`<span style="background:#f5f5f5;color:#bbb;padding:2px 7px;border-radius:5px;font-size:10px;">—</span>`;
+          const ieBadge=s.ie==='E'
+            ?`<span style="background:#fce4ec;color:#c62828;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:500;">E</span>`
+            :`<span style="background:#e8f5e9;color:#2e7d32;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:500;">I</span>`;
+          return `<div class="admin-subcat-item">
+            <span class="admin-subcat-nombre">${label}</span>
+            <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">${modoBadge}${ieBadge}</div>
+            <button class="admin-edit-btn" onclick="abrirEditSubcat('${subSafe}')">✏️</button>
+            <button class="admin-del-btn" onclick="eliminarSubcatAdmin('${subSafe}')">✕</button>
+          </div>`;
+        }).join('')}
         <div class="admin-add-row">
-          <input class="admin-add-input" placeholder="Nueva subcategoría..." id="new-sub-${cat}" />
-          <button class="admin-add-btn" onclick="agregarSubcat('${cat}')">+ Agregar</button>
+          <input class="admin-add-input" placeholder="Nueva subcategoría..." id="new-sub-${catId}" />
+          <button class="admin-add-btn" onclick="abrirAgregarSubcat('${catSafe}','new-sub-${catId}')">+ Agregar</button>
         </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
-function toggleAdminCat(h){const l=h.nextElementSibling,c=h.querySelector('.admin-cat-chevron');l.classList.toggle('open');c.classList.toggle('open');}
-function agregarSubcat(cat){const i=document.getElementById('new-sub-'+cat);const n=i.value.trim();if(!n)return;subcats.push({sub:cat+' - '+n,cat,ie:'E'});i.value='';renderAdmin();}
-function eliminarSubcat(sub){subcats=subcats.filter(s=>s.sub!==sub);renderAdmin();}
-document.getElementById('btn-add-cat').addEventListener('click',()=>{
-  const i=document.getElementById('nueva-cat-input');const n=i.value.trim();if(!n)return;
-  mostrarToast(`Categoría "${n}" agregada`);i.value='';
-});
+
+function toggleAdminCat(catId,header){
+  const list=document.getElementById(catId);
+  const chev=header.querySelector('.admin-cat-chevron');
+  if(!list)return;
+  const open=list.classList.contains('open');
+  list.classList.toggle('open',!open);
+  chev.classList.toggle('open',!open);
+}
+
+function abrirEditSubcat(sub){
+  const sc=subcats.find(s=>s.sub===sub);
+  if(!sc)return;
+  adminEditandoSubcat={oldSub:sub,cat:sc.cat,ie:sc.ie,modo:sc.modo||''};
+  const label=sub.includes(' - ')?sub.split(' - ').slice(1).join(' - '):sub;
+  document.getElementById('admin-edit-title').textContent='Editar: '+label;
+  document.getElementById('admin-edit-nombre').value=label;
+  document.querySelectorAll('#admin-edit-modo .admin-toggle-opt').forEach(o=>{o.className='admin-toggle-opt';});
+  const modoOpts=document.querySelectorAll('#admin-edit-modo .admin-toggle-opt');
+  if(sc.modo==='Transferencia')modoOpts[0].classList.add('active-transf');
+  else if(sc.modo==='Tarjeta Crédito')modoOpts[1].classList.add('active-tc');
+  else modoOpts[2].classList.add('active-vacio');
+  document.querySelectorAll('#admin-edit-ie .admin-ie-opt').forEach(o=>{o.className='admin-ie-opt';});
+  const ieOpts=document.querySelectorAll('#admin-edit-ie .admin-ie-opt');
+  if(sc.ie==='E')ieOpts[0].classList.add('active-e');
+  else ieOpts[1].classList.add('active-i');
+  document.getElementById('ov-admin-edit').classList.add('open');
+}
+
+async function guardarEditSubcat(){
+  if(!adminEditandoSubcat)return;
+  const inputEl=document.getElementById('admin-edit-nombre');
+  const nuevoLabel=inputEl?inputEl.value.trim():'';
+  if(!nuevoLabel){mostrarToast('El nombre no puede estar vacío');return;}
+  const modoActivo=document.querySelector('#admin-edit-modo .admin-toggle-opt.active-transf, #admin-edit-modo .admin-toggle-opt.active-tc, #admin-edit-modo .admin-toggle-opt.active-vacio');
+  const nuevoModo=modoActivo?(modoActivo.dataset.modo||''):'';
+  const ieActivo=document.querySelector('#admin-edit-ie .admin-ie-opt.active-e, #admin-edit-ie .admin-ie-opt.active-i');
+  const nuevoIE=ieActivo?(ieActivo.dataset.ie||'E'):'E';
+  const{oldSub,cat}=adminEditandoSubcat;
+  const prefix=oldSub.includes(' - ')?oldSub.substring(0,oldSub.indexOf(' - ')+3):'';
+  const newSub=prefix+nuevoLabel;
+  const idx=subcats.findIndex(s=>s.sub===oldSub);
+  if(idx>=0)subcats[idx]={sub:newSub,cat,ie:nuevoIE,modo:nuevoModo};
+  const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'']);
+  cerrarAdminModal('ov-admin-edit');
+  mostrarLoading('Guardando cambios...');
+  try{
+    const body={rows};
+    if(newSub!==oldSub)body.rename={oldSub,newSub};
+    const res=await fetch('/api/parametros',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'Error '+res.status);}
+    mostrarToast(newSub!==oldSub?'Subcategoría y gastos actualizados ✓':'Cambios guardados ✓');
+    adminEditandoSubcat=null;
+    await cargarDatos();
+    renderAdmin();
+  }catch(e){
+    mostrarToast('Error: '+e.message);
+  }finally{
+    ocultarLoading();
+  }
+}
+
+function eliminarSubcatAdmin(sub){
+  if(!sub)return;
+  cerrarAdminModal('ov-admin-edit');
+  const todosGastos=Object.values(detalleData).flat();
+  const gastosDeEsta=todosGastos.filter(g=>g.sub.trim()===sub.trim());
+  const count=gastosDeEsta.length;
+  const label=sub.includes(' - ')?sub.split(' - ').slice(1).join(' - '):sub;
+  const sc=subcats.find(s=>s.sub===sub);
+  const catActual=sc?sc.cat:'';
+  document.getElementById('del-subcat-nombre').textContent=label;
+  const countEl=document.getElementById('del-gastos-count');
+  const sinGastosEl=document.getElementById('del-sin-gastos');
+  const moverSection=document.getElementById('del-mover-section');
+  const confirmarBtn=document.getElementById('del-confirmar-btn');
+  if(count===0){
+    countEl.style.display='none';
+    sinGastosEl.style.display='block';
+    moverSection.style.display='none';
+    confirmarBtn.textContent='Eliminar subcategoría';
+  }else{
+    countEl.style.display='block';
+    countEl.textContent=count+(count===1?' gasto':' gastos');
+    sinGastosEl.style.display='none';
+    moverSection.style.display='block';
+    confirmarBtn.textContent='Mover y eliminar';
+  }
+  const sel=document.getElementById('del-subcat-destino');
+  const opciones=subcats
+    .filter(s=>s.sub!==sub&&s.ie===(sc?sc.ie:'E'))
+    .sort((a,b)=>{
+      if(a.cat===catActual&&b.cat!==catActual)return -1;
+      if(a.cat!==catActual&&b.cat===catActual)return 1;
+      return a.sub.localeCompare(b.sub);
+    });
+  sel.innerHTML='<option value="">— Seleccionar subcategoría destino —</option>'+
+    opciones.map(s=>{
+      const lbl=s.sub.includes(' - ')?s.sub.split(' - ').slice(1).join(' - '):s.sub;
+      const prefix=s.cat!==catActual?`[${s.cat}] `:'';
+      return `<option value="${s.sub}">${prefix}${lbl}</option>`;
+    }).join('');
+  adminEditandoSubcat={...adminEditandoSubcat,oldSub:sub,cat:catActual};
+  document.getElementById('ov-admin-del').classList.add('open');
+}
+
+async function confirmarEliminarSubcat(){
+  const sub=adminEditandoSubcat?.oldSub;
+  if(!sub)return;
+  const todosGastos=Object.values(detalleData).flat();
+  const count=todosGastos.filter(g=>g.sub.trim()===sub.trim()).length;
+  const destino=document.getElementById('del-subcat-destino').value;
+  if(count>0&&!destino){mostrarToast('Debes seleccionar una subcategoría destino');return;}
+  cerrarAdminModal('ov-admin-del');
+  const backupSubcats=[...subcats];
+  subcats=subcats.filter(s=>s.sub!==sub);
+  const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'']);
+  mostrarLoading(count>0?`Moviendo ${count} gastos y eliminando...`:'Eliminando subcategoría...');
+  try{
+    const body={rows};
+    if(count>0&&destino)body.move={oldSub:sub,newSub:destino};
+    const res=await fetch('/api/parametros',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'Error '+res.status);}
+    const destinoLabel=destino?(destino.includes(' - ')?destino.split(' - ').slice(1).join(' - '):destino):'';
+    mostrarToast(count>0?`${count} gastos movidos a "${destinoLabel}" y subcategoría eliminada ✓`:'Subcategoría eliminada ✓');
+    adminEditandoSubcat=null;
+    await cargarDatos();
+    renderAdmin();
+  }catch(e){
+    subcats=backupSubcats;
+    mostrarToast('Error: '+e.message);
+  }finally{
+    ocultarLoading();
+  }
+}
+
+function abrirAgregarSubcat(cat,inputId){
+  adminCatParaAgregar=cat;
+  const nombre=inputId?(document.getElementById(inputId)?.value.trim()||''):'';
+  document.getElementById('admin-add-title').textContent='Agregar a '+cat;
+  document.getElementById('admin-add-nombre').value=nombre;
+  document.querySelectorAll('#admin-add-modo .admin-toggle-opt').forEach(o=>{o.className='admin-toggle-opt';});
+  document.querySelectorAll('#admin-add-modo .admin-toggle-opt')[2].classList.add('active-vacio');
+  document.querySelectorAll('#admin-add-ie .admin-ie-opt').forEach(o=>{o.className='admin-ie-opt';});
+  document.querySelectorAll('#admin-add-ie .admin-ie-opt')[0].classList.add('active-e');
+  document.getElementById('ov-admin-add').classList.add('open');
+}
+
+async function guardarNuevaSubcat(){
+  if(!adminCatParaAgregar)return;
+  const inputEl=document.getElementById('admin-add-nombre');
+  const nombre=inputEl?inputEl.value.trim():'';
+  if(!nombre){mostrarToast('Escribe un nombre');return;}
+  const modoActivo=document.querySelector('#admin-add-modo .admin-toggle-opt.active-transf, #admin-add-modo .admin-toggle-opt.active-tc, #admin-add-modo .admin-toggle-opt.active-vacio');
+  const modo=modoActivo?(modoActivo.dataset.modo||''):'';
+  const ieActivo=document.querySelector('#admin-add-ie .admin-ie-opt.active-e, #admin-add-ie .admin-ie-opt.active-i');
+  const ie=ieActivo?(ieActivo.dataset.ie||'E'):'E';
+  const newSub=adminCatParaAgregar+' - '+nombre;
+  if(subcats.find(s=>s.sub===newSub)){mostrarToast('Esa subcategoría ya existe');return;}
+  subcats.push({sub:newSub,cat:adminCatParaAgregar,ie,modo});
+  const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'']);
+  cerrarAdminModal('ov-admin-add');
+  mostrarLoading('Guardando...');
+  try{
+    const res=await fetch('/api/parametros',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows})});
+    if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'Error '+res.status);}
+    mostrarToast(`"${nombre}" agregada ✓`);
+    adminCatParaAgregar=null;
+    await cargarDatos();
+    renderAdmin();
+  }catch(e){
+    subcats=subcats.filter(s=>s.sub!==newSub);
+    mostrarToast('Error: '+e.message);
+  }finally{
+    ocultarLoading();
+  }
+}
+
+function abrirRenombrarCat(cat){
+  adminEditandoCat=cat;
+  document.getElementById('admin-rename-titulo').textContent='Renombrar: '+cat;
+  document.getElementById('admin-rename-input').value=cat;
+  document.getElementById('ov-admin-rename').classList.add('open');
+}
+
+async function guardarRenombrarCat(){
+  if(!adminEditandoCat)return;
+  const inputEl=document.getElementById('admin-rename-input');
+  const nuevaCat=inputEl?inputEl.value.trim():'';
+  if(!nuevaCat){mostrarToast('El nombre no puede estar vacío');return;}
+  if(nuevaCat===adminEditandoCat){cerrarAdminModal('ov-admin-rename');return;}
+  const oldCat=adminEditandoCat;
+  subcats.forEach(s=>{if(s.cat===oldCat)s.cat=nuevaCat;});
+  const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'']);
+  cerrarAdminModal('ov-admin-rename');
+  mostrarLoading('Guardando...');
+  try{
+    const res=await fetch('/api/parametros',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows})});
+    if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'Error '+res.status);}
+    mostrarToast(`Categoría renombrada a "${nuevaCat}" ✓`);
+    adminEditandoCat=null;
+    await cargarDatos();
+    renderAdmin();
+  }catch(e){
+    subcats.forEach(s=>{if(s.cat===nuevaCat)s.cat=oldCat;});
+    mostrarToast('Error: '+e.message);
+  }finally{
+    ocultarLoading();
+  }
+}
+
+async function agregarNuevaCategoria(){
+  const inputEl=document.getElementById('nueva-cat-input');
+  const nombre=inputEl?inputEl.value.trim():'';
+  if(!nombre)return;
+  if(subcats.find(s=>s.cat===nombre)){mostrarToast('Esa categoría ya existe');return;}
+  const newSub=nombre+' - Nueva subcategoría';
+  subcats.push({sub:newSub,cat:nombre,ie:'E',modo:''});
+  const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'']);
+  mostrarLoading('Creando categoría...');
+  try{
+    const res=await fetch('/api/parametros',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows})});
+    if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'Error '+res.status);}
+    mostrarToast(`Categoría "${nombre}" creada ✓`);
+    inputEl.value='';
+    await cargarDatos();
+    renderAdmin();
+  }catch(e){
+    subcats=subcats.filter(s=>s.sub!==newSub);
+    mostrarToast('Error: '+e.message);
+  }finally{
+    ocultarLoading();
+  }
+}
+
+function cerrarAdminModal(id){document.getElementById(id).classList.remove('open');}
+
+function selAdminModo(el,modo){
+  el.closest('.admin-toggle-group').querySelectorAll('.admin-toggle-opt').forEach(o=>{o.className='admin-toggle-opt';});
+  if(modo==='Transferencia')el.classList.add('active-transf');
+  else if(modo==='Tarjeta Crédito')el.classList.add('active-tc');
+  else el.classList.add('active-vacio');
+}
+
+function selAdminIE(el,ie){
+  el.closest('.admin-ie-group').querySelectorAll('.admin-ie-opt').forEach(o=>{o.className='admin-ie-opt';});
+  el.classList.add(ie==='E'?'active-e':'active-i');
+}
+
+document.getElementById('btn-add-cat').addEventListener('click',agregarNuevaCategoria);
+
+document.getElementById('ov-admin-edit').addEventListener('click',e=>{if(e.target===document.getElementById('ov-admin-edit'))cerrarAdminModal('ov-admin-edit');});
+document.getElementById('ov-admin-add').addEventListener('click',e=>{if(e.target===document.getElementById('ov-admin-add'))cerrarAdminModal('ov-admin-add');});
+document.getElementById('ov-admin-rename').addEventListener('click',e=>{if(e.target===document.getElementById('ov-admin-rename'))cerrarAdminModal('ov-admin-rename');});
+document.getElementById('ov-admin-del').addEventListener('click',e=>{if(e.target===document.getElementById('ov-admin-del'))cerrarAdminModal('ov-admin-del');});
 
 // ── FORMULARIO ───────────────────────────────────────────
 document.getElementById('f-fecha').valueAsDate=new Date();

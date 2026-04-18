@@ -311,6 +311,32 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .admin-add-input:focus { outline: none; border-color: #1a73e8; background: #fff; }
 .admin-add-btn { padding: 7px 14px; background: #111; color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: inherit; }
 .add-cat-row { display: flex; gap: 8px; padding: 4px 0 12px; }
+/* ── ADMIN MODALS ────────────────────────────────────────── */
+.admin-toggle-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.admin-toggle-opt { padding: 10px 6px; border: 0.5px solid #e0e0e0; border-radius: 10px; text-align: center; cursor: pointer; font-size: 12px; color: #888; background: #fafafa; display: flex; flex-direction: column; gap: 4px; align-items: center; user-select: none; }
+.admin-toggle-opt .t-icon { font-size: 18px; }
+.admin-toggle-opt.active-tc { border-color: #f57f17; background: #fff8e1; color: #f57f17; font-weight: 500; }
+.admin-toggle-opt.active-transf { border-color: #1a73e8; background: #e8f0fe; color: #1a73e8; font-weight: 500; }
+.admin-toggle-opt.active-vacio { border-color: #aaa; background: #f0f0f0; color: #555; font-weight: 500; }
+.admin-ie-group { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.admin-ie-opt { padding: 11px; border: 0.5px solid #e0e0e0; border-radius: 10px; text-align: center; cursor: pointer; font-size: 14px; color: #888; background: #fafafa; font-weight: 500; user-select: none; }
+.admin-ie-opt.active-e { border-color: #c62828; background: #fce4ec; color: #c62828; }
+.admin-ie-opt.active-i { border-color: #2e7d32; background: #e8f5e9; color: #2e7d32; }
+.admin-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.admin-field label { font-size: 11px; color: #888; font-weight: 500; letter-spacing: 0.04em; }
+.admin-field input { padding: 11px 12px; border: 0.5px solid #ddd; border-radius: 10px; font-size: 15px; color: #111; font-family: inherit; background: #fafafa; outline: none; }
+.admin-field input:focus { border-color: #1a73e8; background: #fff; }
+.btn-admin-guardar { width: 100%; padding: 14px; background: #111; color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; margin-top: 4px; }
+.btn-admin-eliminar { width: 100%; padding: 13px; background: #fce4ec; color: #c62828; border: none; border-radius: 12px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; margin-top: 6px; }
+/* ── ADMIN ELIMINAR SHEET ────────────────────────────────── */
+.admin-del-warning { background: #fff8e1; border: 0.5px solid #ffe082; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
+.admin-del-warning-title { font-size: 13px; font-weight: 500; color: #f57f17; margin-bottom: 4px; }
+.admin-del-warning-sub { font-size: 12px; color: #888; line-height: 1.5; }
+.admin-del-count { font-size: 22px; font-weight: 500; color: #111; margin: 2px 0; }
+.admin-del-select { width: 100%; padding: 11px 12px; border: 0.5px solid #ddd; border-radius: 10px; font-size: 14px; color: #111; font-family: inherit; background: #fafafa; outline: none; margin-top: 4px; }
+.admin-del-select:focus { border-color: #1a73e8; background: #fff; }
+.btn-admin-confirmar-del { width: 100%; padding: 14px; background: #c62828; color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; margin-top: 4px; }
+.btn-admin-cancelar { width: 100%; padding: 13px; background: #f5f5f5; color: #666; border: none; border-radius: 12px; font-size: 14px; cursor: pointer; font-family: inherit; margin-top: 6px; }
 
 /* ── OVERLAYS ───────────────────────────────────────────── */
 .overlay {
@@ -1002,6 +1028,125 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   </div>
 </div>
 
+<!-- ADMIN: Editar subcategoría -->
+<div class="overlay" id="ov-admin-edit">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 16px;">
+      <div class="sheet-title" id="admin-edit-title">Editar subcategoría</div>
+      <button style="width:28px;height:28px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;font-size:14px;color:#666;" onclick="cerrarAdminModal('ov-admin-edit')">✕</button>
+    </div>
+    <div class="admin-field">
+      <label>NOMBRE</label>
+      <input type="text" id="admin-edit-nombre" placeholder="Nombre de la subcategoría" />
+    </div>
+    <div class="admin-field">
+      <label>MÉTODO DE PAGO</label>
+      <div class="admin-toggle-group" id="admin-edit-modo">
+        <div class="admin-toggle-opt" data-modo="Transferencia" onclick="selAdminModo(this,'Transferencia')">
+          <span class="t-icon">🏦</span><span>Transferencia</span>
+        </div>
+        <div class="admin-toggle-opt" data-modo="Tarjeta Crédito" onclick="selAdminModo(this,'Tarjeta Crédito')">
+          <span class="t-icon">💳</span><span>Tarjeta Crédito</span>
+        </div>
+        <div class="admin-toggle-opt active-vacio" data-modo="" onclick="selAdminModo(this,'')">
+          <span class="t-icon" style="font-size:14px;color:#bbb;">—</span><span>Sin definir</span>
+        </div>
+      </div>
+    </div>
+    <div class="admin-field">
+      <label>TIPO</label>
+      <div class="admin-ie-group" id="admin-edit-ie">
+        <div class="admin-ie-opt active-e" data-ie="E" onclick="selAdminIE(this,'E')">Egreso</div>
+        <div class="admin-ie-opt" data-ie="I" onclick="selAdminIE(this,'I')">Ingreso</div>
+      </div>
+    </div>
+    <button class="btn-admin-guardar" onclick="guardarEditSubcat()">Guardar cambios</button>
+    <button class="btn-admin-eliminar" onclick="eliminarSubcatAdmin(adminEditandoSubcat?.oldSub)">Eliminar subcategoría</button>
+  </div>
+</div>
+
+<!-- ADMIN: Agregar subcategoría -->
+<div class="overlay" id="ov-admin-add">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 16px;">
+      <div class="sheet-title" id="admin-add-title">Agregar subcategoría</div>
+      <button style="width:28px;height:28px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;font-size:14px;color:#666;" onclick="cerrarAdminModal('ov-admin-add')">✕</button>
+    </div>
+    <div class="admin-field">
+      <label>NOMBRE</label>
+      <input type="text" id="admin-add-nombre" placeholder="Ej: Agua Maihue" />
+    </div>
+    <div class="admin-field">
+      <label>MÉTODO DE PAGO</label>
+      <div class="admin-toggle-group" id="admin-add-modo">
+        <div class="admin-toggle-opt" data-modo="Transferencia" onclick="selAdminModo(this,'Transferencia')">
+          <span class="t-icon">🏦</span><span>Transferencia</span>
+        </div>
+        <div class="admin-toggle-opt" data-modo="Tarjeta Crédito" onclick="selAdminModo(this,'Tarjeta Crédito')">
+          <span class="t-icon">💳</span><span>Tarjeta Crédito</span>
+        </div>
+        <div class="admin-toggle-opt active-vacio" data-modo="" onclick="selAdminModo(this,'')">
+          <span class="t-icon" style="font-size:14px;color:#bbb;">—</span><span>Sin definir</span>
+        </div>
+      </div>
+    </div>
+    <div class="admin-field">
+      <label>TIPO</label>
+      <div class="admin-ie-group" id="admin-add-ie">
+        <div class="admin-ie-opt active-e" data-ie="E" onclick="selAdminIE(this,'E')">Egreso</div>
+        <div class="admin-ie-opt" data-ie="I" onclick="selAdminIE(this,'I')">Ingreso</div>
+      </div>
+    </div>
+    <button class="btn-admin-guardar" onclick="guardarNuevaSubcat()">Agregar subcategoría</button>
+  </div>
+</div>
+
+<!-- ADMIN: Confirmar eliminación subcategoría -->
+<div class="overlay" id="ov-admin-del">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 14px;">
+      <div class="sheet-title">Eliminar subcategoría</div>
+      <button style="width:28px;height:28px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;font-size:14px;color:#666;" onclick="cerrarAdminModal('ov-admin-del')">✕</button>
+    </div>
+    <div class="admin-del-warning">
+      <div class="admin-del-warning-title" id="del-subcat-nombre">Subcategoría</div>
+      <div class="admin-del-warning-sub">Gastos registrados en esta subcategoría:</div>
+      <div class="admin-del-count" id="del-gastos-count">0 gastos</div>
+      <div class="admin-del-warning-sub" id="del-sin-gastos" style="display:none;">Esta subcategoría no tiene gastos registrados. Se eliminará directamente.</div>
+    </div>
+    <div id="del-mover-section">
+      <div class="admin-field">
+        <label>MOVER GASTOS A</label>
+        <div style="font-size:12px;color:#888;margin-bottom:6px;" id="del-mover-hint">Selecciona la subcategoría que recibirá estos gastos antes de eliminar</div>
+        <select class="admin-del-select" id="del-subcat-destino">
+          <option value="">— Seleccionar subcategoría destino —</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-admin-confirmar-del" id="del-confirmar-btn" onclick="confirmarEliminarSubcat()">Mover y eliminar</button>
+    <button class="btn-admin-cancelar" onclick="cerrarAdminModal('ov-admin-del')">Cancelar</button>
+  </div>
+</div>
+
+<!-- ADMIN: Renombrar categoría -->
+<div class="overlay" id="ov-admin-rename">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 16px;">
+      <div class="sheet-title" id="admin-rename-titulo">Renombrar categoría</div>
+      <button style="width:28px;height:28px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;font-size:14px;color:#666;" onclick="cerrarAdminModal('ov-admin-rename')">✕</button>
+    </div>
+    <div class="admin-field">
+      <label>NOMBRE DE LA CATEGORÍA</label>
+      <input type="text" id="admin-rename-input" placeholder="Nombre de la categoría" />
+    </div>
+    <button class="btn-admin-guardar" onclick="guardarRenombrarCat()">Guardar nombre</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <div id="loading-overlay" style="display:none;position:fixed;inset:0;background:rgba(255,255,255,0.92);z-index:500;flex-direction:column;align-items:center;justify-content:center;gap:12px;">
   <div style="width:36px;height:36px;border:3px solid #e0e0e0;border-top-color:#1a73e8;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
@@ -1484,7 +1629,7 @@ cargarDatos();
     if (document.getElementById('app-script')) return
     const script = document.createElement('script')
     script.id = 'app-script'
-    script.src = '/app-script.js?v=21'
+    script.src = '/app-script.js?v=24'
     document.body.appendChild(script)
   }, [])
 
