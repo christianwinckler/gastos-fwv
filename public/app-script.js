@@ -104,9 +104,23 @@ function normalizarFecha(val){
 function calcMesAnio(fecha){if(!fecha||fecha.length<7)return '';const[y,m]=fecha.split('-');return m+'-'+y;}
 
 // ── PRESUPUESTO POR MES ──────────────────────────────────────
+function deduplicarPresupuesto(rows){
+  const map=new Map();
+  rows.forEach(r=>{
+    if(!r||!r[0]||!r[1])return;
+    const p=String(r[0]).trim();
+    const match=p.match(/^(\d{1,2})-(\d{4})$/);
+    const periodoNorm=match?match[1].padStart(2,'0')+'-'+match[2]:p;
+    const sub=String(r[1]).trim();
+    const key=periodoNorm+'||'+sub;
+    map.set(key,[periodoNorm,sub,(r[2]||'').trim(),Number(r[3])||0]);
+  });
+  return Array.from(map.values());
+}
+
 function buildPptoForMonth(mes,anio){
   const key=String(mes+1).padStart(2,'0')+'-'+anio;
-  const rows=presupuestoAllRows.filter(r=>r&&r[0]===key);
+  const rows=presupuestoAllRows.filter(r=>r&&(r[0]||'').trim()===key);
   pptoData={};
   rows.forEach(r=>{
     const sub=(r[1]||'').trim();
@@ -147,15 +161,15 @@ async function cargarDatos(){
       const ie=(row[4]||'E').trim();
       const banco=(row[5]||'').trim();
       const g={id:idx+1,rowIndex:idx+2,fecha,sub:(row[2]||'').trim(),cat:(row[3]||'').trim(),ie,
-               banco,dev:(row[6]||'')==='X',desc:row[7]||'',monto};
+               banco,dev:(row[6]||'')==='X',desc:row[7]||'',monto,
+               montoValido:(!isNaN(mv)&&mv!==0?mv:(!isNaN(mr)?mr:0))};
       if(!detalleData[mesAnio])detalleData[mesAnio]=[];
       detalleData[mesAnio].push(g);
     });
 
     dashData=computarDashData();
     ocultarLoading();
-    renderDashboard();
-    if(document.getElementById('screen-home')?.classList.contains('active')) renderHome();
+    renderHome();
   }catch(e){
     mostrarError('No se pudo conectar con Google Sheets.\n'+e.message);
   }
@@ -174,7 +188,7 @@ function computarDashData(){
     });
     Object.values(catMap).forEach(c=>{
       c.ppto=subcats.filter(s=>s.cat===c.nombre&&s.ie==='E')
-        .reduce((s,sc)=>s+(pptoData[sc.sub]?pptoData[sc.sub].monto:0),0);
+        .reduce((s,sc)=>{const k=sc.sub.trim();return s+(pptoData[k]?pptoData[k].monto:0);},0);
     });
     const totalPpto=pptoSubcats.filter(s=>!EXCLUDED_CATS.includes(s.cat))
       .reduce((s,sc)=>s+(pptoData[sc.sub]?pptoData[sc.sub].monto:0),0);
@@ -288,8 +302,8 @@ function abrirCat(i,key){
   const c=dashData[key].categorias[i];
   document.getElementById('cat-sheet-title').textContent=c.nombre;
 
-  const subcatsCat=[...pptoSubcats.filter(s=>s.cat===c.nombre)].sort((a,b)=>(pptoData[b.sub]?.monto||0)-(pptoData[a.sub]?.monto||0));
-  const ppto=subcatsCat.reduce((s,sc)=>s+(pptoData[sc.sub]?.monto||0),0);
+  const subcatsCat=[...pptoSubcats.filter(s=>s.cat===c.nombre)].sort((a,b)=>(pptoData[b.sub.trim()]?.monto||0)-(pptoData[a.sub.trim()]?.monto||0));
+  const ppto=subcatsCat.reduce((s,sc)=>s+(pptoData[sc.sub.trim()]?.monto||0),0);
   const rawPct=ppto>0?Math.round((c.monto/ppto)*100):0;
   const status=ppto>0?getStatus(rawPct):'ok';
   const multiples=subcatsCat.length>1;
@@ -320,7 +334,7 @@ function abrirCat(i,key){
         <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
           ${subcatsCat.map(sc=>{
             const label=sc.sub.includes(' - ')?sc.sub.split(' - ').slice(1).join(' - '):sc.sub;
-            const val=pptoData[sc.sub]?.monto||0;
+            const val=pptoData[sc.sub.trim()]?.monto||0;
             const real=realPorSub[sc.sub]||0;
             const scPct=val>0?Math.round((real/val)*100):0;
             const scStatus=val>0?getStatus(scPct):'ok';
@@ -591,7 +605,7 @@ function renderPresupuesto(){
   const entries=Object.entries(grupos)
     .map(([cat,subs])=>{
       const filteredSubs=q?subs.filter(sc=>sc.sub.toLowerCase().includes(q)||cat.toLowerCase().includes(q)):subs;
-      const totalCat=filteredSubs.reduce((s,sc)=>{const p=pptoData[sc.sub];return s+(p?p.monto:0);},0);
+      const totalCat=filteredSubs.reduce((s,sc)=>{const p=pptoData[sc.sub.trim()];return s+(p?p.monto:0);},0);
       return{cat,filteredSubs,totalCat};
     })
     .sort((a,b)=>pptoSortAsc?a.totalCat-b.totalCat:b.totalCat-a.totalCat);
@@ -606,7 +620,7 @@ function renderPresupuesto(){
         <span class="ppto-cat-chevron open">▼</span>
       </div>
       <div class="ppto-subcat-list open">
-        ${sortedSubs.map(sc=>{const p=pptoData[sc.sub]||{monto:0,fijo:false};return `
+        ${sortedSubs.map(sc=>{const p=pptoData[sc.sub.trim()]||{monto:0,fijo:false};return `
           <div class="ppto-subcat-item">
             <div class="ppto-subcat-info"><div class="ppto-subcat-nombre">${sc.sub.includes(' - ')?sc.sub.split(' - ').slice(1).join(' - '):sc.sub}</div></div>
             <span class="ppto-tipo-badge ${p.fijo?'fijo':'variable'}" onclick="toggleFijo('${sc.sub}')">${p.fijo?'Fijo':'Variable'}</span>
@@ -638,28 +652,52 @@ function actualizarPpto(sub,val,inputEl){
   document.getElementById('ov-alcance').classList.add('open');
 }
 async function aplicarAlcance(soloMes){
+  if(presupuestoAllRows.length===0){
+    mostrarToast('Error: no hay datos de presupuesto cargados, recarga la página');
+    cerrar('ov-alcance');
+    return;
+  }
+
+  function dedup(rows){
+    const map=new Map();
+    rows.forEach(r=>{
+      const periodo=(r[0]||'').trim();
+      const sub=(r[1]||'').trim();
+      if(periodo&&sub) map.set(periodo+'||'+sub,r);
+    });
+    return Array.from(map.values());
+  }
+
   if(catAlcancePendiente){
     const{cat,catIdx,key,entries,mes,anio}=catAlcancePendiente;
-    entries.forEach(({sub,monto})=>{if(!pptoData[sub])pptoData[sub]={monto:0,fijo:false};pptoData[sub].monto=monto;});
+    entries.forEach(({sub,monto})=>{
+      if(!pptoData[sub.trim()])pptoData[sub.trim()]={monto:0,fijo:false};
+      pptoData[sub.trim()].monto=monto;
+    });
     mostrarLoading('Guardando presupuesto...');
     try{
       if(soloMes){
         const periodo=String(mes+1).padStart(2,'0')+'-'+anio;
         entries.forEach(({sub,monto})=>{
-          const idx=presupuestoAllRows.findIndex(r=>r[0]===periodo&&r[1]===sub);
-          if(idx>=0)presupuestoAllRows[idx]=[periodo,sub,cat,monto];
-          else presupuestoAllRows.push([periodo,sub,cat,monto]);
+          const idx=presupuestoAllRows.findIndex(
+            r=>(r[0]||'').trim()===periodo&&(r[1]||'').trim()===sub.trim()
+          );
+          if(idx>=0)presupuestoAllRows[idx]=[periodo,sub.trim(),cat,monto];
+          else presupuestoAllRows.push([periodo,sub.trim(),cat,monto]);
         });
       }else{
         for(let m=mes;m<=11;m++){
           const periodo=String(m+1).padStart(2,'0')+'-'+anio;
           entries.forEach(({sub,monto})=>{
-            const idx=presupuestoAllRows.findIndex(r=>r[0]===periodo&&r[1]===sub);
-            if(idx>=0)presupuestoAllRows[idx]=[periodo,sub,cat,monto];
-            else presupuestoAllRows.push([periodo,sub,cat,monto]);
+            const idx=presupuestoAllRows.findIndex(
+              r=>(r[0]||'').trim()===periodo&&(r[1]||'').trim()===sub.trim()
+            );
+            if(idx>=0)presupuestoAllRows[idx]=[periodo,sub.trim(),cat,monto];
+            else presupuestoAllRows.push([periodo,sub.trim(),cat,monto]);
           });
         }
       }
+      presupuestoAllRows=dedup(presupuestoAllRows);
       const res=await fetch('/api/presupuesto',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows:presupuestoAllRows})});
       if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'Error '+res.status);}
       mostrarToast(soloMes?`Actualizado para ${meses[mes]} ${anio}`:`Actualizado hasta dic ${anio}`);
@@ -675,26 +713,37 @@ async function aplicarAlcance(soloMes){
     abrirCat(catIdx,key);
     return;
   }
+
   if(!alcancePendiente)return;
   const{sub,nuevoMonto}=alcancePendiente;
-  if(!pptoData[sub])pptoData[sub]={monto:0,fijo:false};
-  pptoData[sub].monto=nuevoMonto;
-  const cat=pptoSubcats.find(s=>s.sub===sub)?.cat||sub;
+  const catObj=pptoSubcats.find(s=>s.sub.trim()===sub.trim());
+  const cat=catObj?.cat||sub;
+
+  if(soloMes){
+    const periodo=String(pptoPanelMes+1).padStart(2,'0')+'-'+pptoPanelAnio;
+    const idx=presupuestoAllRows.findIndex(
+      r=>(r[0]||'').trim()===periodo&&(r[1]||'').trim()===sub.trim()
+    );
+    if(idx>=0)presupuestoAllRows[idx]=[periodo,sub.trim(),cat,Number(nuevoMonto)];
+    else presupuestoAllRows.push([periodo,sub.trim(),cat,Number(nuevoMonto)]);
+  }else{
+    for(let m=pptoPanelMes;m<=11;m++){
+      const periodo=String(m+1).padStart(2,'0')+'-'+pptoPanelAnio;
+      const idx=presupuestoAllRows.findIndex(
+        r=>(r[0]||'').trim()===periodo&&(r[1]||'').trim()===sub.trim()
+      );
+      if(idx>=0)presupuestoAllRows[idx]=[periodo,sub.trim(),cat,Number(nuevoMonto)];
+      else presupuestoAllRows.push([periodo,sub.trim(),cat,Number(nuevoMonto)]);
+    }
+  }
+
+  if(!pptoData[sub.trim()])pptoData[sub.trim()]={monto:0,fijo:false};
+  pptoData[sub.trim()].monto=Number(nuevoMonto);
+
+  presupuestoAllRows=dedup(presupuestoAllRows);
+
   mostrarLoading('Guardando presupuesto...');
   try{
-    if(soloMes){
-      const periodo=String(pptoPanelMes+1).padStart(2,'0')+'-'+pptoPanelAnio;
-      const idx=presupuestoAllRows.findIndex(r=>r[0]===periodo&&r[1]===sub);
-      if(idx>=0){presupuestoAllRows[idx]=[periodo,sub,cat,nuevoMonto];}
-      else{presupuestoAllRows.push([periodo,sub,cat,nuevoMonto]);}
-    }else{
-      for(let m=pptoPanelMes;m<=11;m++){
-        const periodo=String(m+1).padStart(2,'0')+'-'+pptoPanelAnio;
-        const idx=presupuestoAllRows.findIndex(r=>r[0]===periodo&&r[1]===sub);
-        if(idx>=0){presupuestoAllRows[idx]=[periodo,sub,cat,nuevoMonto];}
-        else{presupuestoAllRows.push([periodo,sub,cat,nuevoMonto]);}
-      }
-    }
     const res=await fetch('/api/presupuesto',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows:presupuestoAllRows})});
     if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'Error '+res.status);}
     mostrarToast(soloMes?`Actualizado para ${meses[pptoPanelMes]} ${pptoPanelAnio}`:`Actualizado hasta dic ${pptoPanelAnio}`);
@@ -703,7 +752,8 @@ async function aplicarAlcance(soloMes){
   }finally{
     ocultarLoading();
   }
-  cerrar('ov-alcance');alcancePendiente=null;
+  cerrar('ov-alcance');
+  alcancePendiente=null;
   buildPptoForMonth(pptoPanelMes,pptoPanelAnio);
   renderPresupuesto();
 }
@@ -890,9 +940,11 @@ document.getElementById('add-ppto-guardar').addEventListener('click',async()=>{
   const allRows=[...presupuestoAllRows,...nuevasFilas];
   mostrarLoading('Guardando presupuesto...');
   try{
-    const res=await fetch('/api/presupuesto',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows:allRows})});
+    const rowsLimpias=deduplicarPresupuesto(allRows);
+    const res=await fetch('/api/presupuesto',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows:rowsLimpias})});
     if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'Error '+res.status);}
     mostrarToast('Presupuesto agregado \u2713');
+    presupuestoAllRows=rowsLimpias;
     cerrar('ov-add-ppto');catPptoPendiente=null;
     await cargarDatos();
   }catch(e){
@@ -912,23 +964,15 @@ function keyMesAnio(mes,anio){return String(mes+1).padStart(2,'0')+'-'+anio;}
 
 function renderHome(){
   // ── KPI CUENTAS ──────────────────────────────────
-  function netoByBanco(banco){
-    let total=0;
-    for(const gastos of Object.values(detalleData)){
-      gastos.forEach(g=>{
-        if(g.banco===banco){
-          total+=(g.ie==='I'?g.monto:-g.monto);
-        }
-      });
-    }
-    return total;
-  }
-  const sant=netoByBanco('Santander');
+  const allGastos=Object.values(detalleData).flat();
+  const sant=allGastos.filter(g=>g.banco==='Santander').reduce((s,g)=>s+g.montoValido,0);
   const santEl=document.getElementById('kpi-sant');
   if(santEl){
     santEl.querySelector('.kpi-valor').textContent=fmt(sant);
   }
-  const fala=netoByBanco('Falabella');
+  const sumaA=allGastos.filter(g=>g.banco==='Falabella').reduce((s,g)=>s+g.montoValido,0);
+  const sumaB=allGastos.filter(g=>g.banco==='Santander'&&g.sub==='Ingreso a Falabella desde Cuenta Corriente').reduce((s,g)=>s+g.montoValido,0);
+  const fala=sumaA+sumaB;
   const falaEl=document.getElementById('kpi-fala');
   if(falaEl){
     falaEl.querySelector('.kpi-valor').textContent=fmt(fala);
@@ -956,10 +1000,10 @@ function renderHome(){
   if(falaCompEl) falaCompEl.textContent=numComprasFala;
 
   // ── KPI TARJETA DE CRÉDITO ───────────────────────
-  const tc=netoByBanco('Tarjeta Crédito');
+  const tc=allGastos.filter(g=>g.banco==='Tarjeta Crédito').reduce((s,g)=>s+g.montoValido,0);
   const tcEl=document.getElementById('kpi-tc');
   if(tcEl){
-    tcEl.textContent=(tc>=0?'':'-')+fmt(tc);
+    tcEl.textContent=(tc>=0?'':'-')+fmt(Math.abs(tc));
     tcEl.style.color=tc>=0?'#2e7d32':'#c62828';
   }
 
@@ -1062,17 +1106,21 @@ function renderHomeGrafico(){
     puntos.push({mes,anio,key,gasto,ppto,label:mesesC[mes]});
   }
 
-  const W=360,H=160,padL=10,padR=10,padT=14,padB=8;
+  const promedio12=puntos.reduce((s,p)=>s+p.gasto,0)/puntos.length;
+  const W=360,H=160,padL=44,padR=10,padT=14,padB=8;
   const maxVal=Math.max(...puntos.map(p=>Math.max(p.gasto,p.ppto)),1);
   const xOf=i=>padL+(i/(puntos.length-1))*(W-padL-padR);
   const yOf=v=>padT+(1-v/maxVal)*(H-padT-padB);
 
-  // Grid lines
+  // Grid lines + Y-axis labels
   let svgStr='';
   const gridSteps=4;
+  function fmtY(v){if(v>=1000000)return (v/1000000).toFixed(1)+'M';if(v>=1000)return Math.round(v/1000)+'k';return Math.round(v)+'';}
   for(let i=0;i<=gridSteps;i++){
     const y=padT+(i/gridSteps)*(H-padT-padB);
+    const val=maxVal*(1-i/gridSteps);
     svgStr+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#f0f0f0" stroke-width="0.5"/>`;
+    svgStr+=`<text x="${padL-4}" y="${y+3}" text-anchor="end" font-size="8" fill="#bbb">${fmtY(val)}</text>`;
   }
 
   // Área sombreada bajo gasto real
@@ -1090,6 +1138,10 @@ function renderHomeGrafico(){
   const gastoPath=puntos.map((p,i)=>`${i===0?'M':'L'}${xOf(i)},${yOf(p.gasto)}`).join(' ');
   svgStr+=`<path d="${gastoPath}" fill="none" stroke="#e53935" stroke-width="2"/>`;
 
+  // Línea promedio (naranja punteado)
+  const yProm=yOf(promedio12);
+  svgStr+=`<line x1="${padL}" y1="${yProm}" x2="${W-padR}" y2="${yProm}" stroke="#2e7d32" stroke-width="1.2" stroke-dasharray="3,3"/>`;
+
   // Puntos interactivos
   puntos.forEach((p,i)=>{
     const over=p.gasto>p.ppto&&p.ppto>0;
@@ -1102,6 +1154,7 @@ function renderHomeGrafico(){
 
   svg.innerHTML=svgStr;
   svg.setAttribute('data-puntos',JSON.stringify(puntos));
+  svg.setAttribute('data-promedio',String(promedio12));
 
   if(mesesEl){
     mesesEl.innerHTML=puntos.map(p=>`<span>${p.label}</span>`).join('');
@@ -1115,7 +1168,8 @@ function showHomeTip(e,i){
   const puntos=JSON.parse(svg.getAttribute('data-puntos')||'[]');
   const p=puntos[i];
   if(!p) return;
-  tip.innerHTML=`<b>${mesesC[p.mes]} ${p.anio}</b><br>Gasto: ${fmt(p.gasto)}<br>Ppto: ${fmt(p.ppto)}`;
+  const promedio=parseFloat(svg.getAttribute('data-promedio')||'0');
+  tip.innerHTML=`<b>${mesesC[p.mes]} ${p.anio}</b><br>Real: ${fmt(p.gasto)}<br>Presupuesto: ${fmt(p.ppto)}<br>Promedio: ${fmt(promedio)}`;
   tip.style.display='block';
   const rect=svg.closest('.home-chart-container').getBoundingClientRect();
   const ex=e.touches?e.touches[0].clientX:e.clientX;

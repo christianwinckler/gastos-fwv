@@ -533,11 +533,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="drawer-close" onclick="cerrarDrawer()">✕</button>
     </div>
     <div class="drawer-links">
-      <div class="drawer-section-label">GASTOS</div>
-      <button class="drawer-link drawer-item-indent" data-screen="home" onclick="switchScreen('home');cerrarDrawer()">
+      <button class="drawer-link drawer-item-indent active" data-screen="home" onclick="switchScreen('home');cerrarDrawer()">
         <span class="drawer-link-icon">🏠</span> Home
       </button>
-      <button class="drawer-link drawer-item-indent active" data-screen="dashboard" onclick="switchScreen('dashboard');cerrarDrawer()">
+      <div class="drawer-divider"></div>
+      <div class="drawer-section-label">GASTOS</div>
+      <button class="drawer-link drawer-item-indent" data-screen="dashboard" onclick="switchScreen('dashboard');cerrarDrawer()">
         <span class="drawer-link-icon">📊</span> Resumen
       </button>
       <button class="drawer-link drawer-item-indent" data-screen="detalle" onclick="switchScreen('detalle');cerrarDrawer()">
@@ -561,7 +562,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <main class="content">
 
     <!-- DASHBOARD -->
-    <div class="screen active" id="screen-dashboard">
+    <div class="screen" id="screen-dashboard">
       <div class="mes-nav">
         <button class="mes-arrow" id="dash-prev">‹</button>
         <span class="mes-label" id="dash-mes">Abril 2026</span>
@@ -676,7 +677,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </div>
 
     <!-- HOME -->
-    <div class="screen" id="screen-home">
+    <div class="screen active" id="screen-home">
       <div class="section-label">CUENTAS CORRIENTES</div>
       <div class="kpi-grid-2" style="padding-bottom:0;">
         <div class="kpi-card" id="kpi-sant">
@@ -781,6 +782,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
           <div class="home-legend-item">
             <div class="home-legend-dot" style="background:#1a73e8;border:1px dashed #1a73e8;"></div>
             Presupuesto
+          </div>
+          <div class="home-legend-item">
+            <div class="home-legend-dot" style="background:#2e7d32;"></div>
+            Promedio 12m
           </div>
         </div>
         <div id="home-chart-meses" style="display:flex;justify-content:space-between;padding:4px 2px 0;font-size:9px;color:#bbb;"></div>
