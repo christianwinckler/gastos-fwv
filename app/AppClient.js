@@ -581,6 +581,87 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .val-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #888; }
 .val-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
+.btn-dividir-accion {
+  width: 100%; padding: 13px;
+  background: #f5f5f5; color: #111;
+  border: 0.5px solid #e0e0e0; border-radius: 10px;
+  font-size: 15px; font-weight: 500; cursor: pointer;
+  font-family: inherit; margin-bottom: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.dividir-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+.dividir-back-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 13px; color: #1a73e8; font-family: inherit; padding: 0;
+}
+.dividir-total-card {
+  background: #f5f5f5; border-radius: 10px;
+  padding: 10px 12px; margin-bottom: 10px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.dividir-total-label { font-size: 10px; font-weight: 500; color: #888; letter-spacing: .04em; margin-bottom: 2px; }
+.dividir-total-monto { font-size: 17px; font-weight: 500; color: #111; }
+.dividir-total-sub { font-size: 11px; color: #999; margin-top: 1px; }
+.dividir-progress-bar { height: 4px; background: #eee; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+.dividir-progress-fill { height: 100%; border-radius: 3px; transition: width .2s, background .2s; }
+.dividir-asig-row { display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px; }
+.dividir-section-hdr {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+}
+.dividir-section-label { font-size: 11px; font-weight: 500; color: #888; letter-spacing: .04em; }
+.dividir-btn-add-part { font-size: 12px; color: #1a73e8; background: none; border: none; cursor: pointer; font-family: inherit; }
+.dividir-parts-scroll { max-height: 240px; overflow-y: auto; margin-bottom: 10px; }
+.dividir-part-card {
+  background: #fff; border: 0.5px solid #e8e8e8;
+  border-radius: 10px; padding: 10px 11px; margin-bottom: 6px;
+}
+.dividir-part-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.dividir-part-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #f0f0f0; font-size: 10px; font-weight: 500;
+  color: #888; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.dividir-part-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dividir-part-sel {
+  flex: 1; font-size: 13px; color: #111; background: none;
+  border: none; cursor: pointer; text-align: left; padding: 0; font-family: inherit;
+}
+.dividir-part-sel.empty { color: #1a73e8; }
+.dividir-part-remove { background: none; border: none; cursor: pointer; font-size: 16px; color: #bbb; line-height: 1; }
+.dividir-part-bottom { display: flex; align-items: center; gap: 7px; }
+.dividir-monto-wrap { position: relative; flex: 1; }
+.dividir-monto-pfx { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #999; }
+.dividir-monto-inp {
+  width: 100%; padding: 8px 9px 8px 21px;
+  border: 0.5px solid #ddd; border-radius: 8px;
+  font-size: 14px; color: #111; font-family: inherit; background: #f9f9f9;
+}
+.dividir-monto-inp:focus { outline: none; border-color: #1a73e8; background: #fff; }
+.dividir-pct-pill {
+  font-size: 10px; padding: 3px 7px; border-radius: 8px;
+  background: #e8f0fe; color: #1a73e8; font-weight: 500; flex-shrink: 0;
+}
+.dividir-btn-resto {
+  font-size: 10px; color: #1a73e8; background: #e8f0fe;
+  border: none; border-radius: 5px; padding: 3px 7px;
+  cursor: pointer; flex-shrink: 0; font-family: inherit;
+}
+.dividir-status-badge {
+  border-radius: 8px; padding: 8px 11px;
+  font-size: 11px; font-weight: 500; text-align: center; margin-bottom: 10px;
+}
+.dividir-st-ok { background: #e8f5e9; color: #2e7d32; }
+.dividir-st-over { background: #fce4ec; color: #c62828; }
+.dividir-st-under { background: #f5f5f5; color: #666; }
+.btn-dividir-guardar {
+  width: 100%; padding: 13px; border: none; border-radius: 10px;
+  font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; margin-bottom: 8px;
+}
+.btn-dividir-guardar.habilitado { background: #111; color: #fff; }
+.btn-dividir-guardar.deshabilitado { background: #999; color: #fff; opacity: .4; cursor: default; }
+
   `
 
   const htmlContent = `
@@ -921,13 +1002,59 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <div class="overlay" id="ov-gasto">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="modal-desc" id="g-desc"></div>
-    <div class="modal-monto" id="g-monto"></div>
-    <div class="modal-actions">
-      <button class="btn-editar">✏️ Editar gasto</button>
-      <button class="btn-eliminar">🗑 Eliminar gasto</button>
-      <button class="btn-cancelar" onclick="cerrar('ov-gasto')">Cancelar</button>
+
+    <!-- Vista A: opciones del gasto -->
+    <div id="ov-gasto-vista-a">
+      <div class="modal-desc" id="g-desc"></div>
+      <div class="modal-monto" id="g-monto"></div>
+      <div class="modal-actions">
+        <button class="btn-editar">✏️ Editar gasto</button>
+        <button class="btn-dividir-accion" onclick="abrirVistaDividir()">⊕ Dividir gasto</button>
+        <button class="btn-eliminar">🗑 Eliminar gasto</button>
+        <button class="btn-cancelar" onclick="cerrar('ov-gasto')">Cancelar</button>
+      </div>
     </div>
+
+    <!-- Vista B: dividir gasto (oculta por defecto) -->
+    <div id="ov-gasto-vista-b" style="display:none;">
+      <div class="dividir-header">
+        <span class="sheet-title" style="margin-bottom:0;">Dividir gasto</span>
+        <button class="dividir-back-btn" onclick="cerrarVistaDividir()">‹ Volver</button>
+      </div>
+
+      <div class="dividir-total-card">
+        <div>
+          <div class="dividir-total-label">TOTAL A DISTRIBUIR</div>
+          <div class="dividir-total-monto" id="div-total-monto">$0</div>
+          <div class="dividir-total-sub" id="div-total-sub"></div>
+        </div>
+        <div style="text-align:right;">
+          <div class="dividir-total-label">SIN ASIGNAR</div>
+          <div style="font-size:15px;font-weight:500;" id="div-resto-disp">—</div>
+        </div>
+      </div>
+      <div class="dividir-progress-bar">
+        <div class="dividir-progress-fill" id="div-prog-fill" style="width:0%;background:#1a73e8;"></div>
+      </div>
+      <div class="dividir-asig-row">
+        <span style="color:#aaa;" id="div-asig-label">0% distribuido</span>
+        <span style="font-weight:500;" id="div-asig-val"></span>
+      </div>
+
+      <div style="height:12px;"></div>
+
+      <div class="dividir-section-hdr">
+        <span class="dividir-section-label">PARTES</span>
+        <button class="dividir-btn-add-part" onclick="divAddPart()">+ Agregar parte</button>
+      </div>
+
+      <div class="dividir-parts-scroll" id="div-parts-container"></div>
+
+      <div class="dividir-status-badge dividir-st-under" id="div-status-badge">Ajusta los montos para continuar</div>
+      <button class="btn-dividir-guardar deshabilitado" id="btn-div-guardar" onclick="ejecutarDividir()">Dividir gasto</button>
+      <button class="btn-cancelar" onclick="cerrarVistaDividir()">Cancelar</button>
+    </div>
+
   </div>
 </div>
 
@@ -1144,6 +1271,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <input type="text" id="admin-rename-input" placeholder="Nombre de la categoría" />
     </div>
     <button class="btn-admin-guardar" onclick="guardarRenombrarCat()">Guardar nombre</button>
+  </div>
+</div>
+
+<!-- DIVIDIR: selector de subcategoría -->
+<div class="overlay" id="ov-div-subcat">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Seleccionar subcategoría</div>
+    <div style="padding:0 0 10px;">
+      <div style="position:relative;">
+        <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px;color:#bbb;">🔍</span>
+        <input id="div-subcat-search" type="text" placeholder="Buscar subcategoría..."
+          style="width:100%;padding:9px 11px 9px 34px;border:0.5px solid #e0e0e0;border-radius:9px;font-size:14px;font-family:inherit;background:#f5f5f5;box-sizing:border-box;"
+          oninput="divFiltrarSubcat(this.value)" />
+      </div>
+    </div>
+    <div id="div-subcat-options" style="max-height:260px;overflow-y:auto;"></div>
   </div>
 </div>
 

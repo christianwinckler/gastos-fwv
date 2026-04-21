@@ -42,6 +42,17 @@ window.hideHomeTip=hideHomeTip;
 window.abrirDrawer=abrirDrawer;
 window.setValFiltroEstado=setValFiltroEstado;
 window.setValFiltroCategoria=setValFiltroCategoria;
+window.abrirVistaDividir=abrirVistaDividir;
+window.cerrarVistaDividir=cerrarVistaDividir;
+window.divAddPart=divAddPart;
+window.divOpenSubcat=divOpenSubcat;
+window.divSelectSubcat=divSelectSubcat;
+window.divFiltrarSubcat=divFiltrarSubcat;
+window.divUpdMonto=divUpdMonto;
+window.divUsarResto=divUsarResto;
+window.divRemovePart=divRemovePart;
+window.ejecutarDividir=ejecutarDividir;
+window.cargarDatosQuiet=cargarDatosQuiet;
 
 const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const mesesC=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -79,6 +90,9 @@ let homeSubcatActiva=null;
 let valMes=3,valAnio=2026;
 let valFiltroEstado='todos';
 let valFiltroCategoria='todos';
+
+let divParts=[];
+let divEditIdx=null;
 
 function fmt(n){return '$'+Math.round(Math.abs(n)).toLocaleString('es-CL');}
 function getStatus(p){return p>=100?'over':p>=80?'warning':'ok';}
@@ -515,6 +529,8 @@ function abrirGasto(id){
   gastoActual=g;
   document.getElementById('g-desc').textContent=g.desc;
   document.getElementById('g-monto').textContent=(g.ie==='E'?'- ':'+ ')+fmt(g.monto);
+  document.getElementById('ov-gasto-vista-a').style.display='block';
+  document.getElementById('ov-gasto-vista-b').style.display='none';
   document.getElementById('ov-gasto').classList.add('open');
 }
 function abrirGastoById(id){
@@ -524,6 +540,8 @@ function abrirGastoById(id){
   gastoActual=g;
   document.getElementById('g-desc').textContent=g.desc;
   document.getElementById('g-monto').textContent=(g.ie==='E'?'- ':'+ ')+fmt(g.monto);
+  document.getElementById('ov-gasto-vista-a').style.display='block';
+  document.getElementById('ov-gasto-vista-b').style.display='none';
   document.getElementById('ov-gasto').classList.add('open');
 }
 document.getElementById('buscador').addEventListener('input',renderDetalle);
@@ -552,8 +570,15 @@ document.getElementById('picker-apply').addEventListener('click',()=>{
   if(rangoDesde.anio>rangoHasta.anio||(rangoDesde.anio===rangoHasta.anio&&rangoDesde.mes>rangoHasta.mes))rangoHasta={...rangoDesde};
   cerrar('ov-picker');renderDetalle();
 });
-document.getElementById('ov-gasto').addEventListener('click',e=>{if(e.target===document.getElementById('ov-gasto'))cerrar('ov-gasto');});
+document.getElementById('ov-gasto').addEventListener('click',e=>{
+  if(e.target===document.getElementById('ov-gasto')){
+    cerrar('ov-gasto');
+    document.getElementById('ov-gasto-vista-a').style.display='block';
+    document.getElementById('ov-gasto-vista-b').style.display='none';
+  }
+});
 document.getElementById('ov-picker').addEventListener('click',e=>{if(e.target===document.getElementById('ov-picker'))cerrar('ov-picker');});
+document.getElementById('ov-div-subcat').addEventListener('click',e=>{if(e.target===document.getElementById('ov-div-subcat'))cerrar('ov-div-subcat');});
 document.querySelector('.btn-eliminar').addEventListener('click',async()=>{
   cerrar('ov-gasto');
   if(!confirm('¿Eliminar este gasto? Esta acción no se puede deshacer.'))return;
@@ -593,6 +618,250 @@ document.querySelector('.btn-editar').addEventListener('click',()=>{
   document.getElementById('dev-hint').textContent=gastoActual.dev?'marcado como X':'marcar con X';
   document.getElementById('ov-nuevo').classList.add('open');
 });
+
+// ── DIVIDIR GASTO ─────────────────────────────────────────
+function abrirVistaDividir(){
+  if(!gastoActual)return;
+  divParts=[
+    {sub:gastoActual.sub,cat:gastoActual.cat,color:catColores[gastoActual.cat]||'#999',monto:gastoActual.monto},
+    {sub:'',cat:'',color:'#999',monto:0}
+  ];
+  document.getElementById('div-total-monto').textContent=fmt(gastoActual.monto);
+  document.getElementById('div-total-sub').textContent=
+    `${gastoActual.desc} · ${gastoActual.fecha.slice(8,10)}/${gastoActual.fecha.slice(5,7)}/${gastoActual.fecha.slice(0,4)} · ${gastoActual.banco}`;
+  document.getElementById('ov-gasto-vista-a').style.display='none';
+  document.getElementById('ov-gasto-vista-b').style.display='block';
+  divRender();
+}
+
+function cerrarVistaDividir(){
+  document.getElementById('ov-gasto-vista-b').style.display='none';
+  document.getElementById('ov-gasto-vista-a').style.display='block';
+}
+
+function divRender(){
+  if(!gastoActual)return;
+  const TOTAL=gastoActual.monto;
+  const asignado=divParts.reduce((s,p)=>s+p.monto,0);
+  const resto=TOTAL-asignado;
+  const pct=TOTAL>0?Math.min(Math.round((asignado/TOTAL)*100),100):0;
+
+  const fill=document.getElementById('div-prog-fill');
+  fill.style.width=pct+'%';
+  fill.style.background=resto===0?'#2e7d32':resto<0?'#c62828':'#1a73e8';
+
+  const restoEl=document.getElementById('div-resto-disp');
+  restoEl.textContent=resto===0?'—':fmt(Math.abs(resto));
+  restoEl.style.color=resto===0?'#bbb':resto<0?'#c62828':'#111';
+
+  document.getElementById('div-asig-label').textContent=
+    resto<0?'Excede el total':pct+'% distribuido';
+  const av=document.getElementById('div-asig-val');
+  av.textContent=resto<0
+    ?'− '+fmt(Math.abs(resto))+' de más'
+    :fmt(asignado)+' asignado';
+  av.style.color=resto===0?'#2e7d32':resto<0?'#c62828':'#888';
+
+  document.getElementById('div-parts-container').innerHTML=divParts.map((p,i)=>{
+    const pctP=TOTAL>0&&p.monto>0?Math.round((p.monto/TOTAL)*100):0;
+    const label=p.sub?(p.sub.includes(' - ')?p.sub.split(' - ').slice(1).join(' - '):p.sub):'';
+    const restoDisponible=TOTAL-divParts.reduce((s,pp,idx)=>idx===i?s:s+pp.monto,0);
+    return `<div class="dividir-part-card">
+      <div class="dividir-part-top">
+        <div class="dividir-part-num">${i+1}</div>
+        ${p.sub
+          ?`<div class="dividir-part-dot" style="background:${p.color};"></div>
+             <button class="dividir-part-sel" onclick="divOpenSubcat(${i})">${label}<span style="color:#aaa;font-size:10px;"> · ${p.cat}</span></button>`
+          :`<button class="dividir-part-sel empty" onclick="divOpenSubcat(${i})">Seleccionar subcategoría...</button>`
+        }
+        ${divParts.length>2?`<button class="dividir-part-remove" onclick="divRemovePart(${i})">×</button>`:''}
+      </div>
+      <div class="dividir-part-bottom">
+        <div class="dividir-monto-wrap">
+          <span class="dividir-monto-pfx">$</span>
+          <input class="dividir-monto-inp" type="number" value="${p.monto||''}"
+            placeholder="0" min="0" oninput="divUpdMonto(${i},this.value)" />
+        </div>
+        <span class="dividir-pct-pill">${pctP}%</span>
+        ${restoDisponible>0&&p.monto<restoDisponible
+          ?`<button class="dividir-btn-resto" onclick="divUsarResto(${i})">Usar resto</button>`
+          :''}
+      </div>
+    </div>`;
+  }).join('');
+
+  const allSub=divParts.every(p=>p.sub);
+  const badge=document.getElementById('div-status-badge');
+  const btn=document.getElementById('btn-div-guardar');
+
+  if(resto===0&&allSub){
+    badge.textContent='Todo el monto está distribuido, listo para dividir';
+    badge.className='dividir-status-badge dividir-st-ok';
+    btn.className='btn-dividir-guardar habilitado';
+  }else if(resto<0){
+    badge.textContent=`⚠ Excede ${fmt(TOTAL)} en ${fmt(Math.abs(resto))} — ajusta los montos`;
+    badge.className='dividir-status-badge dividir-st-over';
+    btn.className='btn-dividir-guardar deshabilitado';
+  }else if(!allSub){
+    badge.textContent='Falta seleccionar subcategoría en algunas partes';
+    badge.className='dividir-status-badge dividir-st-under';
+    btn.className='btn-dividir-guardar deshabilitado';
+  }else{
+    badge.textContent=fmt(resto)+' sin asignar — ajusta los montos';
+    badge.className='dividir-status-badge dividir-st-under';
+    btn.className='btn-dividir-guardar deshabilitado';
+  }
+}
+
+function divUpdMonto(i,val){
+  divParts[i].monto=parseInt(val)||0;
+  divRender();
+}
+function divUsarResto(i){
+  if(!gastoActual)return;
+  const TOTAL=gastoActual.monto;
+  const sinEste=divParts.reduce((s,p,idx)=>idx===i?s:s+p.monto,0);
+  divParts[i].monto=Math.max(0,TOTAL-sinEste);
+  divRender();
+}
+function divRemovePart(i){
+  if(divParts.length>2){divParts.splice(i,1);divRender();}
+}
+function divAddPart(){
+  if(!gastoActual)return;
+  const resto=Math.max(0,gastoActual.monto-divParts.reduce((s,p)=>s+p.monto,0));
+  divParts.push({sub:'',cat:'',color:'#999',monto:resto});
+  divRender();
+  setTimeout(()=>divOpenSubcat(divParts.length-1),30);
+}
+
+function divBuildSubcatHtml(q){
+  const query=(q||'').toLowerCase().trim();
+  const grupos={};
+  subcats.filter(s=>s.ie==='E').forEach(s=>{
+    const label=s.sub.includes(' - ')?s.sub.split(' - ').slice(1).join(' - '):s.sub;
+    if(query&&!label.toLowerCase().includes(query)&&!s.cat.toLowerCase().includes(query))return;
+    if(!grupos[s.cat])grupos[s.cat]=[];
+    grupos[s.cat].push(s);
+  });
+  let html='';
+  const idx=divEditIdx;
+  Object.entries(grupos).forEach(([cat,subs])=>{
+    if(!query)html+=`<div style="font-size:10px;font-weight:500;color:#aaa;letter-spacing:.05em;padding:8px 4px 4px;">${cat.toUpperCase()}</div>`;
+    subs.forEach(s=>{
+      const label=s.sub.includes(' - ')?s.sub.split(' - ').slice(1).join(' - '):s.sub;
+      const active=divParts[idx]&&divParts[idx].sub===s.sub;
+      const color=catColores[s.cat]||'#999';
+      const subSafe=s.sub.replace(/'/g,"\\'");
+      const catSafe=s.cat.replace(/'/g,"\\'");
+      html+=`<div onclick="divSelectSubcat('${subSafe}','${catSafe}','${color}')"
+        style="display:flex;align-items:center;gap:9px;padding:9px 6px;border-radius:7px;cursor:pointer;${active?'background:#e8f0fe;':''}">
+        <div style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+        <span style="font-size:13px;color:#111;flex:1;">${label}${query?`<span style="color:#aaa;font-size:11px;"> · ${cat}</span>`:''}</span>
+        ${active?'<span style="color:#1a73e8;font-size:13px;">✓</span>':''}
+      </div>`;
+    });
+  });
+  if(!html)html=`<div style="padding:16px;text-align:center;font-size:13px;color:#aaa;">Sin resultados</div>`;
+  return html;
+}
+
+function divOpenSubcat(idx){
+  divEditIdx=idx;
+  const searchEl=document.getElementById('div-subcat-search');
+  if(searchEl)searchEl.value='';
+  document.getElementById('div-subcat-options').innerHTML=divBuildSubcatHtml('');
+  document.getElementById('ov-div-subcat').classList.add('open');
+  setTimeout(()=>searchEl&&searchEl.focus(),200);
+}
+
+function divFiltrarSubcat(q){
+  document.getElementById('div-subcat-options').innerHTML=divBuildSubcatHtml(q);
+}
+
+function divSelectSubcat(sub,cat,color){
+  if(divEditIdx!==null&&divParts[divEditIdx]){
+    divParts[divEditIdx].sub=sub;
+    divParts[divEditIdx].cat=cat;
+    divParts[divEditIdx].color=color;
+  }
+  cerrar('ov-div-subcat');
+  divEditIdx=null;
+  divRender();
+}
+
+async function cargarDatosQuiet(){
+  try{
+    const res=await fetch('/api/gastos');
+    if(!res.ok)return;
+    const rows=await res.json();
+    totalFilasGastos=Math.max(0,(rows.length||1)-1);
+  }catch(e){}
+}
+
+async function ejecutarDividir(){
+  const btn=document.getElementById('btn-div-guardar');
+  if(!btn.classList.contains('habilitado'))return;
+  if(!gastoActual)return;
+
+  const TOTAL=gastoActual.monto;
+  const n=divParts.length;
+  const suma=divParts.reduce((s,p)=>s+p.monto,0);
+  if(suma!==TOTAL){mostrarToast('Los montos no cuadran con el total');return;}
+  if(!divParts.every(p=>p.sub)){mostrarToast('Todas las partes deben tener subcategoría');return;}
+
+  btn.disabled=true;
+  cerrar('ov-gasto');
+  mostrarLoading('Dividiendo gasto...');
+
+  try{
+    const delRes=await fetch('/api/gastos',{
+      method:'DELETE',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({rowIndex:gastoActual.rowIndex})
+    });
+    if(!delRes.ok){const err=await delRes.json().catch(()=>({}));throw new Error(err.error||'Error al eliminar gasto original');}
+
+    await cargarDatosQuiet();
+
+    const descBase=gastoActual.desc;
+    const fecha=gastoActual.fecha;
+    const dateSerial=Math.round(new Date(fecha).getTime()/86400000)+25569;
+    const banco=gastoActual.banco;
+    const devStr=gastoActual.dev?'X':'';
+
+    for(let i=0;i<divParts.length;i++){
+      const parte=divParts[i];
+      const descParte=`${descBase} - Gasto Dividido (${i+1}/${n})`;
+      const N=totalFilasGastos+2;
+
+      const fB=`=IF(A${N}<>"",(CONCATENATE(IF(MONTH(A${N})<10,CONCATENATE("0",MONTH(A${N})),MONTH(A${N})),"-",YEAR(A${N}))),"")`;
+      const fD=`=IFERROR(VLOOKUP(C${N},'Parámetros'!A:B,2,FALSE),"")`;
+      const fE=`=IF(G${N}<>"X",IFERROR(VLOOKUP(C${N},'Parámetros'!A:C,3,FALSE),""),IF(IFERROR(VLOOKUP(C${N},'Parámetros'!A:C,3,FALSE),"")="E","I","E"))`;
+      const fJ=`=IF(I${N}<>"",IF(E${N}="I",IF(I${N}>0,I${N},I${N}*-1),IF(E${N}="E",IF(I${N}<0,I${N},I${N}*-1))),0)`;
+      const fK=`=SUMIFs(Presupuesto!D:D,Presupuesto!A:A,B${N},Presupuesto!B:B,C${N})`;
+
+      const row=[dateSerial,fB,parte.sub,fD,fE,banco,devStr,descParte,parte.monto,fJ,fK];
+      const res=await fetch('/api/gastos',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({row})
+      });
+      if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||`Error al insertar parte ${i+1}`);}
+
+      if(i<divParts.length-1)await cargarDatosQuiet();
+    }
+
+    mostrarToast(`Gasto dividido en ${n} partes ✓`);
+    await cargarDatos();
+    renderDetalle();
+  }catch(e){
+    mostrarToast('Error al dividir: '+e.message);
+    ocultarLoading();
+  }finally{
+    btn.disabled=false;
+  }
+}
 
 // ── PRESUPUESTO ─────────────────────────────────────────
 function renderPresupuesto(){
