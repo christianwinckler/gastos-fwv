@@ -253,6 +253,7 @@ function switchScreen(screen){
   });
   const titleEl=document.getElementById('navbar-title');
   if(titleEl) titleEl.innerHTML=`<span class="brand-prefix">Gastos FWV</span> - ${screenTitles[screen]||screen}`;
+  document.title='Gastos FWV — FWV App';
   if(screen==='dashboard') renderDashboard();
   if(screen==='presupuesto') renderPresupuesto();
   if(screen==='admin') renderAdmin();

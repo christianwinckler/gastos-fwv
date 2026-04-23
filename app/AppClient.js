@@ -669,7 +669,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
   <!-- NAVBAR -->
   <nav class="navbar">
-    <div style="display:flex;align-items:center;gap:12px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <a href="/home" style="font-size:12px;color:#999;text-decoration:none;white-space:nowrap;padding:2px 4px;font-family:inherit;">← Apps</a>
       <button class="btn-hamburger" id="btn-hamburger" onclick="abrirDrawer()">
         <div class="ham-line"></div>
         <div class="ham-line"></div>
@@ -711,7 +712,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <span class="drawer-link-icon">🗂</span> Categorías
       </button>
     </div>
-    <div style="padding:16px;">
+    <div style="padding:8px 16px 0;">
+      <a href="/home" style="display:block;text-align:center;font-size:13px;color:#999;text-decoration:none;padding:10px 0;">← Volver a Apps</a>
+    </div>
+    <div style="padding:8px 16px 16px;">
       <button style="width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;" onclick="abrirNuevoGasto();cerrarDrawer()">+ Nuevo gasto</button>
     </div>
   </div>

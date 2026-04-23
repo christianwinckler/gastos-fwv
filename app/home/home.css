@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+.home-wrap {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #f0f4ff 0%, #f9fafb 100%);
+  padding: 28px 20px 40px;
+  box-sizing: border-box;
+}
+
+.home-inner {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .home-inner { max-width: 900px; }
+}
+
+.apps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (min-width: 768px) {
+  .apps-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.app-card {
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+  padding: 24px 20px 20px;
+  min-height: 200px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  text-decoration: none;
+  display: block;
+}
+
+.app-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.app-card-disabled {
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+  padding: 24px 20px 20px;
+  min-height: 200px;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+  opacity: 0.75;
+  display: block;
+}
+
+.app-card-empty {
+  background: #f9fafb;
+  border: 2px dashed #e5e7eb;
+  border-radius: 24px;
+  padding: 24px 20px 20px;
+  min-height: 200px;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.card-deco {
+  position: absolute;
+  bottom: -30px;
+  right: -30px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin-bottom: 14px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+.badge-active { background: #dcfce7; color: #16a34a; }
+.badge-soon { background: #ede9fe; color: #7c3aed; }

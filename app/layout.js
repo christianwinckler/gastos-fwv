@@ -1,7 +1,7 @@
 import './globals.css'
 
 export const metadata = {
-  title: 'Gastos FWV',
+  title: 'FWV App',
   description: 'Control de gastos familiar',
 }
 

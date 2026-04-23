@@ -16,6 +16,11 @@ export const authOptions = {
     async signIn({ user }) {
       return ALLOWED_EMAILS.includes(user.email)
     },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith('/')) return `${baseUrl}${url}`
+      if (url.startsWith(baseUrl)) return url
+      return `${baseUrl}/home`
+    },
     async session({ session, token }) {
       session.user.email = token.email
       return session
