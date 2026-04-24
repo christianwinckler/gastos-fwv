@@ -9,6 +9,15 @@ function LoginContent() {
   const [dark, setDark] = useState(false)
 
   useEffect(() => {
+    const pending = sessionStorage.getItem('pwa_redirect')
+    if (pending) {
+      sessionStorage.removeItem('pwa_redirect')
+      window.location.replace(pending)
+      return
+    }
+  }, [])
+
+  useEffect(() => {
     try {
       if (localStorage.getItem('fwv_dark') === '1') setDark(true)
     } catch (e) {}
@@ -117,7 +126,10 @@ function LoginContent() {
 
           {/* Google sign-in */}
           <button
-            onClick={() => signIn('google', { callbackUrl: '/home' })}
+            onClick={() => {
+              sessionStorage.setItem('pwa_redirect', '/home')
+              signIn('google', { callbackUrl: '/home' })
+            }}
             style={{
               width: '100%', padding: '12px',
               background: bg,
