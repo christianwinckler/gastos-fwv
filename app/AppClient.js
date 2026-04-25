@@ -445,6 +445,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .ajustes-arrow { font-size: 13px; color: #ccc; }
 
 /* Toast */
+/* ── SKELETON ───────────────────────────────────────────── */
+@keyframes shimmer {
+  0%{background-position:-400px 0}
+  100%{background-position:400px 0}
+}
+.skeleton {
+  background: linear-gradient(90deg,#ebebeb 25%,#f5f5f5 50%,#ebebeb 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 6px;
+  display: inline-block;
+}
+.skeleton-text { height: 14px; width: 80%; }
+.skeleton-valor { height: 24px; width: 60%; margin-top: 4px; }
+.skeleton-sub { height: 11px; width: 50%; margin-top: 4px; }
+.navbar-disabled { pointer-events: none; opacity: 0.5; }
+
 .toast {
   position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
   background: #111; color: #fff; padding: 8px 20px; border-radius: 20px;
@@ -906,12 +923,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <div class="kpi-grid-2" style="padding-bottom:0;">
         <div class="kpi-card" id="kpi-sant">
           <div class="kpi-label">SANTANDER</div>
-          <div class="kpi-valor">—</div>
+          <div class="kpi-valor" id="kpi-sant-val"><span class="skeleton skeleton-valor"></span></div>
           <div class="kpi-badge badge-s">Cuenta corriente</div>
         </div>
         <div class="kpi-card" id="kpi-fala">
           <div class="kpi-label">FALABELLA</div>
-          <div class="kpi-valor">—</div>
+          <div class="kpi-valor" id="kpi-fala-val"><span class="skeleton skeleton-valor"></span></div>
           <div class="kpi-badge badge-f">Cuenta corriente</div>
         </div>
       </div>
@@ -919,12 +936,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <div class="kpi-card-falabella">
         <div class="falabella-row">
           <div class="falabella-compras">
-            <div class="falabella-compras-num" id="kpi-fala-compras">—</div>
+            <div class="falabella-compras-num" id="kpi-fala-compras"><span class="skeleton" style="height:28px;width:32px;display:inline-block;"></span></div>
             <div class="falabella-compras-label">compras</div>
           </div>
           <div>
             <div class="kpi-label">ÚLTIMO MES ACTIVO FALABELLA</div>
-            <div class="kpi-valor" id="kpi-fala-mes">—</div>
+            <div class="kpi-valor" id="kpi-fala-mes"><span class="skeleton skeleton-valor"></span></div>
           </div>
         </div>
       </div>
@@ -932,7 +949,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <div class="kpi-card-full">
         <div style="flex:1;">
           <div class="kpi-label">TARJETA DE CRÉDITO</div>
-          <div class="kpi-valor" id="kpi-tc">—</div>
+          <div class="kpi-valor" id="kpi-tc"><span class="skeleton skeleton-valor"></span></div>
           <div class="kpi-sub">Saldo neto acumulado</div>
         </div>
         <div class="kpi-badge badge-tc">TC</div>
@@ -945,25 +962,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <div class="cat-kpi-grid">
         <div class="cat-kpi-card" id="cat-kpi-cuentas">
           <div class="cat-kpi-nombre">CUENTAS</div>
-          <div class="cat-kpi-monto">—</div>
+          <div class="cat-kpi-monto" id="cat-kpi-cuentas-val"><span class="skeleton skeleton-valor"></span></div>
           <div class="cat-kpi-comparacion"><span class="cat-kpi-prom">—</span></div>
           <div class="cat-kpi-barra"><div class="cat-kpi-fill" style="width:0%;background:#1a73e8;"></div></div>
         </div>
         <div class="cat-kpi-card" id="cat-kpi-super">
           <div class="cat-kpi-nombre">SUPERMERCADO</div>
-          <div class="cat-kpi-monto">—</div>
+          <div class="cat-kpi-monto" id="cat-kpi-super-val"><span class="skeleton skeleton-valor"></span></div>
           <div class="cat-kpi-comparacion"><span class="cat-kpi-prom">—</span></div>
           <div class="cat-kpi-barra"><div class="cat-kpi-fill" style="width:0%;background:#1a73e8;"></div></div>
         </div>
         <div class="cat-kpi-card" id="cat-kpi-mall">
           <div class="cat-kpi-nombre">MALL</div>
-          <div class="cat-kpi-monto">—</div>
+          <div class="cat-kpi-monto" id="cat-kpi-mall-val"><span class="skeleton skeleton-valor"></span></div>
           <div class="cat-kpi-comparacion"><span class="cat-kpi-prom">—</span></div>
           <div class="cat-kpi-barra"><div class="cat-kpi-fill" style="width:0%;background:#1a73e8;"></div></div>
         </div>
         <div class="cat-kpi-card" id="cat-kpi-comer">
           <div class="cat-kpi-nombre">SALIDAS A COMER</div>
-          <div class="cat-kpi-monto">—</div>
+          <div class="cat-kpi-monto" id="cat-kpi-comer-val"><span class="skeleton skeleton-valor"></span></div>
           <div class="cat-kpi-comparacion"><span class="cat-kpi-prom">—</span></div>
           <div class="cat-kpi-barra"><div class="cat-kpi-fill" style="width:0%;background:#1a73e8;"></div></div>
         </div>
@@ -1148,9 +1165,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <div class="overlay" id="ov-nuevo">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">Nuevo gasto</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 16px;">
+      <div class="sheet-title" style="margin-bottom:0;">Nuevo gasto</div>
+      <button style="width:28px;height:28px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;font-size:14px;color:#666;" onclick="cerrar('ov-nuevo');modoEdicion=false;gastoEditandoRowIndex=null;">✕</button>
+    </div>
     <div class="form-body">
       <div class="field"><label>FECHA</label><input type="date" id="f-fecha" /></div>
+      <div class="field">
+        <label>BANCO / MEDIO DE PAGO</label>
+        <div class="banco-group">
+          <button class="banco-btn" data-banco="Tarjeta Crédito"><div class="banco-icon t">TC</div><span class="banco-label">Tarjeta Crédito</span></button>
+          <button class="banco-btn" data-banco="Falabella"><div class="banco-icon f">F</div><span class="banco-label">Falabella</span></button>
+          <button class="banco-btn" data-banco="Santander"><div class="banco-icon s">S</div><span class="banco-label">Santander</span></button>
+        </div>
+      </div>
       <div class="field">
         <label>SUBCATEGORÍA</label>
         <div class="subcat-wrap">
@@ -1166,14 +1194,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
             <span class="cat-badge" id="f-cat-nombre"></span>
             <span class="ie-badge" id="f-ie-badge"></span>
           </div>
-        </div>
-      </div>
-      <div class="field">
-        <label>BANCO / MEDIO DE PAGO</label>
-        <div class="banco-group">
-          <button class="banco-btn" data-banco="Santander"><div class="banco-icon s">S</div><span class="banco-label">Santander</span></button>
-          <button class="banco-btn" data-banco="Falabella"><div class="banco-icon f">F</div><span class="banco-label">Falabella</span></button>
-          <button class="banco-btn" data-banco="Tarjeta Crédito"><div class="banco-icon t">TC</div><span class="banco-label">Tarjeta Crédito</span></button>
         </div>
       </div>
       <div class="field"><label>DESCRIPCIÓN</label><textarea id="f-desc" placeholder="Ej: Compra semanal en Jumbo..."></textarea></div>
@@ -1420,6 +1440,41 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div style="display:flex;flex-direction:column;gap:8px;">
       <button style="width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;" onclick="confirmarPagarCuota()">✓ Registrar pago</button>
       <button style="width:100%;padding:13px;background:#f5f5f5;color:#555;border:none;border-radius:10px;font-size:15px;cursor:pointer;font-family:inherit;" onclick="cerrar('ov-pagar-cuota')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- POST-GASTO: opciones -->
+<div class="alcance-overlay" id="ov-post-gasto">
+  <div class="alcance-card" style="max-width:360px;">
+    <div class="alcance-titulo">Gasto guardado ✓</div>
+    <div class="alcance-sub" id="post-gasto-desc" style="margin-bottom:18px;"></div>
+    <div class="alcance-opciones">
+      <button class="alcance-btn" id="post-btn-detalle"
+        style="background:#e8f0fe;color:#1a73e8;"
+        onclick="postGastoDetalle()">
+        <span class="alcance-icon">📋</span>
+        <div class="alcance-txt">
+          <span class="alcance-txt-main">Ir al detalle</span>
+          <span class="alcance-txt-sub">Ver todos los gastos del período</span>
+        </div>
+      </button>
+      <button class="alcance-btn" id="post-btn-dividir"
+        style="background:#f5f5f5;color:#111;"
+        onclick="postGastoDividir()">
+        <span class="alcance-icon">⊕</span>
+        <div class="alcance-txt">
+          <span class="alcance-txt-main">Dividir gasto</span>
+          <span class="alcance-txt-sub">Distribuir en subcategorías</span>
+        </div>
+      </button>
+      <button class="alcance-btn todos" onclick="postGastoNuevo()">
+        <span class="alcance-icon">+</span>
+        <div class="alcance-txt">
+          <span class="alcance-txt-main">Ingresar otro gasto</span>
+          <span class="alcance-txt-sub">Abrir formulario nuevamente</span>
+        </div>
+      </button>
     </div>
   </div>
 </div>

@@ -42,6 +42,11 @@ window.hideHomeTip=hideHomeTip;
 window.abrirDrawer=abrirDrawer;
 window.setValFiltroEstado=setValFiltroEstado;
 window.setValFiltroCategoria=setValFiltroCategoria;
+window.toggleValFiltros=toggleValFiltros;
+window.limpiarValFiltros=limpiarValFiltros;
+window.postGastoDetalle=postGastoDetalle;
+window.postGastoDividir=postGastoDividir;
+window.postGastoNuevo=postGastoNuevo;
 window.abrirVistaDividir=abrirVistaDividir;
 window.cerrarVistaDividir=cerrarVistaDividir;
 window.divAddPart=divAddPart;
@@ -97,6 +102,9 @@ let homeSubcatActiva=null;
 let valMes=3,valAnio=2026;
 let valFiltroEstado='todos';
 let valFiltroCategoria='todos';
+let valFiltrosPanelAbierto=false;
+
+let ultimoGastoGuardado=null;
 
 let divParts=[];
 let divEditIdx=null;
@@ -119,6 +127,15 @@ function mostrarLoading(msg){
   const er=document.getElementById('error-overlay');if(er)er.style.display='none';
 }
 function ocultarLoading(){const el=document.getElementById('loading-overlay');if(el)el.style.display='none';}
+
+function bloquearNavbar(){
+  const nav=document.querySelector('.navbar');
+  if(nav) nav.classList.add('navbar-disabled');
+}
+function desbloquearNavbar(){
+  const nav=document.querySelector('.navbar');
+  if(nav) nav.classList.remove('navbar-disabled');
+}
 function mostrarError(msg){
   const er=document.getElementById('error-overlay');
   if(er){er.style.display='flex';document.getElementById('error-text').textContent=msg;}
@@ -173,7 +190,9 @@ function buildPptoForMonth(mes,anio){
 
 // ── CARGA DE DATOS ───────────────────────────────────────────
 async function cargarDatos(){
-  mostrarLoading('Cargando datos...');
+  const screenActual=document.querySelector('.screen.active')?.id;
+  if(screenActual!=='screen-home') mostrarLoading('Cargando datos...');
+  bloquearNavbar();
   try{
     const[paramRes,gastosRes,pptoRes]=await Promise.all([
       fetch('/api/parametros'),fetch('/api/gastos'),fetch('/api/presupuesto')
@@ -208,9 +227,11 @@ async function cargarDatos(){
     });
 
     dashData=computarDashData();
+    desbloquearNavbar();
     ocultarLoading();
     renderHome();
   }catch(e){
+    desbloquearNavbar();
     mostrarError('No se pudo conectar con Google Sheets.\n'+e.message);
   }
 }
@@ -272,9 +293,20 @@ function switchScreen(screen){
 }
 
 function abrirNuevoGasto(){
-  modoEdicion=false;gastoEditandoRowIndex=null;
+  modoEdicion=false; gastoEditandoRowIndex=null;
   document.querySelector('#ov-nuevo .sheet-title').textContent='Nuevo gasto';
   document.getElementById('btn-guardar').textContent='Guardar gasto';
+  document.getElementById('f-fecha').valueAsDate=new Date();
+  document.getElementById('f-subcat').value='';
+  document.getElementById('f-desc').value='';
+  document.getElementById('f-monto').value='';
+  document.getElementById('f-cat-badge').style.display='none';
+  document.getElementById('dev-toggle').classList.remove('active');
+  document.getElementById('dev-hint').textContent='marcar con X';
+  document.getElementById('f-suggestions').style.display='none';
+  document.querySelectorAll('.banco-btn').forEach(b=>b.classList.remove('active'));
+  const tcBtn=document.querySelector('.banco-btn[data-banco="Tarjeta Crédito"]');
+  if(tcBtn) tcBtn.classList.add('active');
   document.getElementById('ov-nuevo').classList.add('open');
 }
 
@@ -921,7 +953,6 @@ function renderPresupuesto(){
         ${sortedSubs.map(sc=>{const p=pptoData[sc.sub.trim()]||{monto:0,fijo:false};return `
           <div class="ppto-subcat-item">
             <div class="ppto-subcat-info"><div class="ppto-subcat-nombre">${sc.sub.includes(' - ')?sc.sub.split(' - ').slice(1).join(' - '):sc.sub}</div></div>
-            <span class="ppto-tipo-badge ${p.fijo?'fijo':'variable'}" onclick="toggleFijo('${sc.sub}')">${p.fijo?'Fijo':'Variable'}</span>
             <div class="ppto-monto-wrap"><span class="ppto-monto-prefix">$</span>
               <input class="ppto-monto-input" type="number" value="${p.monto}" min="0" onchange="actualizarPpto('${sc.sub}',this.value,this)" ${p.fijo?'style="background:#f0f4ff;"':''} />
             </div>
@@ -1439,22 +1470,25 @@ document.getElementById('btn-guardar').addEventListener('click',async()=>{
       modoEdicion=false;gastoEditandoRowIndex=null;
       document.querySelector('#ov-nuevo .sheet-title').textContent='Nuevo gasto';
       mostrarToast('Gasto actualizado \u2713');
+      cerrar('ov-nuevo');
+      await cargarDatos();
+      const sAct=document.querySelector('.screen.active')?.id;
+      if(sAct==='screen-detalle') renderDetalle();
+      if(sAct==='screen-dashboard') renderDashboard();
     }else{
       const res=await fetch('/api/gastos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({row})});
       if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'Error '+res.status);}
-      mostrarToast('Gasto guardado \u2713');
+      ultimoGastoGuardado={desc,monto,sub};
+      cerrar('ov-nuevo');
+      const descCorta=desc.length>40?desc.slice(0,40)+'...':desc;
+      document.getElementById('post-gasto-desc').textContent=`"${descCorta}" \u2014 ${fmt(monto)}`;
+      document.getElementById('ov-post-gasto').classList.add('open');
+      await cargarDatos();
+      const screenActiva=document.querySelector('.screen.active')?.id;
+      if(screenActiva==='screen-detalle') renderDetalle();
+      if(screenActiva==='screen-dashboard') renderDashboard();
+      return;
     }
-    cerrar('ov-nuevo');
-    document.getElementById('f-fecha').valueAsDate=new Date();
-    document.getElementById('f-subcat').value='';
-    document.getElementById('f-desc').value='';
-    document.getElementById('f-monto').value='';
-    document.querySelectorAll('.banco-btn').forEach(b=>b.classList.remove('active'));
-    document.getElementById('dev-toggle').classList.remove('active');
-    document.getElementById('dev-hint').textContent='marcar con X';
-    document.getElementById('f-cat-badge').style.display='none';
-    await cargarDatos();
-    renderDetalle();
   }catch(e){
     mostrarToast('Error al guardar: '+e.message);
   }finally{
@@ -1532,7 +1566,7 @@ function renderHome(){
   const sant=allGastos.filter(g=>g.banco==='Santander').reduce((s,g)=>s+g.montoValido,0);
   const santEl=document.getElementById('kpi-sant');
   if(santEl){
-    santEl.querySelector('.kpi-valor').textContent=fmt(sant);
+    santEl.querySelector('.kpi-valor').innerHTML=fmt(sant);
   }
   // Parte 1: montoValido donde sub = "Banco - Ingreso a Falabella desde Ahorros"
   const fala1 = allGastos
@@ -1552,7 +1586,7 @@ function renderHome(){
   const fala = fala1 + fala2 + fala3;
   const falaEl=document.getElementById('kpi-fala');
   if(falaEl){
-    falaEl.querySelector('.kpi-valor').textContent=fmt(fala);
+    falaEl.querySelector('.kpi-valor').innerHTML=fmt(fala);
   }
 
   // ── KPI ÚLTIMO MES ACTIVO FALABELLA ──────────────
@@ -1573,9 +1607,9 @@ function renderHome(){
   }
   const falaMesEl=document.getElementById('kpi-fala-mes');
   const falaCompEl=document.getElementById('kpi-fala-compras');
-  if(falaMesEl) falaMesEl.textContent=ultimoMesFala;
+  if(falaMesEl) falaMesEl.innerHTML=ultimoMesFala;
   if(falaCompEl){
-    falaCompEl.textContent=numComprasFala;
+    falaCompEl.innerHTML=numComprasFala;
     const bgColor=numComprasFala>=8?'#e8f5e9':numComprasFala>=4?'#fff8e1':'#fce4ec';
     const textColor=numComprasFala>=8?'#2e7d32':numComprasFala>=4?'#f57f17':'#c62828';
     const falaBox=falaCompEl.closest('.falabella-compras');
@@ -1589,7 +1623,7 @@ function renderHome(){
   const tc=allGastos.filter(g=>g.banco==='Tarjeta Crédito').reduce((s,g)=>s+g.montoValido,0);
   const tcEl=document.getElementById('kpi-tc');
   if(tcEl){
-    tcEl.textContent=(tc>=0?'':'-')+fmt(Math.abs(tc));
+    tcEl.innerHTML=(tc>=0?'':'-')+fmt(Math.abs(tc));
     tcEl.style.color=tc>=0?'#2e7d32':'#c62828';
   }
 
@@ -1627,7 +1661,7 @@ function renderHome(){
     const diffOk=diff<=0;
     const barPct=prom>0?Math.min((actual/prom)*100,100):0;
     const barColor=diffOk?'#2e7d32':'#e53935';
-    el.querySelector('.cat-kpi-monto').textContent=fmt(actual);
+    el.querySelector('.cat-kpi-monto').innerHTML=fmt(actual);
     el.querySelector('.cat-kpi-comparacion').innerHTML=
       `<span class="cat-kpi-prom">prom ${fmt(prom)}</span>`+
       (prom>0?`<span class="cat-kpi-diff ${diffOk?'diff-ok':'diff-over'}">${diff>0?'+':''}${diff}%</span>`:'');
@@ -1860,6 +1894,52 @@ function calcAporteSaldo(s){
 function setValFiltroEstado(val){valFiltroEstado=val;renderValidacion();}
 function setValFiltroCategoria(val){valFiltroCategoria=val;renderValidacion();}
 
+function toggleValFiltros(){
+  valFiltrosPanelAbierto=!valFiltrosPanelAbierto;
+  const panel=document.getElementById('val-filtros-panel');
+  const chev=document.getElementById('val-filtros-chevron');
+  if(panel) panel.style.display=valFiltrosPanelAbierto?'block':'none';
+  if(chev) chev.style.transform=valFiltrosPanelAbierto?'rotate(180deg)':'rotate(0deg)';
+}
+
+function limpiarValFiltros(){
+  valFiltroEstado='todos';
+  valFiltroCategoria='todos';
+  renderValidacion();
+}
+
+function postGastoDetalle(){
+  cerrar('ov-post-gasto');
+  switchScreen('detalle');
+}
+
+function postGastoDividir(){
+  cerrar('ov-post-gasto');
+  if(!ultimoGastoGuardado) return;
+  let gastoEncontrado=null;
+  for(const gastos of Object.values(detalleData)){
+    const g=gastos.find(x=>
+      x.desc===ultimoGastoGuardado.desc &&
+      x.monto===ultimoGastoGuardado.monto &&
+      x.sub===ultimoGastoGuardado.sub
+    );
+    if(g){gastoEncontrado=g;break;}
+  }
+  if(!gastoEncontrado){mostrarToast('No se encontró el gasto para dividir');return;}
+  gastoActual=gastoEncontrado;
+  document.getElementById('g-desc').textContent=gastoActual.desc;
+  document.getElementById('g-monto').textContent=(gastoActual.ie==='E'?'- ':'+ ')+fmt(gastoActual.monto);
+  document.getElementById('ov-gasto-vista-a').style.display='none';
+  document.getElementById('ov-gasto-vista-b').style.display='block';
+  abrirVistaDividir();
+  document.getElementById('ov-gasto').classList.add('open');
+}
+
+function postGastoNuevo(){
+  cerrar('ov-post-gasto');
+  abrirNuevoGasto();
+}
+
 function renderValidacion(){
   document.getElementById('val-mes').textContent=`${meses[valMes]} ${valAnio}`;
   const key=`${String(valMes+1).padStart(2,'0')}-${valAnio}`;
@@ -1993,21 +2073,46 @@ function renderValidacion(){
     <div class="val-legend-item"><div class="val-legend-dot" style="background:#f5f5f5;border:1.5px solid #e0e0e0;"></div>Pendiente</div>
   </div>`;
 
-  const estadoOptions=[{val:'todos',label:'Todos'},{val:'pagado',label:'Pagados'},{val:'pendiente',label:'Pendientes'}];
-  html+=`<div class="val-filter-row" style="padding-bottom:2px;">`;
-  estadoOptions.forEach(o=>{
-    html+=`<button class="val-chip ${valFiltroEstado===o.val?'active':''}" onclick="setValFiltroEstado('${o.val}')">${o.label}</button>`;
-  });
-  html+=`</div>`;
-  html+=`<div style="padding:2px 12px 8px;">
-    <div style="font-size:10px;color:#888;font-weight:500;letter-spacing:0.06em;margin-bottom:6px;">CATEGORÍA</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;">`;
-  html+=`<button class="val-chip ${valFiltroCategoria==='todos'?'active':''}" onclick="setValFiltroCategoria('todos')">Todas las cats.</button>`;
-  cats.forEach(c=>{
-    const cs=c.replace(/'/g,"\\'");
-    html+=`<button class="val-chip ${valFiltroCategoria===c?'active':''}" onclick="setValFiltroCategoria('${cs}')">${c}</button>`;
-  });
-  html+=`</div></div>`;
+  html += `
+<div style="margin:0 12px 8px;">
+  <button onclick="toggleValFiltros()" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f5f5f5;border:0.5px solid #e0e0e0;border-radius:10px;font-family:inherit;cursor:pointer;font-size:13px;color:#555;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:14px;">⚙</span>
+      <span style="font-weight:500;">Filtros</span>
+      ${(valFiltroEstado !== 'todos' || valFiltroCategoria !== 'todos')
+        ? `<span style="background:#1a73e8;color:#fff;font-size:10px;padding:1px 7px;border-radius:10px;font-weight:500;">activos</span>`
+        : ''}
+    </div>
+    <span id="val-filtros-chevron" style="font-size:11px;color:#bbb;transition:transform 0.2s;display:inline-block;transform:${valFiltrosPanelAbierto ? 'rotate(180deg)' : 'rotate(0deg)'};">▼</span>
+  </button>
+
+  <div id="val-filtros-panel" style="display:${valFiltrosPanelAbierto ? 'block' : 'none'};border:0.5px solid #e0e0e0;border-top:none;border-radius:0 0 10px 10px;padding:12px 12px 10px;background:#fff;margin-top:-1px;">
+
+    <div style="margin-bottom:10px;">
+      <div style="font-size:10px;color:#888;font-weight:500;letter-spacing:0.06em;margin-bottom:6px;">ESTADO</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${[{val:'todos',label:'Todos'},{val:'pagado',label:'Pagados'},{val:'pendiente',label:'Pendientes'}].map(o =>
+          `<button class="val-chip ${valFiltroEstado===o.val?'active':''}" onclick="setValFiltroEstado('${o.val}')">${o.label}</button>`
+        ).join('')}
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:10px;color:#888;font-weight:500;letter-spacing:0.06em;margin-bottom:6px;">CATEGORÍA</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <button class="val-chip ${valFiltroCategoria==='todos'?'active':''}" onclick="setValFiltroCategoria('todos')">Todas las cats.</button>
+        ${cats.map(c => {
+          const cs = c.replace(/'/g, "\\'");
+          return `<button class="val-chip ${valFiltroCategoria===c?'active':''}" onclick="setValFiltroCategoria('${cs}')">${c}</button>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <button onclick="limpiarValFiltros()" style="margin-top:10px;padding:6px 14px;background:#f5f5f5;color:#666;border:0.5px solid #e0e0e0;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;">
+      Limpiar filtros
+    </button>
+  </div>
+</div>`;
 
   Object.entries(gruposFiltrados).forEach(([cat,items])=>{
     const realGrupo=items.reduce((s,i)=>s+i.pagado,0);
@@ -2480,7 +2585,7 @@ function renderCuotasHomeChart(){
 
   const mesesLabels=[];
   const mesesDates=[];
-  for(let i=0;i<=maxMeses;i++){
+  for(let i=1;i<=maxMeses;i++){
     const d=new Date(anioHoy,mesHoy+i,1);
     mesesLabels.push(mesesC[d.getMonth()]+' '+d.getFullYear());
     mesesDates.push({mes:d.getMonth(),anio:d.getFullYear()});
