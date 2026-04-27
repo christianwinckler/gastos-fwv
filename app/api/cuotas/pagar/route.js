@@ -16,16 +16,16 @@ export async function POST(request) {
 
     const row = [
       dateSerial,
-      `=IF(A${N}<>"",(CONCATENATE(IF(MONTH(A${N})<10,CONCATENATE("0",MONTH(A${N})),MONTH(A${N})),"-",YEAR(A${N}))),"")`,
+      `=IF(A${N}<>"",(CONCATENATE(IF(MONTH(A${N})<10;CONCATENATE("0";MONTH(A${N}));MONTH(A${N}));"-";YEAR(A${N})));"")`,
       'TC - Pagos en Cuotas',
-      `=IFERROR(VLOOKUP(C${N},'Parámetros'!A:B,2,FALSE),"")`,
-      `=IF(G${N}<>"X",IFERROR(VLOOKUP(C${N},'Parámetros'!A:C,3,FALSE),""),IF(IFERROR(VLOOKUP(C${N},'Parámetros'!A:C,3,FALSE),"")="E","I","E"))`,
+      `=IFERROR(VLOOKUP(C${N};'Parámetros'!A:B;2;FALSE);"")`,
+      `=IF(G${N}<>"X";IFERROR(VLOOKUP(C${N};'Parámetros'!A:C;3;FALSE);"");IF(IFERROR(VLOOKUP(C${N};'Parámetros'!A:C;3;FALSE);"")="E";"I";"E"))`,
       'Tarjeta Crédito',
       '',
       descripcion,
       valorCuota,
-      `=IF(I${N}<>"",IF(E${N}="I",IF(I${N}>0,I${N},I${N}*-1),IF(E${N}="E",IF(I${N}<0,I${N},I${N}*-1))),0)`,
-      `=SUMIFS(Presupuesto!D:D,Presupuesto!A:A,B${N},Presupuesto!B:B,C${N})`,
+      `=IF(I${N}<>"";IF(E${N}="I";IF(I${N}>0;I${N};I${N}*-1);IF(E${N}="E";IF(I${N}<0;I${N};I${N}*-1)));0)`,
+      `=SUMIFS(Presupuesto!D:D;Presupuesto!A:A;B${N};Presupuesto!B:B;C${N})`,
     ]
 
     await addGasto(row)

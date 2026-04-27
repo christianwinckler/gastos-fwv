@@ -79,7 +79,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 }
 .drawer-link:hover { background: #f5f5f5; }
 .drawer-link.active { background: #e8f0fe; color: #1a73e8; font-weight: 500; }
-.drawer-link-icon { font-size: 20px; width: 24px; text-align: center; }
 .drawer-divider { height: 0.5px; background: #e0e0e0; margin: 8px 0; }
 .drawer-section-label { font-size: 10px; font-weight: 500; color: #888; letter-spacing: 0.06em; padding: 10px 20px 4px; }
 .drawer-item-indent { padding-left: 40px; }
@@ -711,6 +710,73 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cuotas-tarjeta-icon { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
 .cuotas-tarjeta-icon.gold { background:#fff8e1; color:#f57f17; }
 .cuotas-tarjeta-icon.visa { background:#e8f0fe; color:#1a73e8; }
+.cuad-check-btn {
+  position: absolute; top: 10px; right: 10px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #e8f5e9; border: 0.5px solid #a5d6a7;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+.cuad-check-btn svg { width: 13px; height: 13px; }
+.cuad-result-ok {
+  background: #e8f5e9; border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 14px;
+}
+.cuad-result-ok-title { font-size: 14px; font-weight: 500; color: #2e7d32; margin-bottom: 3px; }
+.cuad-result-ok-sub { font-size: 12px; color: #388e3c; }
+.cuad-result-diff {
+  background: #fff8e1; border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 14px;
+}
+.cuad-result-diff-title { font-size: 14px; font-weight: 500; color: #f57f17; margin-bottom: 3px; }
+.cuad-result-diff-sub { font-size: 12px; color: #f57f17; }
+.cuad-diff-row {
+  display: flex; justify-content: space-between;
+  padding: 4px 0; font-size: 13px;
+}
+.cuad-diff-key { color: #888; }
+.cuad-diff-val { font-weight: 500; color: #111; }
+.cuad-diff-line { height: 0.5px; background: #e0e0e0; margin: 6px 0; }
+.cuad-option-btn {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px; border: 0.5px solid #e0e0e0; border-radius: 10px;
+  background: #fff; cursor: pointer; margin-bottom: 8px;
+  font-family: inherit; text-align: left;
+}
+.cuad-option-icon {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.cuad-option-title { font-size: 13px; font-weight: 500; color: #111; }
+.cuad-option-sub { font-size: 11px; color: #999; margin-top: 1px; }
+.cuad-preview-card {
+  background: #f5f5f5; border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 14px;
+}
+.hcuad-kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 12px 8px; }
+.hcuad-kpi { background:#f5f5f5; border-radius:10px; padding:11px 12px; }
+.hcuad-kpi-label { font-size:10px; color:#888; font-weight:500; letter-spacing:.04em; margin-bottom:3px; }
+.hcuad-kpi-valor { font-size:18px; font-weight:500; color:#111; }
+.hcuad-kpi-sub { font-size:11px; color:#999; margin-top:2px; }
+.hcuad-filtro-btn { width:100%; display:flex; align-items:center; justify-content:space-between; padding:10px 13px; background:#fff; border:0.5px solid #e0e0e0; border-radius:10px; font-family:inherit; cursor:pointer; font-size:13px; color:#555; margin:0 12px 4px; width:calc(100% - 24px); }
+.hcuad-filtro-panel { background:#fff; border:0.5px solid #e0e0e0; border-top:none; border-radius:0 0 10px 10px; padding:12px; margin:0 12px 10px; }
+.hcuad-chip { padding:5px 11px; border-radius:14px; font-size:12px; border:0.5px solid #e0e0e0; background:#fff; color:#555; cursor:pointer; font-family:inherit; }
+.hcuad-chip.active { border-color:#1a73e8; background:#e8f0fe; color:#1a73e8; font-weight:500; }
+.hcuad-card { background:#fff; border-radius:12px; padding:13px 13px 11px; border:0.5px solid #e8e8e8; margin:0 12px 7px; }
+.hcuad-card-head { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:8px; }
+.hcuad-fecha { font-size:12px; color:#999; }
+.hcuad-banco { font-size:14px; font-weight:500; color:#111; margin-top:2px; }
+.hcuad-usuario { font-size:11px; color:#888; margin-top:1px; }
+.hcuad-badge { display:inline-block; padding:3px 8px; border-radius:8px; font-size:11px; font-weight:500; }
+.hcuad-badge-ok { background:#e8f5e9; color:#2e7d32; }
+.hcuad-badge-dif { background:#fff8e1; color:#f57f17; }
+.hcuad-badge-aj { background:#fce4ec; color:#c62828; }
+.hcuad-montos { display:flex; gap:7px; flex-wrap:wrap; margin-top:8px; }
+.hcuad-monto-item { flex:1; min-width:80px; background:#f5f5f5; border-radius:7px; padding:7px 9px; }
+.hcuad-monto-label { font-size:10px; color:#888; font-weight:500; letter-spacing:.03em; margin-bottom:2px; }
+.hcuad-monto-val { font-size:13px; font-weight:500; color:#111; }
+.hcuad-nota { font-size:11px; color:#bbb; margin-top:8px; padding-top:8px; border-top:0.5px solid #f0f0f0; }
+body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
 
   `
 
@@ -720,11 +786,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <!-- NAVBAR -->
   <nav class="navbar">
     <div style="display:flex;align-items:center;gap:10px;">
-      <button class="btn-hamburger" id="btn-hamburger" onclick="abrirDrawer()">
-        <div class="ham-line"></div>
-        <div class="ham-line"></div>
-        <div class="ham-line"></div>
-      </button>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button class="btn-hamburger" id="btn-hamburger" onclick="abrirDrawer()">
+          <div class="ham-line"></div>
+          <div class="ham-line"></div>
+          <div class="ham-line"></div>
+        </button>
+        <button onclick="switchScreen('home')" style="width:32px;height:32px;border-radius:8px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;" title="Home">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 9.5L10 3l7 6.5" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 8.5V16a1 1 0 001 1h3v-4h2v4h3a1 1 0 001-1V8.5" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
       <span class="navbar-brand" id="navbar-title"><span class="brand-prefix">Gastos FWV</span> - Resumen</span>
     </div>
     <button id="btn-add-nav" onclick="abrirNuevoGasto()" style="width:32px;height:32px;background:#111;color:#fff;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;font-family:inherit;">+</button>
@@ -744,29 +818,32 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </div>
     <div class="drawer-links">
       <button class="drawer-link drawer-item-indent active" data-screen="home" onclick="switchScreen('home');cerrarDrawer()">
-        <span class="drawer-link-icon">🏠</span> Home
+        Home
       </button>
       <div class="drawer-divider"></div>
       <div class="drawer-section-label">GASTOS</div>
       <button class="drawer-link drawer-item-indent" data-screen="dashboard" onclick="switchScreen('dashboard');cerrarDrawer()">
-        <span class="drawer-link-icon">📊</span> Resumen
+        Resumen
       </button>
       <button class="drawer-link drawer-item-indent" data-screen="detalle" onclick="switchScreen('detalle');cerrarDrawer()">
-        <span class="drawer-link-icon">📋</span> Detalle
-      </button>
-      <button class="drawer-link drawer-item-indent" data-screen="presupuesto" onclick="switchScreen('presupuesto');cerrarDrawer()">
-        <span class="drawer-link-icon">💰</span> Presupuestos
+        Detalle
       </button>
       <button class="drawer-link drawer-item-indent" data-screen="validacion" onclick="switchScreen('validacion');cerrarDrawer()">
-        <span class="drawer-link-icon">✅</span> Validación Pagos
+        Validación Pagos
       </button>
       <button class="drawer-link drawer-item-indent" data-screen="cuotas" onclick="switchScreen('cuotas');cerrarDrawer()">
-        <span class="drawer-link-icon">💳</span> Cuotas TC
+        Pagos en Cuotas con Tarjeta de Crédito
       </button>
       <div class="drawer-divider"></div>
       <div class="drawer-section-label">ADMINISTRADOR</div>
       <button class="drawer-link drawer-item-indent" data-screen="admin" onclick="switchScreen('admin');cerrarDrawer()">
-        <span class="drawer-link-icon">🗂</span> Categorías
+        Categorías
+      </button>
+      <button class="drawer-link drawer-item-indent" data-screen="presupuesto" onclick="switchScreen('presupuesto');cerrarDrawer()">
+        Presupuestos
+      </button>
+      <button class="drawer-link drawer-item-indent" data-screen="historial-cuad" onclick="switchScreen('historial-cuad');cerrarDrawer()">
+        Historial Cuadraturas
       </button>
     </div>
     <div style="padding:8px 16px 16px;">
@@ -917,19 +994,58 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <div style="padding:0 12px 80px;" id="cuotas-lista"></div>
     </div>
 
+    <!-- HISTORIAL CUADRATURAS -->
+    <div class="screen" id="screen-historial-cuad">
+      <div style="padding:14px 12px 8px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;" id="hcuad-kpis"></div>
+      </div>
+      <div style="padding:0 12px 6px;">
+        <button onclick="toggleHcuadFiltros()" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:#fff;border:0.5px solid #e0e0e0;border-radius:10px;font-family:inherit;cursor:pointer;font-size:13px;color:#555;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 3h12M3 7h8M5 11h4" stroke="#555" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Filtros
+            <span id="hcuad-filtro-badge" style="display:none;background:#e8f0fe;color:#1a73e8;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:500;"></span>
+          </div>
+          <span id="hcuad-filtro-chev" style="font-size:11px;color:#bbb;transition:transform 0.2s;">▼</span>
+        </button>
+        <div id="hcuad-filtro-panel" style="display:none;background:#fff;border:0.5px solid #e0e0e0;border-top:none;border-radius:0 0 10px 10px;padding:12px;">
+          <div style="font-size:10px;color:#888;font-weight:500;letter-spacing:.05em;margin-bottom:6px;">ESTADO</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;" id="hcuad-chips-estado"></div>
+          <div style="font-size:10px;color:#888;font-weight:500;letter-spacing:.05em;margin-bottom:6px;">BANCO</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;" id="hcuad-chips-banco"></div>
+          <div style="font-size:10px;color:#888;font-weight:500;letter-spacing:.05em;margin-bottom:6px;">USUARIO</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;" id="hcuad-chips-usuario"></div>
+          <button onclick="limpiarHcuadFiltros()" style="padding:6px 14px;background:#f5f5f5;color:#666;border:0.5px solid #e0e0e0;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;">Limpiar filtros</button>
+        </div>
+      </div>
+      <div id="hcuad-lista" style="padding:4px 0 80px;"></div>
+    </div>
+
     <!-- HOME -->
     <div class="screen active" id="screen-home">
       <div class="section-label">CUENTAS CORRIENTES</div>
       <div class="kpi-grid-2" style="padding-bottom:0;">
-        <div class="kpi-card" id="kpi-sant">
+        <div class="kpi-card" id="kpi-sant" style="position:relative;">
           <div class="kpi-label">SANTANDER</div>
           <div class="kpi-valor" id="kpi-sant-val"><span class="skeleton skeleton-valor"></span></div>
           <div class="kpi-badge badge-s">Cuenta corriente</div>
+          <button class="cuad-check-btn" onclick="abrirCuadratura('Santander')" title="Cuadrar saldo">
+            <svg viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" fill="#e8f5e9" stroke="#a5d6a7" stroke-width="1"/>
+              <path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="#2e7d32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
         </div>
-        <div class="kpi-card" id="kpi-fala">
+        <div class="kpi-card" id="kpi-fala" style="position:relative;">
           <div class="kpi-label">FALABELLA</div>
           <div class="kpi-valor" id="kpi-fala-val"><span class="skeleton skeleton-valor"></span></div>
           <div class="kpi-badge badge-f">Cuenta corriente</div>
+          <button class="cuad-check-btn" onclick="abrirCuadratura('Falabella')" title="Cuadrar saldo">
+            <svg viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" fill="#e8f5e9" stroke="#a5d6a7" stroke-width="1"/>
+              <path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="#2e7d32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
         </div>
       </div>
       <div style="height:8px;"></div>
@@ -950,9 +1066,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <div style="flex:1;">
           <div class="kpi-label">TARJETA DE CRÉDITO</div>
           <div class="kpi-valor" id="kpi-tc"><span class="skeleton skeleton-valor"></span></div>
-          <div class="kpi-sub">Saldo neto acumulado</div>
+          <div class="kpi-sub">Saldo disponible real</div>
         </div>
-        <div class="kpi-badge badge-tc">TC</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <div class="kpi-badge badge-tc">TC</div>
+          <button class="cuad-check-btn" style="position:relative;top:auto;right:auto;" onclick="abrirCuadratura('Tarjeta Crédito')" title="Cuadrar saldo">
+            <svg viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" fill="#e8f5e9" stroke="#a5d6a7" stroke-width="1"/>
+              <path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="#2e7d32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div class="section-label-row" style="padding-top:20px;">
@@ -1476,6 +1600,56 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         </div>
       </button>
     </div>
+  </div>
+</div>
+
+<!-- CUADRATURA: ingresar saldo -->
+<div class="alcance-overlay" id="ov-cuadratura">
+  <div class="alcance-card" style="max-width:360px;width:100%;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div class="alcance-titulo" style="margin:0;" id="cuad-titulo">Cuadrar saldo</div>
+      <button style="width:28px;height:28px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;font-size:14px;color:#666;" onclick="cerrar('ov-cuadratura')">✕</button>
+    </div>
+    <div style="font-size:13px;color:#888;margin-bottom:16px;" id="cuad-sub">Ingresa el saldo que figura en tu app del banco</div>
+
+    <div style="background:#f5f5f5;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <span style="font-size:12px;color:#888;">Saldo en la app</span>
+      <span style="font-size:14px;font-weight:500;color:#111;" id="cuad-monto-app">—</span>
+    </div>
+
+    <div style="font-size:11px;color:#888;font-weight:500;letter-spacing:0.04em;margin-bottom:5px;">SALDO REAL EN EL BANCO</div>
+    <div class="monto-wrap" style="margin-bottom:16px;">
+      <span class="monto-prefix">$</span>
+      <input type="number" id="cuad-monto-banco" placeholder="0" min="0" style="width:100%;padding:10px 12px 10px 28px;border:0.5px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;" />
+    </div>
+
+    <button style="width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;margin-bottom:8px;" onclick="ejecutarComparacion()">Comparar saldos</button>
+    <button style="width:100%;padding:12px;background:#f5f5f5;color:#666;border:none;border-radius:10px;font-size:14px;cursor:pointer;font-family:inherit;" onclick="cerrar('ov-cuadratura')">Cancelar</button>
+  </div>
+</div>
+
+<!-- CUADRATURA: resultado -->
+<div class="alcance-overlay" id="ov-cuadratura-resultado">
+  <div class="alcance-card" style="max-width:360px;width:100%;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div class="alcance-titulo" style="margin:0;">Resultado cuadratura</div>
+      <button style="width:28px;height:28px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;font-size:14px;color:#666;" onclick="cerrarResultadoCuadratura()">✕</button>
+    </div>
+    <div id="cuad-resultado-content"></div>
+  </div>
+</div>
+
+<!-- CUADRATURA: confirmar ajuste -->
+<div class="alcance-overlay" id="ov-cuadratura-ajuste">
+  <div class="alcance-card" style="max-width:360px;width:100%;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div class="alcance-titulo" style="margin:0;">Confirmar ajuste</div>
+      <button style="width:28px;height:28px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;font-size:14px;color:#666;" onclick="cerrar('ov-cuadratura-ajuste')">✕</button>
+    </div>
+    <div style="font-size:13px;color:#888;margin-bottom:14px;">Se creará el siguiente registro en Detalle</div>
+    <div class="cuad-preview-card" id="cuad-ajuste-preview"></div>
+    <button style="width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;margin-bottom:8px;" onclick="confirmarAjusteCuadratura()">Confirmar ajuste</button>
+    <button style="width:100%;padding:12px;background:#f5f5f5;color:#666;border:none;border-radius:10px;font-size:14px;cursor:pointer;font-family:inherit;" onclick="cerrar('ov-cuadratura-ajuste')">Volver</button>
   </div>
 </div>
 

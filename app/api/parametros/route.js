@@ -1,13 +1,17 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../auth/[...nextauth]/route'
-import { getParametros, updateParametros, renameSubcatEnDetalle, moverGastosSubcat } from '@/lib/sheetsService'
+import { getParametros, updateParametros, renameSubcatEnDetalle,
+  moverGastosSubcat, getMontoInicialTC } from '@/lib/sheetsService'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session) return Response.json({ error: 'No autorizado' }, { status: 401 })
   try {
-    const data = await getParametros()
-    return Response.json(data)
+    const [data, montoInicialTC] = await Promise.all([
+      getParametros(),
+      getMontoInicialTC(),
+    ])
+    return Response.json({ rows: data, montoInicialTC })
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 })
   }

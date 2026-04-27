@@ -65,6 +65,18 @@ window.actualizarPreviewCuota=actualizarPreviewCuota;
 window.selCuotaTarjeta=selCuotaTarjeta;
 window.abrirPagarCuota=abrirPagarCuota;
 window.confirmarPagarCuota=confirmarPagarCuota;
+window.bloquearScrollFondo=bloquearScrollFondo;
+window.desbloquearScrollFondo=desbloquearScrollFondo;
+window.toggleHcuadFiltros=toggleHcuadFiltros;
+window.limpiarHcuadFiltros=limpiarHcuadFiltros;
+window.setHcuadFiltro=setHcuadFiltro;
+window.abrirCuadratura=abrirCuadratura;
+window.ejecutarComparacion=ejecutarComparacion;
+window.cuadSeguirRevisando=cuadSeguirRevisando;
+window.cuadAbrirAjuste=cuadAbrirAjuste;
+window.confirmarAjusteCuadratura=confirmarAjusteCuadratura;
+window.cerrarResultadoCuadratura=cerrarResultadoCuadratura;
+window.registrarCuadratura=registrarCuadratura;
 
 const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const mesesC=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -72,6 +84,7 @@ const catColores={'Hogar':'#1a73e8','Supermercado':'#2e7d32','Auto':'#e65100','B
 const catBgs={'Hogar':'#e8f0fe','Supermercado':'#e8f5e9','Auto':'#fff3e0','Banco':'#fce4ec','Salud':'#f3e5f5','Cuentas':'#e0f7fa','Entretenimiento':'#fff8e1','Mall':'#fbe9e7','Ingresos':'#e8f5e9'};
 
 let subcats=[];
+let montoInicialTC=0;
 
 let pptoData={};
 let presupuestoAllRows=[];
@@ -111,7 +124,13 @@ let divEditIdx=null;
 
 function fmt(n){return '$'+Math.round(Math.abs(n)).toLocaleString('es-CL');}
 function getStatus(p){return p>=100?'over':p>=80?'warning':'ok';}
-function cerrar(id){document.getElementById(id).classList.remove('open');}
+function bloquearScrollFondo(){document.body.classList.add('sheet-open');}
+function desbloquearScrollFondo(){document.body.classList.remove('sheet-open');}
+function cerrar(id){
+  document.getElementById(id).classList.remove('open');
+  const hayAbiertos=document.querySelectorAll('.overlay.open, .alcance-overlay.open').length>0;
+  if(!hayAbiertos)desbloquearScrollFondo();
+}
 
 function mostrarToast(msg){
   const t=document.getElementById('toast');
@@ -200,9 +219,12 @@ async function cargarDatos(){
     if(!paramRes.ok)throw new Error('Error al cargar parámetros ('+paramRes.status+')');
     if(!gastosRes.ok)throw new Error('Error al cargar gastos ('+gastosRes.status+')');
     if(!pptoRes.ok)throw new Error('Error al cargar presupuesto ('+pptoRes.status+')');
-    const paramRows=await paramRes.json();
+    const paramData=await paramRes.json();
     const gastosRows=await gastosRes.json();
     const pptoRows=await pptoRes.json();
+
+    const paramRows=Array.isArray(paramData)?paramData:(paramData.rows||[]);
+    montoInicialTC=Array.isArray(paramData)?0:(paramData.montoInicialTC||0);
 
     subcats=paramRows.slice(1).filter(r=>r&&r[0]).map(r=>({sub:r[0],cat:r[1]||'',ie:r[2]||'E',modo:r[3]||''}));
     presupuestoAllRows=pptoRows.slice(1).filter(r=>r&&r[0]);
@@ -227,6 +249,7 @@ async function cargarDatos(){
     });
 
     dashData=computarDashData();
+    await cargarCuotas();
     desbloquearNavbar();
     ocultarLoading();
     renderHome();
@@ -272,7 +295,7 @@ function cerrarDrawer(){
 }
 
 // ── NAVEGACIÓN ──────────────────────────────────────────
-const screenTitles={home:'Home',dashboard:'Resumen',detalle:'Detalle',presupuesto:'Presupuestos',admin:'Categorías',validacion:'Validación Pagos',cuotas:'Cuotas TC'};
+const screenTitles={home:'Home',dashboard:'Resumen',detalle:'Detalle',presupuesto:'Presupuestos',admin:'Categorías',validacion:'Validación Pagos',cuotas:'Pagos en Cuotas TC','historial-cuad':'Historial Cuadraturas'};
 function switchScreen(screen){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+screen).classList.add('active');
@@ -289,6 +312,7 @@ function switchScreen(screen){
   if(screen==='home') renderHome();
   if(screen==='validacion') renderValidacion();
   if(screen==='cuotas') { cargarCuotas().then(()=>renderCuotas()); }
+  if(screen==='historial-cuad') { cargarHistorialCuad(); }
   window.scrollTo(0,0);
 }
 
@@ -308,6 +332,7 @@ function abrirNuevoGasto(){
   const tcBtn=document.querySelector('.banco-btn[data-banco="Tarjeta Crédito"]');
   if(tcBtn) tcBtn.classList.add('active');
   document.getElementById('ov-nuevo').classList.add('open');
+  bloquearScrollFondo();
 }
 
 // ── DASHBOARD ───────────────────────────────────────────
@@ -368,6 +393,13 @@ function renderDashboard(){
     </div>`;
   }).join('');
 }
+
+document.getElementById('f-desc').addEventListener('focus',function(){
+  setTimeout(()=>{this.scrollIntoView({behavior:'smooth',block:'center'});},400);
+});
+document.getElementById('f-monto').addEventListener('focus',function(){
+  setTimeout(()=>{this.scrollIntoView({behavior:'smooth',block:'center'});},400);
+});
 
 // Dashboard buscar / orden
 document.getElementById('dash-cat-search').addEventListener('input',renderDashboard);
@@ -444,6 +476,7 @@ function abrirCat(i,key){
       <div class="gasto-monto e">- ${fmt(g.monto)}</div>
     </div>`).join('');
   document.getElementById('ov-cat').classList.add('open');
+  bloquearScrollFondo();
 }
 
 function guardarPptoDesdeCat(cat,catIdx,key){
@@ -461,6 +494,7 @@ function guardarPptoDesdeCat(cat,catIdx,key){
   document.getElementById('alcance-sub').textContent=label;
   document.getElementById('alcance-mes-label').textContent=`${meses[dashMes]} ${dashAnio}`;
   document.getElementById('ov-alcance').classList.add('open');
+  bloquearScrollFondo();
 }
 
 document.getElementById('dash-prev').addEventListener('click',()=>{dashMes--;if(dashMes<0){dashMes=11;dashAnio--;}renderDashboard();});
@@ -573,6 +607,7 @@ function abrirGasto(id){
   document.getElementById('ov-gasto-vista-a').style.display='block';
   document.getElementById('ov-gasto-vista-b').style.display='none';
   document.getElementById('ov-gasto').classList.add('open');
+  bloquearScrollFondo();
 }
 function abrirGastoById(id){
   let g=null;
@@ -584,6 +619,7 @@ function abrirGastoById(id){
   document.getElementById('ov-gasto-vista-a').style.display='block';
   document.getElementById('ov-gasto-vista-b').style.display='none';
   document.getElementById('ov-gasto').classList.add('open');
+  bloquearScrollFondo();
 }
 document.getElementById('buscador').addEventListener('input',renderDetalle);
 document.getElementById('det-orden-pill').addEventListener('click',()=>{
@@ -604,6 +640,7 @@ document.getElementById('rango-btn').addEventListener('click',()=>{
   document.getElementById('p-desde-mes').value=rangoDesde.mes;document.getElementById('p-desde-anio').value=rangoDesde.anio;
   document.getElementById('p-hasta-mes').value=rangoHasta.mes;document.getElementById('p-hasta-anio').value=rangoHasta.anio;
   document.getElementById('ov-picker').classList.add('open');
+  bloquearScrollFondo();
 });
 document.getElementById('picker-apply').addEventListener('click',()=>{
   rangoDesde={mes:parseInt(document.getElementById('p-desde-mes').value),anio:parseInt(document.getElementById('p-desde-anio').value)};
@@ -658,6 +695,7 @@ document.querySelector('.btn-editar').addEventListener('click',()=>{
   devToggleEl.classList.toggle('active',gastoActual.dev===true);
   document.getElementById('dev-hint').textContent=gastoActual.dev?'marcado como X':'marcar con X';
   document.getElementById('ov-nuevo').classList.add('open');
+  bloquearScrollFondo();
 });
 
 // ── DIVIDIR GASTO ─────────────────────────────────────────
@@ -723,10 +761,8 @@ function divRender(){
           <input class="dividir-monto-inp" type="number" value="${p.monto||''}"
             placeholder="0" min="0" oninput="divUpdMonto(${i},this.value)" />
         </div>
-        <span class="dividir-pct-pill">${pctP}%</span>
-        ${restoDisponible>0&&p.monto<restoDisponible
-          ?`<button class="dividir-btn-resto" onclick="divUsarResto(${i})">Usar resto</button>`
-          :''}
+        <span class="dividir-pct-pill" id="div-pct-${i}">${pctP}%</span>
+        <button class="dividir-btn-resto" id="div-resto-btn-${i}" onclick="divUsarResto(${i})" style="display:${restoDisponible>0?'inline-block':'none'}">Usar resto</button>
       </div>
     </div>`;
   }).join('');
@@ -756,7 +792,56 @@ function divRender(){
 
 function divUpdMonto(i,val){
   divParts[i].monto=parseInt(val)||0;
-  divRender();
+  divActualizarResumen();
+}
+function divActualizarResumen(){
+  if(!gastoActual)return;
+  const TOTAL=gastoActual.monto;
+  const asignado=divParts.reduce((s,p)=>s+p.monto,0);
+  const resto=TOTAL-asignado;
+  const pct=TOTAL>0?Math.min(Math.round((asignado/TOTAL)*100),100):0;
+
+  const fill=document.getElementById('div-prog-fill');
+  if(fill){fill.style.width=pct+'%';fill.style.background=resto===0?'#2e7d32':resto<0?'#c62828':'#1a73e8';}
+
+  const restoEl=document.getElementById('div-resto-disp');
+  if(restoEl){restoEl.textContent=resto===0?'—':fmt(Math.abs(resto));restoEl.style.color=resto===0?'#bbb':resto<0?'#c62828':'#111';}
+
+  const asigLabel=document.getElementById('div-asig-label');
+  if(asigLabel)asigLabel.textContent=resto<0?'Excede el total':pct+'% distribuido';
+  const asigVal=document.getElementById('div-asig-val');
+  if(asigVal){
+    asigVal.textContent=resto<0?'− '+fmt(Math.abs(resto))+' de más':fmt(asignado)+' asignado';
+    asigVal.style.color=resto===0?'#2e7d32':resto<0?'#c62828':'#888';
+  }
+
+  divParts.forEach((p,i)=>{
+    const pctP=TOTAL>0&&p.monto>0?Math.round((p.monto/TOTAL)*100):0;
+    const pill=document.getElementById('div-pct-'+i);
+    if(pill)pill.textContent=pctP+'%';
+    const restoBtn=document.getElementById('div-resto-btn-'+i);
+    if(restoBtn){
+      const restoDisp=TOTAL-divParts.reduce((s,pp,idx)=>idx===i?s:s+pp.monto,0);
+      restoBtn.style.display=restoDisp>0?'inline-block':'none';
+    }
+  });
+
+  const allSub=divParts.every(p=>p.sub);
+  const badge=document.getElementById('div-status-badge');
+  const btn=document.getElementById('btn-div-guardar');
+  if(resto===0&&allSub){
+    if(badge){badge.textContent='Todo el monto está distribuido, listo para dividir';badge.className='dividir-status-badge dividir-st-ok';}
+    if(btn)btn.className='btn-dividir-guardar habilitado';
+  }else if(resto<0){
+    if(badge){badge.textContent=`⚠ Excede ${fmt(TOTAL)} en ${fmt(Math.abs(resto))} — ajusta los montos`;badge.className='dividir-status-badge dividir-st-over';}
+    if(btn)btn.className='btn-dividir-guardar deshabilitado';
+  }else if(!allSub){
+    if(badge){badge.textContent='Falta seleccionar subcategoría en algunas partes';badge.className='dividir-status-badge dividir-st-under';}
+    if(btn)btn.className='btn-dividir-guardar deshabilitado';
+  }else{
+    if(badge){badge.textContent=fmt(resto)+' sin asignar — ajusta los montos';badge.className='dividir-status-badge dividir-st-under';}
+    if(btn)btn.className='btn-dividir-guardar deshabilitado';
+  }
 }
 function divUsarResto(i){
   if(!gastoActual)return;
@@ -813,6 +898,7 @@ function divOpenSubcat(idx){
   if(searchEl)searchEl.value='';
   document.getElementById('div-subcat-options').innerHTML=divBuildSubcatHtml('');
   document.getElementById('ov-div-subcat').classList.add('open');
+  bloquearScrollFondo();
   setTimeout(()=>searchEl&&searchEl.focus(),200);
 }
 
@@ -876,11 +962,11 @@ async function ejecutarDividir(){
       const descParte=`${descBase} - Gasto Dividido (${i+1}/${n})`;
       const N=totalFilasGastos+2;
 
-      const fB=`=IF(A${N}<>"",(CONCATENATE(IF(MONTH(A${N})<10,CONCATENATE("0",MONTH(A${N})),MONTH(A${N})),"-",YEAR(A${N}))),"")`;
-      const fD=`=IFERROR(VLOOKUP(C${N},'Parámetros'!A:B,2,FALSE),"")`;
-      const fE=`=IF(G${N}<>"X",IFERROR(VLOOKUP(C${N},'Parámetros'!A:C,3,FALSE),""),IF(IFERROR(VLOOKUP(C${N},'Parámetros'!A:C,3,FALSE),"")="E","I","E"))`;
-      const fJ=`=IF(I${N}<>"",IF(E${N}="I",IF(I${N}>0,I${N},I${N}*-1),IF(E${N}="E",IF(I${N}<0,I${N},I${N}*-1))),0)`;
-      const fK=`=SUMIFs(Presupuesto!D:D,Presupuesto!A:A,B${N},Presupuesto!B:B,C${N})`;
+      const fB=`=IF(A${N}<>"";CONCATENATE(IF(MONTH(A${N})<10;CONCATENATE("0";MONTH(A${N}));MONTH(A${N}));"-";YEAR(A${N}));"")`;
+      const fD=`=IFERROR(VLOOKUP(C${N};'Parámetros'!A:B;2;FALSE);"")`;
+      const fE=`=IF(G${N}<>"X";IFERROR(VLOOKUP(C${N};'Parámetros'!A:C;3;FALSE);"");IF(IFERROR(VLOOKUP(C${N};'Parámetros'!A:C;3;FALSE);"")="E";"I";"E"))`;
+      const fJ=`=IF(I${N}<>"";IF(E${N}="I";IF(I${N}>0;I${N};I${N}*-1);IF(E${N}="E";IF(I${N}<0;I${N};I${N}*-1)));0)`;
+      const fK=`=SUMIFS(Presupuesto!D:D;Presupuesto!A:A;B${N};Presupuesto!B:B;C${N})`;
 
       const row=[dateSerial,fB,parte.sub,fD,fE,banco,devStr,descParte,parte.monto,fJ,fK];
       const res=await fetch('/api/gastos',{
@@ -979,6 +1065,7 @@ function actualizarPpto(sub,val,inputEl){
   document.getElementById('alcance-sub').textContent=`"${nombre}" → ${fmt(nuevo)}`;
   document.getElementById('alcance-mes-label').textContent=`${meses[pptoPanelMes]} ${pptoPanelAnio}`;
   document.getElementById('ov-alcance').classList.add('open');
+  bloquearScrollFondo();
 }
 async function aplicarAlcance(soloMes){
   if(presupuestoAllRows.length===0){
@@ -1168,6 +1255,7 @@ function abrirEditSubcat(sub){
   if(sc.ie==='E')ieOpts[0].classList.add('active-e');
   else ieOpts[1].classList.add('active-i');
   document.getElementById('ov-admin-edit').classList.add('open');
+  bloquearScrollFondo();
 }
 
 async function guardarEditSubcat(){
@@ -1245,6 +1333,7 @@ function eliminarSubcatAdmin(sub){
     }).join('');
   adminEditandoSubcat={...adminEditandoSubcat,oldSub:sub,cat:catActual};
   document.getElementById('ov-admin-del').classList.add('open');
+  bloquearScrollFondo();
 }
 
 async function confirmarEliminarSubcat(){
@@ -1287,6 +1376,7 @@ function abrirAgregarSubcat(cat,inputId){
   document.querySelectorAll('#admin-add-ie .admin-ie-opt').forEach(o=>{o.className='admin-ie-opt';});
   document.querySelectorAll('#admin-add-ie .admin-ie-opt')[0].classList.add('active-e');
   document.getElementById('ov-admin-add').classList.add('open');
+  bloquearScrollFondo();
 }
 
 async function guardarNuevaSubcat(){
@@ -1324,6 +1414,7 @@ function abrirRenombrarCat(cat){
   document.getElementById('admin-rename-titulo').textContent='Renombrar: '+cat;
   document.getElementById('admin-rename-input').value=cat;
   document.getElementById('ov-admin-rename').classList.add('open');
+  bloquearScrollFondo();
 }
 
 async function guardarRenombrarCat(){
@@ -1478,16 +1569,18 @@ document.getElementById('btn-guardar').addEventListener('click',async()=>{
     }else{
       const res=await fetch('/api/gastos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({row})});
       if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'Error '+res.status);}
-      ultimoGastoGuardado={desc,monto,sub};
       cerrar('ov-nuevo');
+      ultimoGastoGuardado={desc,monto,sub};
       const descCorta=desc.length>40?desc.slice(0,40)+'...':desc;
       document.getElementById('post-gasto-desc').textContent=`"${descCorta}" \u2014 ${fmt(monto)}`;
       document.getElementById('ov-post-gasto').classList.add('open');
-      await cargarDatos();
-      const screenActiva=document.querySelector('.screen.active')?.id;
-      if(screenActiva==='screen-detalle') renderDetalle();
-      if(screenActiva==='screen-dashboard') renderDashboard();
-      return;
+      bloquearScrollFondo();
+      cargarDatos().then(()=>{
+        const screenActiva=document.querySelector('.screen.active')?.id;
+        if(screenActiva==='screen-detalle') renderDetalle();
+        if(screenActiva==='screen-dashboard') renderDashboard();
+        if(screenActiva==='screen-home') renderHome();
+      }).catch(e=>console.error('Error recargando datos:',e));
     }
   }catch(e){
     mostrarToast('Error al guardar: '+e.message);
@@ -1620,11 +1713,15 @@ function renderHome(){
   }
 
   // ── KPI TARJETA DE CRÉDITO ───────────────────────
-  const tc=allGastos.filter(g=>g.banco==='Tarjeta Crédito').reduce((s,g)=>s+g.montoValido,0);
+  const gastosTC=allGastos.filter(g=>g.banco==='Tarjeta Crédito').reduce((s,g)=>s+g.montoValido,0);
+  const gastosAbsTC=Math.abs(gastosTC);
+  const pagosTC=allGastos.filter(g=>g.sub==='TC - Pago Nueva Tarjeta').reduce((s,g)=>s+g.montoValido,0)*-1;
+  const deudaCuotas=cuotasData.filter(c=>c.cuotasRestantes>0).reduce((s,c)=>s+c.montoPendiente,0);
+  const saldoTC=montoInicialTC-gastosAbsTC+pagosTC-deudaCuotas;
   const tcEl=document.getElementById('kpi-tc');
   if(tcEl){
-    tcEl.innerHTML=(tc>=0?'':'-')+fmt(Math.abs(tc));
-    tcEl.style.color=tc>=0?'#2e7d32':'#c62828';
+    tcEl.textContent=(saldoTC>=0?'':'-')+fmt(Math.abs(saldoTC));
+    tcEl.style.color=saldoTC>=0?'#2e7d32':'#c62828';
   }
 
   // ── CATEGORÍAS CLAVE ─────────────────────────────
@@ -1933,6 +2030,7 @@ function postGastoDividir(){
   document.getElementById('ov-gasto-vista-b').style.display='block';
   abrirVistaDividir();
   document.getElementById('ov-gasto').classList.add('open');
+  bloquearScrollFondo();
 }
 
 function postGastoNuevo(){
@@ -2255,6 +2353,7 @@ function abrirSaldoDetalle(){
 
   document.getElementById('saldo-detalle-content').innerHTML=html;
   document.getElementById('ov-saldo-detalle').classList.add('open');
+  bloquearScrollFondo();
 }
 
 // ── INIT ─────────────────────────────────────────────────
@@ -2480,6 +2579,7 @@ function abrirNuevaCuota(){
   const goldBtn=document.querySelector('.cuotas-tarjeta-btn[data-tarjeta="Gold"]');
   if(goldBtn){goldBtn.classList.add('active-gold');goldBtn.querySelector('span').style.color='#f57f17';}
   document.getElementById('ov-nueva-cuota').classList.add('open');
+  bloquearScrollFondo();
 }
 
 async function guardarNuevaCuota(){
@@ -2516,6 +2616,7 @@ function abrirPagarCuota(item){
     <div style="font-size:12px;color:#999;">Cuota ${cuotaNum} de ${c.numeroCuotas}</div>`;
   document.getElementById('pagar-cuota-fecha').valueAsDate=new Date();
   document.getElementById('ov-pagar-cuota').classList.add('open');
+  bloquearScrollFondo();
 }
 
 async function confirmarPagarCuota(){
@@ -2573,15 +2674,9 @@ function renderCuotasHomeChart(){
 
   let maxMeses=0;
   activas.forEach(c=>{
-    if(!c.fechaCompra)return;
-    const inicio=new Date(c.fechaCompra+'T00:00:00');
-    if(isNaN(inicio.getTime()))return;
-    const ultima=new Date(inicio);
-    ultima.setMonth(ultima.getMonth()+c.numeroCuotas);
-    const diff=(ultima.getFullYear()-anioHoy)*12+(ultima.getMonth()-mesHoy);
-    if(diff>maxMeses)maxMeses=diff;
+    if(c.cuotasRestantes>maxMeses)maxMeses=c.cuotasRestantes;
   });
-  maxMeses=Math.max(maxMeses,3);
+  maxMeses=Math.max(maxMeses,2);
 
   const mesesLabels=[];
   const mesesDates=[];
@@ -2591,28 +2686,29 @@ function renderCuotasHomeChart(){
     mesesDates.push({mes:d.getMonth(),anio:d.getFullYear()});
   }
 
-  const itemsConIndices=activas.map((c,idx)=>{
-    if(!c.fechaCompra)return null;
-    const inicioCompra=new Date(c.fechaCompra+'T00:00:00');
-    if(isNaN(inicioCompra.getTime()))return null;
-    const data=mesesDates.map(({mes,anio})=>{
-      const diffMeses=(anio-inicioCompra.getFullYear())*12+(mes-inicioCompra.getMonth());
-      if(diffMeses>=1&&diffMeses<=c.numeroCuotas&&diffMeses>c.cuotasPagadas)return c.valorCuota;
-      return 0;
-    });
-    return{item:c,color:CUOTAS_COLORS[idx%CUOTAS_COLORS.length],data};
-  }).filter(Boolean);
+  const CUOTAS_COLORS=['#378ADD','#D85A30','#1D9E75','#BA7517','#534AB7','#993556'];
 
-  const totalPorMes=mesesDates.map((_,i)=>itemsConIndices.reduce((s,it)=>s+(it.data[i]||0),0));
+  const itemsConIndices=activas.map((c,idx)=>({
+    item:c,
+    color:CUOTAS_COLORS[idx%CUOTAS_COLORS.length],
+    data:mesesDates.map((_,i)=>i<c.cuotasRestantes?c.valorCuota:0),
+  }));
 
-  const totalMensualActual=itemsConIndices.reduce((s,it)=>s+(it.data[0]||0),0);
+  const totalPorMes=mesesDates.map((_,i)=>
+    itemsConIndices.reduce((s,it)=>s+(it.data[i]||0),0)
+  );
+
   const totalDeuda=activas.reduce((s,c)=>s+c.montoPendiente,0);
+
+  const proximoMesDate=new Date(anioHoy,mesHoy+1,1);
+  const proximoMesLabel=meses[proximoMesDate.getMonth()]+' '+proximoMesDate.getFullYear();
+  const totalProximoMes=itemsConIndices.reduce((s,it)=>s+(it.data[0]||0),0);
 
   const kpisEl=document.getElementById('cuotas-home-kpis');
   if(kpisEl)kpisEl.innerHTML=`
     <div style="background:#f5f5f5;border-radius:10px;padding:11px 10px;">
-      <div class="kpi-label">CUOTA ESTE MES</div>
-      <div style="font-size:16px;font-weight:600;color:#c62828;">${fmt(totalMensualActual)}</div>
+      <div class="kpi-label">CUOTA EN ${proximoMesLabel.toUpperCase()}</div>
+      <div style="font-size:16px;font-weight:600;color:#c62828;">${fmt(totalProximoMes)}</div>
     </div>
     <div style="background:#f5f5f5;border-radius:10px;padding:11px 10px;">
       <div class="kpi-label">DEUDA RESTANTE</div>
@@ -2698,5 +2794,426 @@ function renderCuotasHomeChart(){
   });
 }
 
+// ── HISTORIAL CUADRATURAS ────────────────────────────────
+let hcuadData = [];
+let hcuadFiltroEstado = 'todos';
+let hcuadFiltroBanco = 'todos';
+let hcuadFiltroUsuario = 'todos';
+let hcuadFiltrosPanelAbierto = false;
+
+async function cargarHistorialCuad() {
+  mostrarLoading('Cargando historial...');
+  try {
+    const res = await fetch('/api/cuadratura/historial');
+    if (!res.ok) throw new Error('Error ' + res.status);
+    const rows = await res.json();
+    hcuadData = rows.slice(1)
+      .filter(r => r && r[0])
+      .map(r => ({
+        fecha:      (r[0] || '').trim(),
+        usuario:    (r[1] || '').trim(),
+        banco:      (r[2] || '').trim(),
+        montoApp:   parseMonto(r[3]) || 0,
+        montoBanco: parseMonto(r[4]) || 0,
+        diferencia: parseMonto(r[5]) || 0,
+        estado:     (r[6] || '').trim(),
+      }))
+      .sort((a, b) => b.fecha.localeCompare(a.fecha));
+    ocultarLoading();
+    renderHistorialCuad();
+  } catch(e) {
+    mostrarError('Error al cargar historial: ' + e.message);
+  }
+}
+
+function getBadgeHcuad(estado) {
+  if (estado === 'OK') return '<span class="hcuad-badge hcuad-badge-ok">OK</span>';
+  if (estado.includes('AJUSTE')) return '<span class="hcuad-badge hcuad-badge-aj">Ajuste realizado</span>';
+  return '<span class="hcuad-badge hcuad-badge-dif">Revisando</span>';
+}
+
+function fmtFechaHcuad(fechaISO) {
+  if (!fechaISO || fechaISO.length < 10) return fechaISO;
+  const [y, m, d] = fechaISO.split('-');
+  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return `${parseInt(d)} ${meses[parseInt(m)-1]} ${y}`;
+}
+
+function nombreUsuario(email) {
+  if (!email) return '—';
+  if (email.includes('christian')) return 'Christian Winckler';
+  return 'Javita';
+}
+
+function toggleHcuadFiltros() {
+  hcuadFiltrosPanelAbierto = !hcuadFiltrosPanelAbierto;
+  const panel = document.getElementById('hcuad-filtro-panel');
+  const chev = document.getElementById('hcuad-filtro-chev');
+  if (panel) panel.style.display = hcuadFiltrosPanelAbierto ? 'block' : 'none';
+  if (chev) chev.style.transform = hcuadFiltrosPanelAbierto ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+
+function limpiarHcuadFiltros() {
+  hcuadFiltroEstado = 'todos';
+  hcuadFiltroBanco = 'todos';
+  hcuadFiltroUsuario = 'todos';
+  renderHistorialCuad();
+}
+
+function setHcuadFiltro(tipo, val) {
+  if (tipo === 'estado') hcuadFiltroEstado = val;
+  if (tipo === 'banco') hcuadFiltroBanco = val;
+  if (tipo === 'usuario') hcuadFiltroUsuario = val;
+  renderHistorialCuad();
+}
+
+function renderHistorialCuad() {
+  let lista = hcuadData;
+  if (hcuadFiltroEstado !== 'todos') {
+    if (hcuadFiltroEstado === 'ok') lista = lista.filter(r => r.estado === 'OK');
+    else if (hcuadFiltroEstado === 'dif') lista = lista.filter(r => r.estado.includes('DIFERENCIA') && !r.estado.includes('AJUSTE'));
+    else if (hcuadFiltroEstado === 'aj') lista = lista.filter(r => r.estado.includes('AJUSTE'));
+  }
+  if (hcuadFiltroBanco !== 'todos') lista = lista.filter(r => r.banco === hcuadFiltroBanco);
+  if (hcuadFiltroUsuario !== 'todos') lista = lista.filter(r => nombreUsuario(r.usuario) === hcuadFiltroUsuario);
+
+  const total = hcuadData.length;
+  const conDif = hcuadData.filter(r => r.diferencia !== 0).length;
+  const conAj = hcuadData.filter(r => r.estado.includes('AJUSTE')).length;
+  const ultima = hcuadData[0];
+  const kpisEl = document.getElementById('hcuad-kpis');
+  if (kpisEl) {
+    kpisEl.innerHTML = `
+      <div class="hcuad-kpi">
+        <div class="hcuad-kpi-label">TOTAL CUADRATURAS</div>
+        <div class="hcuad-kpi-valor">${total}</div>
+        <div class="hcuad-kpi-sub">registros totales</div>
+      </div>
+      <div class="hcuad-kpi">
+        <div class="hcuad-kpi-label">CON DIFERENCIAS</div>
+        <div class="hcuad-kpi-valor" style="color:${conDif>0?'#f57f17':'#111'};">${conDif}</div>
+        <div class="hcuad-kpi-sub">${total>0?Math.round(conDif/total*100):0}% del total</div>
+      </div>
+      <div class="hcuad-kpi">
+        <div class="hcuad-kpi-label">AJUSTES REALIZADOS</div>
+        <div class="hcuad-kpi-valor" style="color:${conAj>0?'#c62828':'#111'};">${conAj}</div>
+        <div class="hcuad-kpi-sub">con gasto en detalle</div>
+      </div>
+      <div class="hcuad-kpi">
+        <div class="hcuad-kpi-label">ÚLTIMA CUADRATURA</div>
+        <div class="hcuad-kpi-valor" style="font-size:13px;">${ultima ? fmtFechaHcuad(ultima.fecha) : '—'}</div>
+        <div class="hcuad-kpi-sub">${ultima ? ultima.banco + ' · ' + nombreUsuario(ultima.usuario) : '—'}</div>
+      </div>`;
+  }
+
+  const estadoOpts = [
+    {val:'todos',label:'Todos'},
+    {val:'ok',label:'OK'},
+    {val:'dif',label:'Con diferencia'},
+    {val:'aj',label:'Con ajuste'},
+  ];
+  const bancos = ['todos', ...new Set(hcuadData.map(r => r.banco))];
+  const usuarios = ['todos', ...new Set(hcuadData.map(r => nombreUsuario(r.usuario)))];
+
+  const chipsEstado = document.getElementById('hcuad-chips-estado');
+  if (chipsEstado) {
+    chipsEstado.innerHTML = estadoOpts.map(o =>
+      `<button class="hcuad-chip ${hcuadFiltroEstado===o.val?'active':''}"
+        onclick="setHcuadFiltro('estado','${o.val}')">${o.label}</button>`
+    ).join('');
+  }
+  const chipsBanco = document.getElementById('hcuad-chips-banco');
+  if (chipsBanco) {
+    chipsBanco.innerHTML = bancos.map(b =>
+      `<button class="hcuad-chip ${hcuadFiltroBanco===b?'active':''}"
+        onclick="setHcuadFiltro('banco','${b}')">${b === 'todos' ? 'Todos' : b}</button>`
+    ).join('');
+  }
+  const chipsUsuario = document.getElementById('hcuad-chips-usuario');
+  if (chipsUsuario) {
+    chipsUsuario.innerHTML = usuarios.map(u =>
+      `<button class="hcuad-chip ${hcuadFiltroUsuario===u?'active':''}"
+        onclick="setHcuadFiltro('usuario','${u}')">${u === 'todos' ? 'Todos' : u}</button>`
+    ).join('');
+  }
+
+  const activos = [hcuadFiltroEstado, hcuadFiltroBanco, hcuadFiltroUsuario]
+    .filter(f => f !== 'todos').length;
+  const badge = document.getElementById('hcuad-filtro-badge');
+  if (badge) {
+    badge.style.display = activos > 0 ? 'inline-block' : 'none';
+    badge.textContent = activos + ' activo' + (activos !== 1 ? 's' : '');
+  }
+
+  const listaEl = document.getElementById('hcuad-lista');
+  if (!listaEl) return;
+
+  if (!lista.length) {
+    listaEl.innerHTML = '<div style="padding:40px 16px;text-align:center;font-size:13px;color:#bbb;">Sin registros con estos filtros</div>';
+    return;
+  }
+
+  listaEl.innerHTML = lista.map(r => {
+    const difColor = r.diferencia === 0 ? '#999' : r.diferencia < 0 ? '#c62828' : '#2e7d32';
+    const difPrefix = r.diferencia > 0 ? '+' : '';
+    const esAjuste = r.estado.includes('AJUSTE');
+    return `<div class="hcuad-card">
+      <div class="hcuad-card-head">
+        <div>
+          <div class="hcuad-fecha">${fmtFechaHcuad(r.fecha)}</div>
+          <div class="hcuad-banco">${r.banco}</div>
+          <div class="hcuad-usuario">${nombreUsuario(r.usuario)}</div>
+        </div>
+        ${getBadgeHcuad(r.estado)}
+      </div>
+      <div class="hcuad-montos">
+        <div class="hcuad-monto-item">
+          <div class="hcuad-monto-label">SALDO APP</div>
+          <div class="hcuad-monto-val">${fmt(r.montoApp)}</div>
+        </div>
+        <div class="hcuad-monto-item">
+          <div class="hcuad-monto-label">SALDO BANCO</div>
+          <div class="hcuad-monto-val">${fmt(r.montoBanco)}</div>
+        </div>
+        <div class="hcuad-monto-item">
+          <div class="hcuad-monto-label">DIFERENCIA</div>
+          <div class="hcuad-monto-val" style="color:${difColor};">${r.diferencia === 0 ? '$0' : difPrefix + fmt(Math.abs(r.diferencia))}</div>
+        </div>
+      </div>
+      ${esAjuste ? `<div class="hcuad-nota">Gasto de ajuste creado en Detalle · Cuadratura con Banco - ${nombreUsuario(r.usuario)}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── CUADRATURA DE SALDOS ─────────────────────────────────
+let cuadBancoActual = '';
+let cuadMontoApp = 0;
+let cuadMontoBanco = 0;
+let cuadDiferencia = 0;
+
+function abrirCuadratura(banco) {
+  cuadBancoActual = banco;
+
+  let montoApp = 0;
+  if (banco === 'Santander') {
+    const allGastos = Object.values(detalleData).flat();
+    montoApp = allGastos
+      .filter(g => g.banco === 'Santander')
+      .reduce((s, g) => s + g.montoValido, 0);
+  } else if (banco === 'Falabella') {
+    const allGastos = Object.values(detalleData).flat();
+    const fala1 = allGastos
+      .filter(g => g.sub === 'Banco - Ingreso a Falabella desde Ahorros')
+      .reduce((s, g) => s + g.montoValido, 0);
+    const fala2 = allGastos
+      .filter(g => g.sub === 'Banco - Ingreso a Falabella desde Cuenta Corriente')
+      .reduce((s, g) => s + g.montoValido, 0) * -1;
+    const fala3 = allGastos
+      .filter(g => g.ie === 'E' && g.banco === 'Falabella')
+      .reduce((s, g) => s + g.montoValido, 0);
+    montoApp = fala1 + fala2 + fala3;
+  } else if (banco === 'Tarjeta Crédito') {
+    const allGastos = Object.values(detalleData).flat();
+    const gastosAbsTC = Math.abs(
+      allGastos.filter(g => g.banco === 'Tarjeta Crédito')
+        .reduce((s, g) => s + g.montoValido, 0)
+    );
+    const pagosTC = allGastos
+      .filter(g => g.sub === 'TC - Pago Nueva Tarjeta')
+      .reduce((s, g) => s + g.montoValido, 0) * -1;
+    const deudaCuotas = cuotasData
+      .filter(c => c.cuotasRestantes > 0)
+      .reduce((s, c) => s + c.montoPendiente, 0);
+    montoApp = montoInicialTC - gastosAbsTC + pagosTC - deudaCuotas;
+  }
+
+  cuadMontoApp = Math.round(montoApp);
+
+  document.getElementById('cuad-titulo').textContent = `Cuadrar saldo — ${banco}`;
+  document.getElementById('cuad-sub').textContent =
+    `Ingresa el saldo que figura en tu app de ${banco}`;
+  document.getElementById('cuad-monto-app').textContent = fmt(cuadMontoApp);
+  document.getElementById('cuad-monto-banco').value = '';
+
+  bloquearScrollFondo();
+  document.getElementById('ov-cuadratura').classList.add('open');
+}
+
+function ejecutarComparacion() {
+  const inputVal = parseFloat(document.getElementById('cuad-monto-banco').value) || 0;
+  cuadMontoBanco = Math.round(inputVal);
+  cuadDiferencia = cuadMontoApp - cuadMontoBanco;
+
+  cerrar('ov-cuadratura');
+
+  const contenedor = document.getElementById('cuad-resultado-content');
+  const difAbs = Math.abs(cuadDiferencia);
+  const cuadra = cuadDiferencia === 0;
+
+  if (cuadra) {
+    contenedor.innerHTML = `
+      <div class="cuad-result-ok">
+        <div class="cuad-result-ok-title">Saldos cuadran correctamente</div>
+        <div class="cuad-result-ok-sub">No hay diferencias entre la app y el banco</div>
+      </div>
+      <div class="cuad-diff-row"><span class="cuad-diff-key">Saldo app</span><span class="cuad-diff-val">${fmt(cuadMontoApp)}</span></div>
+      <div class="cuad-diff-row"><span class="cuad-diff-key">Saldo banco</span><span class="cuad-diff-val">${fmt(cuadMontoBanco)}</span></div>
+      <div class="cuad-diff-line"></div>
+      <div class="cuad-diff-row"><span class="cuad-diff-key">Diferencia</span><span class="cuad-diff-val" style="color:#2e7d32;">$0</span></div>
+      <div style="height:14px;"></div>
+      <button style="width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;margin-bottom:8px;" onclick="registrarCuadratura('OK',false)">Confirmar y registrar</button>
+      <button style="width:100%;padding:12px;background:#f5f5f5;color:#666;border:none;border-radius:10px;font-size:14px;cursor:pointer;font-family:inherit;" onclick="cerrarResultadoCuadratura()">Cancelar</button>`;
+  } else {
+    const appTieneMas = cuadDiferencia > 0;
+    contenedor.innerHTML = `
+      <div class="cuad-result-diff">
+        <div class="cuad-result-diff-title">Se encontró una diferencia</div>
+        <div class="cuad-result-diff-sub">La app tiene ${appTieneMas ? fmt(difAbs) + ' más' : fmt(difAbs) + ' menos'} que el banco</div>
+      </div>
+      <div class="cuad-diff-row"><span class="cuad-diff-key">Saldo app</span><span class="cuad-diff-val">${fmt(cuadMontoApp)}</span></div>
+      <div class="cuad-diff-row"><span class="cuad-diff-key">Saldo banco</span><span class="cuad-diff-val">${fmt(cuadMontoBanco)}</span></div>
+      <div class="cuad-diff-line"></div>
+      <div class="cuad-diff-row"><span class="cuad-diff-key">Diferencia</span><span class="cuad-diff-val" style="color:#f57f17;">${fmt(difAbs)}</span></div>
+      <div style="height:14px;"></div>
+      <button class="cuad-option-btn" onclick="cuadSeguirRevisando()">
+        <div class="cuad-option-icon" style="background:#e8f0fe;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v5l3 3" stroke="#1a73e8" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="8" r="6" stroke="#1a73e8" stroke-width="1.2"/></svg>
+        </div>
+        <div>
+          <div class="cuad-option-title">Seguir revisando</div>
+          <div class="cuad-option-sub">Registrar diferencia y revisar más tarde</div>
+        </div>
+      </button>
+      <button class="cuad-option-btn" onclick="cuadAbrirAjuste()">
+        <div class="cuad-option-icon" style="background:#e8f5e9;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="#2e7d32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <div class="cuad-option-title">Realizar ajuste automático</div>
+          <div class="cuad-option-sub">Crear gasto de cuadratura en Detalle</div>
+        </div>
+      </button>
+      <button style="width:100%;padding:12px;background:#f5f5f5;color:#666;border:none;border-radius:10px;font-size:14px;cursor:pointer;font-family:inherit;margin-top:2px;" onclick="cerrarResultadoCuadratura()">Cancelar</button>`;
+  }
+
+  bloquearScrollFondo();
+  document.getElementById('ov-cuadratura-resultado').classList.add('open');
+}
+
+async function cuadSeguirRevisando() {
+  cerrar('ov-cuadratura-resultado');
+  mostrarLoading('Registrando...');
+  try {
+    const res = await fetch('/api/cuadratura', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        banco: cuadBancoActual,
+        montoApp: cuadMontoApp,
+        montoBanco: cuadMontoBanco,
+        estado: 'DIFERENCIA - REVISANDO',
+        hacerAjuste: false,
+      })
+    });
+    if (!res.ok) throw new Error('Error ' + res.status);
+    mostrarToast('Diferencia registrada. Sigue revisando ✓');
+  } catch(e) {
+    mostrarToast('Error al registrar: ' + e.message);
+  } finally {
+    ocultarLoading();
+    desbloquearScrollFondo();
+  }
+}
+
+function cuadAbrirAjuste() {
+  cerrar('ov-cuadratura-resultado');
+  const appTieneMas = cuadDiferencia > 0;
+  const difAbs = Math.abs(cuadDiferencia);
+
+  document.getElementById('cuad-ajuste-preview').innerHTML = `
+    <div class="cuad-diff-row"><span class="cuad-diff-key">Subcategoría</span><span class="cuad-diff-val" style="font-size:12px;">Banco - Cuadratura Automática</span></div>
+    <div class="cuad-diff-row"><span class="cuad-diff-key">Banco</span><span class="cuad-diff-val">${cuadBancoActual}</span></div>
+    <div class="cuad-diff-row"><span class="cuad-diff-key">Monto</span><span class="cuad-diff-val">${fmt(difAbs)}</span></div>
+    <div class="cuad-diff-row"><span class="cuad-diff-key">Devolución</span><span class="cuad-diff-val" style="color:${appTieneMas?'#2e7d32':'#999'};">${appTieneMas ? 'X (app tiene más)' : 'No'}</span></div>
+    <div class="cuad-diff-row"><span class="cuad-diff-key">Descripción</span><span class="cuad-diff-val" style="font-size:11px;">Cuadratura con Banco</span></div>`;
+
+  bloquearScrollFondo();
+  document.getElementById('ov-cuadratura-ajuste').classList.add('open');
+}
+
+async function confirmarAjusteCuadratura() {
+  cerrar('ov-cuadratura-ajuste');
+  mostrarLoading('Aplicando ajuste...');
+  try {
+    const res = await fetch('/api/cuadratura', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        banco: cuadBancoActual,
+        montoApp: cuadMontoApp,
+        montoBanco: cuadMontoBanco,
+        estado: 'AJUSTE REALIZADO',
+        hacerAjuste: true,
+      })
+    });
+    if (!res.ok) throw new Error('Error ' + res.status);
+    mostrarToast('Ajuste aplicado y registrado ✓');
+    await cargarDatos();
+    renderHome();
+  } catch(e) {
+    mostrarToast('Error: ' + e.message);
+  } finally {
+    ocultarLoading();
+    desbloquearScrollFondo();
+  }
+}
+
+async function registrarCuadratura(estado, hacerAjuste) {
+  cerrar('ov-cuadratura-resultado');
+  mostrarLoading('Registrando cuadratura...');
+  try {
+    const res = await fetch('/api/cuadratura', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        banco: cuadBancoActual,
+        montoApp: cuadMontoApp,
+        montoBanco: cuadMontoBanco,
+        estado,
+        hacerAjuste,
+      })
+    });
+    if (!res.ok) throw new Error('Error ' + res.status);
+    mostrarToast('Cuadratura registrada ✓');
+  } catch(e) {
+    mostrarToast('Error: ' + e.message);
+  } finally {
+    ocultarLoading();
+    desbloquearScrollFondo();
+  }
+}
+
+function cerrarResultadoCuadratura() {
+  cerrar('ov-cuadratura-resultado');
+  desbloquearScrollFondo();
+}
+
+document.getElementById('ov-cuadratura').addEventListener('click', e => {
+  if (e.target === document.getElementById('ov-cuadratura')) {
+    cerrar('ov-cuadratura');
+    desbloquearScrollFondo();
+  }
+});
+document.getElementById('ov-cuadratura-resultado').addEventListener('click', e => {
+  if (e.target === document.getElementById('ov-cuadratura-resultado')) {
+    cerrarResultadoCuadratura();
+  }
+});
+document.getElementById('ov-cuadratura-ajuste').addEventListener('click', e => {
+  if (e.target === document.getElementById('ov-cuadratura-ajuste')) {
+    cerrar('ov-cuadratura-ajuste');
+    desbloquearScrollFondo();
+  }
+});
+
 cargarDatos();
-  
