@@ -837,7 +837,12 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
       </div>
       <span class="navbar-brand" id="navbar-title"><span class="brand-prefix">Gastos FWV</span> - Resumen</span>
     </div>
-    <button id="btn-add-nav" onclick="abrirNuevoGasto()" style="width:32px;height:32px;background:#111;color:#fff;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;font-family:inherit;">+</button>
+    <div class="navbar-right" style="display:flex;align-items:center;gap:8px;">
+      <button id="btn-eye-all" onclick="toggleEyeAll()" style="width:32px;height:32px;border-radius:50%;background:#F2F2F7;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#8e8e93;" title="Ocultar todos los montos">
+        <svg id="eye-all-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+      <button id="btn-add-nav" onclick="abrirNuevoGasto()" style="width:32px;height:32px;background:#111;color:#fff;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;font-family:inherit;">+</button>
+    </div>
   </nav>
 
   <!-- DRAWER (mobile) -->
@@ -1065,9 +1070,6 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
           <div class="kpi-label">SANTANDER</div>
           <div class="kpi-valor" id="kpi-sant-val"><span class="skeleton skeleton-valor"></span></div>
           <div class="kpi-badge badge-s">Cuenta corriente</div>
-          <button class="eye-toggle-btn" id="eye-btn-santander" style="position:absolute;top:10px;right:42px;" onclick="toggleEye('santander')" title="Ocultar monto">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
           <button class="cuad-check-btn" onclick="abrirCuadratura('Santander')" title="Cuadrar saldo">
             <svg viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="7" fill="#e8f5e9" stroke="#a5d6a7" stroke-width="1"/>
@@ -1079,9 +1081,6 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
           <div class="kpi-label">FALABELLA</div>
           <div class="kpi-valor" id="kpi-fala-val"><span class="skeleton skeleton-valor"></span></div>
           <div class="kpi-badge badge-f">Cuenta corriente</div>
-          <button class="eye-toggle-btn" id="eye-btn-falabella" style="position:absolute;top:10px;right:42px;" onclick="toggleEye('falabella')" title="Ocultar monto">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
           <button class="cuad-check-btn" onclick="abrirCuadratura('Falabella')" title="Cuadrar saldo">
             <svg viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="7" fill="#e8f5e9" stroke="#a5d6a7" stroke-width="1"/>
@@ -1105,22 +1104,21 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
       </div>
       <div style="height:8px;"></div>
       <div class="kpi-card-full">
-        <div style="flex:1;">
+        <div style="position:relative;flex:1;">
           <div class="kpi-label">TARJETA DE CRÉDITO</div>
           <div class="kpi-valor" id="kpi-tc"><span class="skeleton skeleton-valor"></span></div>
-          <div class="kpi-sub">Saldo disponible real</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-          <div class="kpi-badge badge-tc">TC</div>
-          <button class="eye-toggle-btn" id="eye-btn-tc" onclick="toggleEye('tc')" title="Ocultar monto">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-          <button class="cuad-check-btn" style="position:relative;top:auto;right:auto;" onclick="abrirCuadratura('Tarjeta Crédito')" title="Cuadrar saldo">
-            <svg viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" fill="#e8f5e9" stroke="#a5d6a7" stroke-width="1"/>
-              <path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="#2e7d32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+            <div class="kpi-sub">Saldo disponible real</div>
+            <div class="kpi-badge badge-tc">Tarjeta Gold Limited</div>
+          </div>
+          <div style="position:absolute;top:0;right:0;display:flex;align-items:center;gap:6px;">
+            <button class="cuad-check-btn" style="position:relative;top:auto;right:auto;" onclick="abrirCuadratura('Tarjeta Crédito')" title="Cuadrar saldo">
+              <svg viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="7" fill="#e8f5e9" stroke="#a5d6a7" stroke-width="1"/>
+                <path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="#2e7d32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1172,49 +1170,30 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
       </div>
 
       <div class="section-label" style="padding-top:20px;">EVOLUCIÓN 12 MESES</div>
-      <div class="home-filtro-panel" id="home-filtro-panel">
-        <div class="home-filtro-inner">
-          <div class="home-filtro-panel-header">
-            <span class="home-filtro-panel-titulo">Filtrar gráfico</span>
-            <button class="home-filtro-close" onclick="cerrarHomeFiltro()">✕</button>
-          </div>
-          <div style="margin-bottom:10px;">
-            <div style="font-size:10px;color:#aaa;font-weight:500;letter-spacing:0.05em;margin-bottom:6px;">CATEGORÍA</div>
-            <div id="home-chips-cat" style="display:flex;flex-wrap:wrap;gap:6px;">
-              <button class="home-chip active" onclick="toggleHomeCat(this,'todos')">Todos</button>
-            </div>
-          </div>
-          <div id="home-chips-subcat-wrap" style="display:none;margin-bottom:10px;">
-            <div style="font-size:10px;color:#aaa;font-weight:500;letter-spacing:0.05em;margin-bottom:6px;">SUBCATEGORÍA</div>
-            <div id="home-chips-subcat" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
-          </div>
-          <button class="home-chip" onclick="limpiarHomeFiltros()" style="margin-top:4px;">Limpiar filtros</button>
+      <div style="display:flex;gap:8px;padding:0 12px 8px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:120px;position:relative;" id="wrap-evo-cat">
+          <div style="font-size:10px;font-weight:500;color:#888;letter-spacing:.04em;margin-bottom:3px;">CATEGORÍA</div>
+          <input id="inp-evo-cat" placeholder="Todas las categorías" autocomplete="off"
+            style="width:100%;padding:6px 28px 6px 10px;border:0.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;background:#f5f5f5;color:#111;outline:none;box-sizing:border-box;" />
+          <button id="clear-evo-cat" onclick="resetEvoCat()" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:14px;color:#999;cursor:pointer;padding:0;margin-top:10px;">×</button>
+          <div id="dd-evo-cat" style="display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;background:#fff;border:0.5px solid #ddd;border-radius:8px;z-index:100;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+        </div>
+        <div style="flex:1;min-width:120px;position:relative;" id="wrap-evo-sub">
+          <div style="font-size:10px;font-weight:500;color:#888;letter-spacing:.04em;margin-bottom:3px;">SUBCATEGORÍA</div>
+          <input id="inp-evo-sub" placeholder="Todas" autocomplete="off" disabled
+            style="width:100%;padding:6px 28px 6px 10px;border:0.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;background:#f5f5f5;color:#111;outline:none;box-sizing:border-box;opacity:0.5;" />
+          <button id="clear-evo-sub" onclick="resetEvoSub()" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:14px;color:#999;cursor:pointer;padding:0;margin-top:10px;">×</button>
+          <div id="dd-evo-sub" style="display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;background:#fff;border:0.5px solid #ddd;border-radius:8px;z-index:100;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
         </div>
       </div>
       <div class="home-chart-container">
         <div class="home-chart-header">
           <span class="home-chart-titulo">Gasto vs presupuesto</span>
-          <button class="home-filtro-btn" id="home-filtro-btn-open" onclick="toggleHomeFiltro()">
-            <span>⚙</span> Filtrar
-          </button>
         </div>
-        <div id="home-tooltip" class="home-tooltip"></div>
-        <svg id="home-line-chart" viewBox="0 0 360 160" style="width:100%;display:block;overflow:visible;"></svg>
-        <div class="home-chart-legend">
-          <div class="home-legend-item">
-            <div class="home-legend-dot" style="background:#e53935;"></div>
-            Gasto real
-          </div>
-          <div class="home-legend-item">
-            <div class="home-legend-dot" style="background:#1a73e8;border:1px dashed #1a73e8;"></div>
-            Presupuesto
-          </div>
-          <div class="home-legend-item">
-            <div class="home-legend-dot" style="background:#2e7d32;"></div>
-            Promedio 12m
-          </div>
+        <div style="position:relative;height:220px;">
+          <canvas id="home-line-chart-canvas"></canvas>
         </div>
-        <div id="home-chart-meses" style="display:flex;justify-content:space-between;padding:4px 2px 0;font-size:9px;color:#bbb;"></div>
+        <div id="home-chart-legend-new" style="display:flex;gap:14px;padding:8px 0 0;flex-wrap:wrap;"></div>
       </div>
       <div style="height:16px;"></div>
     </div>
@@ -1267,6 +1246,7 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
       <div class="modal-monto" id="g-monto"></div>
       <div class="modal-actions">
         <button class="btn-editar">✏️ Editar gasto</button>
+        <button id="btn-distribuir-intl" onclick="abrirDistribuirIntl()" style="display:none;width:100%;padding:13px;background:#e8f0fe;color:#1a73e8;border:0.5px solid #aac4f0;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;margin-bottom:8px;align-items:center;justify-content:center;gap:8px;">🌐 Distribuir pago internacional</button>
         <button class="btn-dividir-accion" onclick="abrirVistaDividir()">⊕ Dividir gasto</button>
         <button class="btn-eliminar">🗑 Eliminar gasto</button>
         <button class="btn-cancelar" onclick="cerrar('ov-gasto')">Cancelar</button>
