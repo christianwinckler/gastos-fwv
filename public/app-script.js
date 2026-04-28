@@ -34,6 +34,12 @@ window.aplicarDetFiltros=aplicarDetFiltros;
 window.limpiarDetFiltros=limpiarDetFiltros;
 window.renderHome=renderHome;
 window.toggleEye=toggleEye;
+window.intlAgregarItem=intlAgregarItem;
+window.intlEliminarItem=intlEliminarItem;
+window.intlUpdateField=intlUpdateField;
+window.intlVerResumen=intlVerResumen;
+window.intlGuardarSinDist=intlGuardarSinDist;
+window.intlConfirmar=intlConfirmar;
 window.toggleHomeFiltro=toggleHomeFiltro;
 window.cerrarHomeFiltro=cerrarHomeFiltro;
 window.toggleHomeCat=toggleHomeCat;
@@ -91,6 +97,213 @@ function toggleEye(key) {
       : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
   }
   renderHome();
+}
+
+// ── TARJETA INTERNACIONAL ────────────────────────────────
+let intlItems = [];
+let intlNextId = 0;
+let intlSinDist = false;
+
+function checkIntlMode() {
+  const sub = document.getElementById('f-subcat').value.trim();
+  const esIntl = sub === 'Tarjeta Internacional';
+  const banner = document.getElementById('intl-banner');
+  const btnSec = document.getElementById('btn-guardar-sin-dist');
+  const btnG = document.getElementById('btn-guardar');
+  if (banner) banner.style.display = esIntl ? '' : 'none';
+  if (btnSec) btnSec.style.display = esIntl ? '' : 'none';
+  if (btnG && !btnG.disabled) btnG.textContent = esIntl ? 'Continuar → Distribuir' : (modoEdicion ? 'Guardar cambios' : 'Guardar gasto');
+}
+
+function intlReset() {
+  intlItems = []; intlNextId = 0; intlSinDist = false;
+  const banner = document.getElementById('intl-banner');
+  const btnSec = document.getElementById('btn-guardar-sin-dist');
+  if (banner) banner.style.display = 'none';
+  if (btnSec) btnSec.style.display = 'none';
+}
+
+function intlSubcatOpts(selectedSub) {
+  return subcats.filter(s => s.ie === 'E').map(s => {
+    const label = s.sub.includes(' - ') ? s.sub.split(' - ').slice(1).join(' - ') : s.sub;
+    const sel = s.sub === selectedSub ? 'selected' : '';
+    return `<option value="${s.sub}" ${sel}>${label} (${s.cat})</option>`;
+  }).join('');
+}
+
+function intlTotalUSD() {
+  return intlItems.reduce((s, i) => s + (parseFloat(i.usd) || 0), 0);
+}
+
+function intlClpItem(item) {
+  const montoCLP = parseFloat(document.getElementById('f-monto').value) || 0;
+  const totalUSD = intlTotalUSD();
+  if (!totalUSD) return 0;
+  return Math.round((parseFloat(item.usd) || 0) / totalUSD * montoCLP);
+}
+
+function intlTotalCLPDist() {
+  return intlItems.reduce((s, i) => s + intlClpItem(i), 0);
+}
+
+function intlUpdateTotals() {
+  const montoCLP = parseFloat(document.getElementById('f-monto').value) || 0;
+  const totalUSD = intlTotalUSD();
+  const distribuido = intlTotalCLPDist();
+  const diff = distribuido - montoCLP;
+  const exact = Math.abs(diff) <= Math.max(intlItems.length, 1);
+  const pct = montoCLP ? Math.min(distribuido / montoCLP * 100, 110) : 0;
+
+  const tcEl = document.getElementById('intl-tipo-cambio-display');
+  if (tcEl) tcEl.innerHTML = totalUSD > 0 ? `Tipo de cambio estimado: <strong>$${Math.round(montoCLP / totalUSD).toLocaleString('es-CL')} / USD</strong>` : '';
+
+  const wrap = document.getElementById('intl-progress-wrap');
+  if (wrap) {
+    const fillColor = exact ? '#2e7d32' : diff > 0 ? '#c62828' : '#f57f17';
+    const labelExtra = exact ? '✓ cuadra exacto' : diff > 0 ? `+${fmt(diff)} de más` : `${fmt(Math.abs(diff))} por distribuir`;
+    wrap.innerHTML = `<div class="intl-progress-label"><span>${fmt(distribuido)} distribuido</span><span>${labelExtra}</span></div><div class="intl-progress-track"><div class="intl-progress-fill" style="width:${Math.min(pct,100)}%;background:${fillColor};"></div></div>`;
+  }
+
+  intlItems.forEach(item => {
+    const el = document.querySelector(`#intl-row-${item.id} .intl-item-clp strong`);
+    if (el) el.textContent = intlClpItem(item) ? fmt(intlClpItem(item)) : '—';
+  });
+
+  const btnRes = document.getElementById('btn-intl-resumen');
+  if (btnRes) {
+    const ok = intlItems.length > 0 && intlItems.every(i => i.desc && i.sub && parseFloat(i.usd) > 0) && exact;
+    btnRes.disabled = !ok;
+    btnRes.style.opacity = ok ? '1' : '0.4';
+  }
+}
+
+function intlRenderDist() {
+  const list = document.getElementById('intl-items-list');
+  if (list) {
+    list.innerHTML = intlItems.map(item => `<div class="intl-item-row" id="intl-row-${item.id}">
+      <div class="intl-item-top">
+        <input class="intl-item-input" type="text" placeholder="Descripción del ítem" value="${(item.desc||'').replace(/"/g,'&quot;')}" oninput="intlUpdateField(${item.id},'desc',this.value)" />
+        <button class="intl-item-del" onclick="intlEliminarItem(${item.id})">×</button>
+      </div>
+      <select class="intl-subcat-sel" onchange="intlUpdateField(${item.id},'sub',this.value)">
+        <option value="">Subcategoría...</option>
+        ${intlSubcatOpts(item.sub)}
+      </select>
+      <div class="intl-item-usd-wrap">
+        <span class="intl-item-usd-prefix">USD</span>
+        <input class="intl-item-usd" type="number" placeholder="0.00" step="0.01" min="0" value="${item.usd||''}" oninput="intlUpdateField(${item.id},'usd',this.value)" />
+        <div class="intl-item-clp" style="flex:1;"><strong>${intlClpItem(item)?fmt(intlClpItem(item)):'—'}</strong><br>CLP</div>
+      </div>
+    </div>`).join('');
+  }
+  intlUpdateTotals();
+}
+
+function intlContinuar() {
+  const montoCLP = parseFloat(document.getElementById('f-monto').value) || 0;
+  if (!montoCLP) { mostrarToast('Ingresa el monto CLP primero'); return; }
+  intlItems = []; intlNextId = 0;
+  document.getElementById('intl-dist-subtitle').textContent = `${fmt(montoCLP)} CLP en total`;
+  intlRenderDist();
+  document.getElementById('ov-intl-dist').classList.add('open');
+  bloquearScrollFondo();
+}
+
+function intlAgregarItem() {
+  intlItems.push({ id: intlNextId++, desc: '', sub: '', usd: '' });
+  intlRenderDist();
+}
+
+function intlEliminarItem(id) {
+  intlItems = intlItems.filter(i => i.id !== id);
+  intlRenderDist();
+}
+
+function intlUpdateField(id, field, val) {
+  const item = intlItems.find(i => i.id === id);
+  if (!item) return;
+  item[field === 'desc' ? 'desc' : field === 'sub' ? 'sub' : 'usd'] = val;
+  intlUpdateTotals();
+}
+
+function intlVerResumen() {
+  const montoCLP = parseFloat(document.getElementById('f-monto').value) || 0;
+  const totalUSD = intlTotalUSD();
+  const tc = totalUSD > 0 ? Math.round(montoCLP / totalUSD) : 0;
+  const list = document.getElementById('intl-confirm-list');
+  if (list) {
+    list.innerHTML = intlItems.map(item => {
+      const clp = intlClpItem(item);
+      const usd = parseFloat(item.usd) || 0;
+      const label = item.sub.includes(' - ') ? item.sub.split(' - ').slice(1).join(' - ') : item.sub;
+      return `<div class="intl-confirm-item">
+        <div><div class="intl-confirm-desc">${item.desc}</div><div class="intl-confirm-sub">${label}</div></div>
+        <div class="intl-confirm-amts"><div class="intl-confirm-clp">${fmt(clp)}</div><div class="intl-confirm-usd">USD ${usd.toFixed(2)}</div></div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('ov-intl-confirm').classList.add('open');
+}
+
+async function intlConfirmar() {
+  const fecha = document.getElementById('f-fecha').value;
+  const bancoEl = document.querySelector('.banco-btn.active');
+  const banco = bancoEl ? bancoEl.dataset.banco : '';
+  const esDev = document.getElementById('dev-toggle').classList.contains('active');
+  const devStr = esDev ? 'X' : '';
+  const montoCLP = parseFloat(document.getElementById('f-monto').value) || 0;
+  const totalUSD = intlTotalUSD();
+  const tc = totalUSD > 0 ? Math.round(montoCLP / totalUSD) : 0;
+  const btn = document.getElementById('btn-intl-confirmar');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  const count = intlItems.length;
+  try {
+    for (const item of intlItems) {
+      const clp = intlClpItem(item);
+      const usd = parseFloat(item.usd) || 0;
+      const descCompleta = `${item.desc} (USD ${usd.toFixed(2)} @ $${tc.toLocaleString('es-CL')})`;
+      const N = totalFilasGastos + 2;
+      const dateSerial = Math.round(new Date(fecha).getTime() / 86400000) + 25569;
+      const fB = `=IF(A${N}<>"";(CONCATENATE(IF(MONTH(A${N})<10;CONCATENATE("0";MONTH(A${N}));MONTH(A${N}));"-";YEAR(A${N})));if(A${N}="";"";\"Fecha no válida\"))`;
+      const fD = `=IFERROR(VLOOKUP(C${N};'Parámetros'!A:B;2;FALSE);"")`;
+      const fE = `=IF(G${N}<>"X";IFERROR(VLOOKUP(C${N};'Parámetros'!A:C;3;FALSE);"");IF(IFERROR(VLOOKUP(C${N};'Parámetros'!A:C;3;FALSE);"")="E";"I";"E"))`;
+      const fJ = `=IF(I${N}<>"";IF(E${N}="I";IF(I${N}>0;I${N};I${N}*-1);IF(E${N}="E";IF(I${N}<0;I${N};I${N}*-1)));0)`;
+      const fK = `=SUMIFs(Presupuesto!D:D;Presupuesto!A:A;B${N};Presupuesto!B:B;C${N})`;
+      const row = [dateSerial, fB, item.sub, fD, fE, banco, devStr, descCompleta, clp, fJ, fK];
+      const res = await fetch('/api/gastos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ row }) });
+      if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Error ' + res.status); }
+      totalFilasGastos++;
+    }
+    cerrar('ov-intl-confirm'); cerrar('ov-intl-dist'); cerrar('ov-nuevo');
+    intlReset();
+    document.getElementById('f-subcat').value = '';
+    document.getElementById('f-desc').value = '';
+    document.getElementById('f-monto').value = '';
+    document.getElementById('f-cat-badge').style.display = 'none';
+    document.querySelectorAll('.banco-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('dev-toggle').classList.remove('active');
+    document.getElementById('dev-hint').textContent = 'marcar con X';
+    const tcBtn = document.querySelector('.banco-btn[data-banco="Tarjeta Crédito"]');
+    if (tcBtn) tcBtn.classList.add('active');
+    mostrarToast(`${count} gasto${count !== 1 ? 's' : ''} guardado${count !== 1 ? 's' : ''} ✓`);
+    desbloquearScrollFondo();
+    cargarDatos().then(() => {
+      const sa = document.querySelector('.screen.active')?.id;
+      if (sa === 'screen-detalle') renderDetalle();
+      if (sa === 'screen-dashboard') renderDashboard();
+      if (sa === 'screen-home') renderHome();
+    }).catch(e => console.error('Error recargando datos:', e));
+  } catch (e) {
+    mostrarToast('Error al guardar: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Confirmar y guardar todos';
+  }
+}
+
+function intlGuardarSinDist() {
+  cerrar('ov-intl-dist');
+  intlSinDist = true;
+  document.getElementById('btn-guardar').click();
 }
 
 const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -333,6 +546,7 @@ function switchScreen(screen){
 
 function abrirNuevoGasto(){
   modoEdicion=false; gastoEditandoRowIndex=null;
+  intlReset();
   document.querySelector('#ov-nuevo .sheet-title').textContent='Nuevo gasto';
   document.getElementById('btn-guardar').textContent='Guardar gasto';
   document.getElementById('f-fecha').valueAsDate=new Date();
@@ -1520,8 +1734,9 @@ function renderSugs(items){
 subcatInput.addEventListener('input',()=>{
   listaOpen=false;btnLista.classList.remove('active');
   const q=subcatInput.value.toLowerCase().trim();
-  if(!q){sugBox.style.display='none';return;}
+  if(!q){sugBox.style.display='none';checkIntlMode();return;}
   renderSugs(subcats.filter(s=>s.sub.toLowerCase().includes(q)));
+  checkIntlMode();
 });
 btnLista.addEventListener('click',()=>{
   listaOpen=!listaOpen;btnLista.classList.toggle('active',listaOpen);
@@ -1536,6 +1751,7 @@ sugBox.addEventListener('click',e=>{
   ieb.className='ie-badge ie-'+item.dataset.ie;
   document.getElementById('f-cat-badge').style.display='block';
   sugBox.style.display='none';listaOpen=false;btnLista.classList.remove('active');
+  checkIntlMode();
 });
 document.addEventListener('click',e=>{if(!e.target.closest('.subcat-wrap')&&!e.target.closest('#btn-lista')){sugBox.style.display='none';listaOpen=false;btnLista.classList.remove('active');}});
 document.querySelectorAll('.banco-btn').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.banco-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');});});
@@ -1545,6 +1761,7 @@ document.getElementById('ov-nuevo').addEventListener('click',e=>{
   if(e.target===document.getElementById('ov-nuevo')){
     cerrar('ov-nuevo');
     modoEdicion=false;gastoEditandoRowIndex=null;
+    intlReset();
     document.querySelector('#ov-nuevo .sheet-title').textContent='Nuevo gasto';
     document.getElementById('btn-guardar').textContent='Guardar gasto';
   }
@@ -1558,6 +1775,8 @@ document.getElementById('btn-guardar').addEventListener('click',async()=>{
   const monto=parseFloat(document.getElementById('f-monto').value)||0;
   const esDev=document.getElementById('dev-toggle').classList.contains('active');
   if(!fecha||!sub||!banco||!monto){mostrarToast('Completa fecha, subcategoría, banco y monto');return;}
+  if(sub==='Tarjeta Internacional'&&!intlSinDist){intlContinuar();return;}
+  intlSinDist=false;
   const btn=document.getElementById('btn-guardar');
   btn.disabled=true;btn.textContent='Guardando...';
   try{

@@ -417,6 +417,32 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .monto-prefix { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; color: #999; pointer-events: none; }
 .monto-wrap input { padding-left: 28px; }
 .btn-guardar { width: 100%; padding: 13px; background: #111; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; margin-top: 4px; }
+.btn-guardar-sec { width: 100%; padding: 12px; background: #f5f5f5; color: #555; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; margin-top: 8px; }
+.intl-banner { background: #f0f7ff; border: 0.5px solid #c8dffe; border-radius: 10px; padding: 11px 13px; display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: #1a4a7a; line-height: 1.45; margin-top: 8px; }
+.intl-banner-icon { font-size: 16px; flex-shrink: 0; margin-top: -1px; }
+.intl-progress-label { display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-bottom: 5px; }
+.intl-progress-track { height: 5px; background: #eee; border-radius: 3px; overflow: hidden; }
+.intl-progress-fill { height: 100%; border-radius: 3px; transition: width 0.2s, background 0.2s; }
+.intl-item-row { background: #f9f9f9; border: 0.5px solid #e8e8e8; border-radius: 10px; padding: 12px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; }
+.intl-item-top { display: flex; gap: 8px; align-items: center; }
+.intl-item-clp { font-size: 12px; color: #888; text-align: right; }
+.intl-item-clp strong { font-size: 14px; color: #111; font-weight: 600; }
+.intl-item-input { flex: 1; padding: 8px 10px; border: 0.5px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: inherit; background: #fff; }
+.intl-item-usd-wrap { display: flex; align-items: center; gap: 6px; }
+.intl-item-usd-prefix { font-size: 13px; color: #888; }
+.intl-item-usd { width: 90px; padding: 8px 10px; border: 0.5px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: inherit; background: #fff; text-align: right; }
+.intl-item-del { width: 28px; height: 28px; border-radius: 50%; background: #fce4ec; border: none; cursor: pointer; color: #c62828; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.intl-subcat-sel { width: 100%; padding: 8px 10px; border: 0.5px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: inherit; background: #fff; color: #111; }
+.intl-add-btn { width: 100%; padding: 11px; background: #f0f7ff; color: #1a73e8; border: 0.5px solid #c8dffe; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; margin-bottom: 12px; }
+.intl-tipo-cambio { font-size: 12px; color: #888; margin-bottom: 12px; text-align: right; }
+.intl-tipo-cambio strong { color: #1a73e8; }
+.intl-confirm-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 0.5px solid #f0f0f0; }
+.intl-confirm-item:last-child { border-bottom: none; }
+.intl-confirm-desc { font-size: 13px; color: #111; font-weight: 500; }
+.intl-confirm-sub { font-size: 11px; color: #888; margin-top: 2px; }
+.intl-confirm-amts { text-align: right; flex-shrink: 0; }
+.intl-confirm-clp { font-size: 14px; color: #111; font-weight: 600; }
+.intl-confirm-usd { font-size: 11px; color: #888; margin-top: 2px; }
 .subcat-wrap { position: relative; }
 .subcat-row { display: flex; gap: 6px; }
 .subcat-row input { flex: 1; padding: 10px 12px; border: 0.5px solid #ddd; border-radius: 8px; font-size: 15px; background: #fff; color: #111; font-family: inherit; }
@@ -1341,9 +1367,43 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
       </div>
       <div class="field"><label>DESCRIPCIÓN</label><textarea id="f-desc" placeholder="Ej: Compra semanal en Jumbo..."></textarea></div>
       <div class="field"><label>MONTO</label><div class="monto-wrap"><span class="monto-prefix">$</span><input type="number" id="f-monto" placeholder="0" min="0" /></div></div>
+      <div id="intl-banner" style="display:none;"><div class="intl-banner"><span class="intl-banner-icon">🌐</span><span>Gasto internacional. Ingresa el monto total en CLP que pagarás y luego distribuye en ítems USD.</span></div></div>
       <div class="dev-row" id="dev-toggle"><div class="toggle-box"><span class="toggle-check">✓</span></div><span class="dev-label">Es una devolución</span><span class="dev-hint" id="dev-hint">marcar con X</span></div>
       <button class="btn-guardar" id="btn-guardar">Guardar gasto</button>
+      <button class="btn-guardar-sec" id="btn-guardar-sin-dist" style="display:none;" onclick="intlGuardarSinDist()">Guardar sin distribuir</button>
     </div>
+  </div>
+</div>
+
+<!-- TARJETA INTERNACIONAL: distribución USD -->
+<div class="overlay" id="ov-intl-dist">
+  <div class="sheet" style="max-height:90vh;overflow-y:auto;">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 4px;">
+      <div class="sheet-title" style="margin-bottom:0;">Distribuir en USD</div>
+      <button style="width:28px;height:28px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;font-size:14px;color:#666;" onclick="cerrar('ov-intl-dist')">✕</button>
+    </div>
+    <div id="intl-dist-subtitle" style="font-size:13px;color:#888;margin-bottom:4px;"></div>
+    <div class="intl-tipo-cambio" id="intl-tipo-cambio-display"></div>
+    <div id="intl-progress-wrap" style="margin-bottom:14px;"></div>
+    <div id="intl-items-list"></div>
+    <button class="intl-add-btn" onclick="intlAgregarItem()">＋ Agregar ítem</button>
+    <button class="btn-guardar" id="btn-intl-resumen" style="margin-bottom:8px;opacity:0.4;" disabled onclick="intlVerResumen()">Ver resumen →</button>
+    <button class="btn-guardar-sec" onclick="intlGuardarSinDist()">Guardar sin distribuir</button>
+  </div>
+</div>
+
+<!-- TARJETA INTERNACIONAL: confirmación -->
+<div class="overlay" id="ov-intl-confirm">
+  <div class="sheet" style="max-height:90vh;overflow-y:auto;">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 16px;">
+      <div class="sheet-title" style="margin-bottom:0;">Resumen</div>
+      <button style="width:28px;height:28px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;font-size:14px;color:#666;" onclick="cerrar('ov-intl-confirm')">✕</button>
+    </div>
+    <div id="intl-confirm-list" style="margin-bottom:16px;"></div>
+    <button class="btn-guardar" id="btn-intl-confirmar" style="margin-bottom:8px;" onclick="intlConfirmar()">Confirmar y guardar todos</button>
+    <button class="btn-guardar-sec" onclick="cerrar('ov-intl-confirm')">Volver</button>
   </div>
 </div>
 
