@@ -86,6 +86,9 @@ window.confirmarAjusteCuadratura=confirmarAjusteCuadratura;
 window.cerrarResultadoCuadratura=cerrarResultadoCuadratura;
 window.registrarCuadratura=registrarCuadratura;
 window.toggleEyeAll=toggleEyeAll;
+window.presetRango=presetRango;
+window.setAdminFilter=setAdminFilter;
+window.selAdminEstado=selAdminEstado;
 
 window._eyeHidden = {santander: false, falabella: false, tc: false};
 window._eyeAllHidden = false;
@@ -594,6 +597,7 @@ let detalleData={};
 let adminEditandoSubcat=null;
 let adminEditandoCat=null;
 let adminCatParaAgregar=null;
+let adminFilter='todas';
 let totalFilasGastos=0;
 let dashMes=3,dashAnio=2026,pptoPanelMes=3,pptoPanelAnio=2026;
 let rangoDesde={mes:3,anio:2026},rangoHasta={mes:3,anio:2026};
@@ -619,8 +623,8 @@ let divEditIdx=null;
 
 function fmt(n){return '$'+Math.round(Math.abs(n)).toLocaleString('es-CL');}
 function getStatus(p){return p>=100?'over':p>=80?'warning':'ok';}
-function bloquearScrollFondo(){document.body.classList.add('sheet-open');}
-function desbloquearScrollFondo(){document.body.classList.remove('sheet-open');}
+function bloquearScrollFondo(){document.body.classList.add('sheet-open');document.body.style.overflowX='hidden';}
+function desbloquearScrollFondo(){document.body.classList.remove('sheet-open');document.body.style.overflowX='';}
 function cerrar(id){
   document.getElementById(id).classList.remove('open');
   const hayAbiertos=document.querySelectorAll('.overlay.open, .alcance-overlay.open').length>0;
@@ -721,7 +725,7 @@ async function cargarDatos(){
     const paramRows=Array.isArray(paramData)?paramData:(paramData.rows||[]);
     montoInicialTC=Array.isArray(paramData)?0:(paramData.montoInicialTC||0);
 
-    subcats=paramRows.slice(1).filter(r=>r&&r[0]).map(r=>({sub:r[0],cat:r[1]||'',ie:r[2]||'E',modo:r[3]||''}));
+    subcats=paramRows.slice(1).filter(r=>r&&r[0]).map(r=>({sub:r[0],cat:r[1]||'',ie:r[2]||'E',modo:r[3]||'',estado:r[4]||''}));
     presupuestoAllRows=pptoRows.slice(1).filter(r=>r&&r[0]);
     buildPptoForMonth(pptoPanelMes,pptoPanelAnio);
 
@@ -967,7 +971,6 @@ function abrirCat(i,key){
 
   document.getElementById('cat-sheet-items').innerHTML=[...c.gastos].sort((a,b)=>b.monto-a.monto).map(g=>`
     <div class="gasto-item" onclick="abrirGastoById(${g.id})">
-      <div class="gasto-cat-dot" style="background:${catColores[c.nombre]||'#999'};"></div>
       <div class="gasto-info"><div class="gasto-desc">${g.desc}</div><div class="gasto-meta">${g.sub?g.sub.includes(' - ')?g.sub.split(' - ').slice(1).join(' - '):g.sub:''}${g.sub&&g.fecha?' · ':''}${g.fecha}</div></div>
       <div class="gasto-monto e">- ${fmt(g.monto)}</div>
     </div>`).join('');
@@ -1017,7 +1020,7 @@ function getDiaLabel(f){
   const fd=new Date(f+'T00:00:00');
   if(fd.getTime()===hoy.getTime())return 'Hoy';
   if(fd.getTime()===ayer.getTime())return 'Ayer';
-  return `${fd.getDate()} de ${meses[fd.getMonth()]}`;
+  const multiAnio=rangoDesde.anio!==rangoHasta.anio;return `${fd.getDate()} de ${meses[fd.getMonth()]}${multiAnio?' '+fd.getFullYear():''}`;
 }
 function renderDetalle(){
   actualizarRangoLabel();
@@ -1058,7 +1061,6 @@ function renderDetalle(){
       ${dia!=='_'?`<div class="dia-label">${dia}<span class="dia-total">${(tot>=0?'+':'')+fmt(tot)}</span></div>`:''}
       ${items.map(g=>`
         <div class="gasto-item" onclick="abrirGasto(${g.id})">
-          <div class="gasto-cat-dot" style="background:${catColores[g.cat]||'#999'};"></div>
           <div class="gasto-info">
             <div class="gasto-desc">${g.desc}</div>
             <div class="gasto-meta"><span>${g.sub}</span>${g.dev?'<span class="gasto-dev">devolución</span>':''}</div>
@@ -1138,6 +1140,18 @@ document.getElementById('det-filtro-btn').addEventListener('click',()=>{
   p.style.display=open?'block':'none';
   if(open)renderDetFilterPanel(getTodosRango());
 });
+function presetRango(tipo){
+  const hoy=new Date();
+  const mesHoy=hoy.getMonth(),anioHoy=hoy.getFullYear();
+  let desdeMes=mesHoy,desdeAnio=anioHoy,hastaMes=mesHoy,hastaAnio=anioHoy;
+  if(tipo==='3m'){let m=mesHoy-2,a=anioHoy;if(m<0){m+=12;a-=1;}desdeMes=m;desdeAnio=a;}
+  else if(tipo==='6m'){let m=mesHoy-5,a=anioHoy;if(m<0){m+=12;a-=1;}desdeMes=m;desdeAnio=a;}
+  else if(tipo==='12m'){let m=mesHoy-11,a=anioHoy;if(m<0){m+=12;a-=1;}desdeMes=m;desdeAnio=a;}
+  document.getElementById('p-desde-mes').value=desdeMes;
+  document.getElementById('p-desde-anio').value=desdeAnio;
+  document.getElementById('p-hasta-mes').value=hastaMes;
+  document.getElementById('p-hasta-anio').value=hastaAnio;
+}
 document.getElementById('rango-btn').addEventListener('click',()=>{
   const anios=[2019,2020,2021,2022,2023,2024,2025,2026];
   ['p-desde-mes','p-hasta-mes'].forEach(id=>{document.getElementById(id).innerHTML=meses.map((m,i)=>`<option value="${i}">${m}</option>`).join('');});
@@ -1690,26 +1704,73 @@ document.getElementById('ppto-next').addEventListener('click',()=>{pptoPanelMes+
 document.getElementById('ppto-search').addEventListener('input',()=>renderPresupuesto());
 
 // ── ADMIN ────────────────────────────────────────────────
+function getPptoCat(cat){
+  return subcats.filter(s=>s.cat===cat&&s.ie==='E').reduce((sum,s)=>sum+(pptoData[s.sub.trim()]?.monto||0),0);
+}
+function getUltimoGastoSubcatRaw(sub){
+  let ultima='';
+  Object.values(detalleData).flat().forEach(g=>{if(g.sub.trim()===sub.trim()&&g.fecha>ultima)ultima=g.fecha;});
+  return ultima;
+}
+function getUltimoGastoSubcat(sub){
+  let ultima='';
+  Object.values(detalleData).flat().forEach(g=>{if(g.sub.trim()===sub.trim()&&g.fecha>ultima)ultima=g.fecha;});
+  if(!ultima||ultima.length<10)return '';
+  const d=new Date(ultima+'T00:00:00');
+  return `${d.getDate()} ${mesesC[d.getMonth()]} ${d.getFullYear()}`;
+}
 function renderAdmin(){
+  const q=(document.getElementById('admin-search')?.value||'').toLowerCase().trim();
   const grupos={};
   subcats.forEach(s=>{if(!grupos[s.cat])grupos[s.cat]=[];grupos[s.cat].push(s);});
-  const catColoresDefault='#666';
-  const catBgsDefault='#f5f5f5';
-  document.getElementById('admin-cat-lista').innerHTML=Object.entries(grupos).map(([cat,subs])=>{
+  const pasaBusqueda=s=>!q||(s.sub.toLowerCase().includes(q)||s.cat.toLowerCase().includes(q));
+  const activas=[],ocultas=[];
+  Object.entries(grupos).forEach(([cat,subs])=>{
+    if(subs.every(s=>s.estado==='Oculto'))ocultas.push([cat,subs]);
+    else activas.push([cat,subs]);
+  });
+  activas.sort((a,b)=>{
+    const ma=getPptoCat(a[0]),mb=getPptoCat(b[0]);
+    if(ma===0&&mb===0)return 0;if(ma===0)return 1;if(mb===0)return -1;
+    return mb-ma;
+  });
+  const renderCat=(cat,subs,esOculta)=>{
+    let subsFilt=subs.filter(pasaBusqueda);
+    if(adminFilter==='activas')subsFilt=subsFilt.filter(s=>s.estado!=='Oculto');
+    else if(adminFilter==='ocultas')subsFilt=subsFilt.filter(s=>s.estado==='Oculto');
+    if(!subsFilt.length&&(adminFilter!=='todas'||q))return '';
     const catId='admincat_'+cat.replace(/[^a-zA-Z0-9]/g,'_');
     const catSafe=cat.replace(/'/g,"\\'");
-    return `<div class="admin-cat-card">
+    const catOpacity=esOculta?'opacity:0.5;':'';
+    const catNameStyle=esOculta?'text-decoration:line-through;':'';
+    return `<div class="admin-cat-card" style="${catOpacity}">
       <div class="admin-cat-header" onclick="toggleAdminCat('${catId}',this)">
-        <div class="cat-icon" style="width:32px;height:32px;font-size:13px;background:${catBgs[cat]||catBgsDefault};color:${catColores[cat]||catColoresDefault};border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;">${cat.charAt(0)}</div>
-        <span class="admin-cat-nombre">${cat}</span>
-        <span class="admin-cat-count">${subs.length} subcats</span>
+        <div class="cat-icon" style="width:32px;height:32px;font-size:13px;background:${catBgs[cat]||'#f5f5f5'};color:${catColores[cat]||'#666'};border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;">${cat.charAt(0)}</div>
+        <span class="admin-cat-nombre" style="${catNameStyle}">${cat}</span>
+        <span style="flex:1;"></span>
+        <span class="admin-cat-count">${subsFilt.length} subcats</span>
         <button onclick="event.stopPropagation();abrirRenombrarCat('${catSafe}')" style="padding:4px 10px;border-radius:6px;border:0.5px solid #e0e0e0;background:#f9f9f9;color:#666;font-size:11px;cursor:pointer;font-family:inherit;">Renombrar</button>
         <span class="admin-cat-chevron open">▼</span>
       </div>
       <div class="admin-subcat-list open" id="${catId}">
-        ${subs.map(s=>{
+        ${[...subsFilt].sort((a,b)=>{
+          const pA=pptoData[a.sub.trim()]?.monto||0,pB=pptoData[b.sub.trim()]?.monto||0;
+          if(pB!==pA)return pB-pA;
+          const fA=getUltimoGastoSubcatRaw(a.sub),fB=getUltimoGastoSubcatRaw(b.sub);
+          if(fB&&!fA)return 1;if(fA&&!fB)return -1;
+          return fB.localeCompare(fA);
+        }).map(s=>{
           const subSafe=s.sub.replace(/'/g,"\\'");
           const label=s.sub.includes(' - ')?s.sub.split(' - ').slice(1).join(' - '):s.sub;
+          const subOculta=s.estado==='Oculto';
+          const subStyle=subOculta?'opacity:0.45;':'';
+          const subLabelStyle=subOculta?'text-decoration:line-through;':'';
+          const fechaLabel=getUltimoGastoSubcat(s.sub);
+          const estadoBadge=s.estado==='Oculto'
+            ?`<span style="background:#f0f0f0;color:#999;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:500;">Oculto</span>`
+            :s.estado==='Activo'
+            ?`<span style="background:#e8f5e9;color:#2e7d32;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:500;">Activo</span>`
+            :'';
           const modoBadge=s.modo==='Transferencia'
             ?`<span style="background:#e8f0fe;color:#1a73e8;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:500;">Transferencia</span>`
             :s.modo==='Tarjeta Crédito'
@@ -1718,9 +1779,10 @@ function renderAdmin(){
           const ieBadge=s.ie==='E'
             ?`<span style="background:#fce4ec;color:#c62828;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:500;">E</span>`
             :`<span style="background:#e8f5e9;color:#2e7d32;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:500;">I</span>`;
-          return `<div class="admin-subcat-item">
-            <span class="admin-subcat-nombre">${label}</span>
-            <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">${modoBadge}${ieBadge}</div>
+          return `<div class="admin-subcat-item" style="${subStyle}">
+            <span class="admin-subcat-nombre" style="${subLabelStyle}">${label}</span>
+            ${fechaLabel?`<span style="font-size:11px;color:#bbb;margin-right:4px;">${fechaLabel}</span>`:''}
+            <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">${estadoBadge}${modoBadge}${ieBadge}</div>
             <button class="admin-edit-btn" onclick="abrirEditSubcat('${subSafe}')">✏️</button>
             <button class="admin-del-btn" onclick="eliminarSubcatAdmin('${subSafe}')">✕</button>
           </div>`;
@@ -1731,7 +1793,13 @@ function renderAdmin(){
         </div>
       </div>
     </div>`;
-  }).join('');
+  };
+  let html=activas.map(([cat,subs])=>renderCat(cat,subs,false)).join('');
+  if(ocultas.length){
+    html+=`<div style="font-size:11px;color:#bbb;font-weight:500;letter-spacing:0.04em;padding:12px 4px 6px;">OCULTAS</div>`;
+    html+=ocultas.map(([cat,subs])=>renderCat(cat,subs,true)).join('');
+  }
+  document.getElementById('admin-cat-lista').innerHTML=html;
 }
 
 function toggleAdminCat(catId,header){
@@ -1759,6 +1827,10 @@ function abrirEditSubcat(sub){
   const ieOpts=document.querySelectorAll('#admin-edit-ie .admin-ie-opt');
   if(sc.ie==='E')ieOpts[0].classList.add('active-e');
   else ieOpts[1].classList.add('active-i');
+  document.querySelectorAll('#admin-edit-estado .admin-ie-opt').forEach(o=>{o.className='admin-ie-opt';});
+  const estadoOpts=document.querySelectorAll('#admin-edit-estado .admin-ie-opt');
+  if(sc.estado==='Oculto')estadoOpts[1].classList.add('active-oculto');
+  else estadoOpts[0].classList.add('active-activo');
   document.getElementById('ov-admin-edit').classList.add('open');
   bloquearScrollFondo();
 }
@@ -1772,12 +1844,14 @@ async function guardarEditSubcat(){
   const nuevoModo=modoActivo?(modoActivo.dataset.modo||''):'';
   const ieActivo=document.querySelector('#admin-edit-ie .admin-ie-opt.active-e, #admin-edit-ie .admin-ie-opt.active-i');
   const nuevoIE=ieActivo?(ieActivo.dataset.ie||'E'):'E';
+  const estadoActivo=document.querySelector('#admin-edit-estado .admin-ie-opt.active-activo, #admin-edit-estado .admin-ie-opt.active-oculto');
+  const nuevoEstado=estadoActivo?(estadoActivo.dataset.estado||''):(adminEditandoSubcat?.estado||'');
   const{oldSub,cat}=adminEditandoSubcat;
   const prefix=oldSub.includes(' - ')?oldSub.substring(0,oldSub.indexOf(' - ')+3):'';
   const newSub=prefix+nuevoLabel;
   const idx=subcats.findIndex(s=>s.sub===oldSub);
-  if(idx>=0)subcats[idx]={sub:newSub,cat,ie:nuevoIE,modo:nuevoModo};
-  const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'']);
+  if(idx>=0)subcats[idx]={sub:newSub,cat,ie:nuevoIE,modo:nuevoModo,estado:nuevoEstado};
+  const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'',s.estado||'']);
   cerrarAdminModal('ov-admin-edit');
   mostrarLoading('Guardando cambios...');
   try{
@@ -1851,7 +1925,7 @@ async function confirmarEliminarSubcat(){
   cerrarAdminModal('ov-admin-del');
   const backupSubcats=[...subcats];
   subcats=subcats.filter(s=>s.sub!==sub);
-  const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'']);
+  const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'',s.estado||'']);
   mostrarLoading(count>0?`Moviendo ${count} gastos y eliminando...`:'Eliminando subcategoría...');
   try{
     const body={rows};
@@ -1896,7 +1970,7 @@ async function guardarNuevaSubcat(){
   const newSub=adminCatParaAgregar+' - '+nombre;
   if(subcats.find(s=>s.sub===newSub)){mostrarToast('Esa subcategoría ya existe');return;}
   subcats.push({sub:newSub,cat:adminCatParaAgregar,ie,modo});
-  const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'']);
+  const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'',s.estado||'']);
   cerrarAdminModal('ov-admin-add');
   mostrarLoading('Guardando...');
   try{
@@ -1930,7 +2004,7 @@ async function guardarRenombrarCat(){
   if(nuevaCat===adminEditandoCat){cerrarAdminModal('ov-admin-rename');return;}
   const oldCat=adminEditandoCat;
   subcats.forEach(s=>{if(s.cat===oldCat)s.cat=nuevaCat;});
-  const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'']);
+  const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'',s.estado||'']);
   cerrarAdminModal('ov-admin-rename');
   mostrarLoading('Guardando...');
   try{
@@ -1955,7 +2029,7 @@ async function agregarNuevaCategoria(){
   if(subcats.find(s=>s.cat===nombre)){mostrarToast('Esa categoría ya existe');return;}
   const newSub=nombre+' - Nueva subcategoría';
   subcats.push({sub:newSub,cat:nombre,ie:'E',modo:''});
-  const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'']);
+  const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'',s.estado||'']);
   mostrarLoading('Creando categoría...');
   try{
     const res=await fetch('/api/parametros',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows})});
@@ -1972,7 +2046,11 @@ async function agregarNuevaCategoria(){
   }
 }
 
-function cerrarAdminModal(id){document.getElementById(id).classList.remove('open');}
+function cerrarAdminModal(id){
+  document.getElementById(id).classList.remove('open');
+  const hayAbiertos=document.querySelectorAll('.overlay.open, .alcance-overlay.open').length>0;
+  if(!hayAbiertos)desbloquearScrollFondo();
+}
 
 function selAdminModo(el,modo){
   el.closest('.admin-toggle-group').querySelectorAll('.admin-toggle-opt').forEach(o=>{o.className='admin-toggle-opt';});
@@ -1986,7 +2064,19 @@ function selAdminIE(el,ie){
   el.classList.add(ie==='E'?'active-e':'active-i');
 }
 
+function selAdminEstado(el,estado){
+  el.closest('.admin-ie-group').querySelectorAll('.admin-ie-opt').forEach(o=>{o.className='admin-ie-opt';});
+  el.classList.add(estado==='Activo'?'active-activo':'active-oculto');
+}
+
+function setAdminFilter(val){
+  adminFilter=val;
+  document.querySelectorAll('.admin-chip').forEach(c=>{c.classList.toggle('active',c.dataset.filter===val);});
+  renderAdmin();
+}
+
 document.getElementById('btn-add-cat').addEventListener('click',agregarNuevaCategoria);
+document.getElementById('admin-search').addEventListener('input',renderAdmin);
 
 document.getElementById('ov-admin-edit').addEventListener('click',e=>{if(e.target===document.getElementById('ov-admin-edit'))cerrarAdminModal('ov-admin-edit');});
 document.getElementById('ov-admin-add').addEventListener('click',e=>{if(e.target===document.getElementById('ov-admin-add'))cerrarAdminModal('ov-admin-add');});

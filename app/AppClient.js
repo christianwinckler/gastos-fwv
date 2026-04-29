@@ -226,7 +226,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   transition: box-shadow 0.1s;
 }
 .gasto-item:hover { box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
-.gasto-cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
 .gasto-info { flex: 1; min-width: 0; }
 .gasto-desc { font-size: 14px; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gasto-meta { font-size: 11px; color: #999; margin-top: 2px; display: flex; gap: 6px; align-items: center; }
@@ -321,6 +320,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .admin-ie-opt { padding: 11px; border: 0.5px solid #e0e0e0; border-radius: 10px; text-align: center; cursor: pointer; font-size: 14px; color: #888; background: #fafafa; font-weight: 500; user-select: none; }
 .admin-ie-opt.active-e { border-color: #c62828; background: #fce4ec; color: #c62828; }
 .admin-ie-opt.active-i { border-color: #2e7d32; background: #e8f5e9; color: #2e7d32; }
+.admin-ie-opt.active-activo { border-color: #2e7d32; background: #e8f5e9; color: #2e7d32; }
+.admin-ie-opt.active-oculto { border-color: #999; background: #f0f0f0; color: #555; }
+.admin-chip { padding: 5px 12px; border-radius: 14px; font-size: 12px; border: 0.5px solid #e0e0e0; background: #fff; color: #555; cursor: pointer; font-family: inherit; }
+.admin-chip.active { border-color: #1a73e8; background: #e8f0fe; color: #1a73e8; font-weight: 500; }
 .admin-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
 .admin-field label { font-size: 11px; color: #888; font-weight: 500; letter-spacing: 0.04em; }
 .admin-field input { padding: 11px 12px; border: 0.5px solid #ddd; border-radius: 10px; font-size: 15px; color: #111; font-family: inherit; background: #fafafa; outline: none; }
@@ -341,12 +344,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .overlay {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,0.35); z-index: 150; align-items: flex-end;
+  overflow: hidden;
 }
 .overlay.open { display: flex; }
 .sheet {
   background: #fff; width: 100%; border-radius: 16px 16px 0 0;
   padding: 16px 16px 32px; max-height: 88vh; overflow-y: auto;
   max-width: 600px; margin: 0 auto;
+  overflow-x: hidden; touch-action: pan-y;
 }
 .sheet-handle { width: 36px; height: 4px; background: #e0e0e0; border-radius: 2px; margin: 0 auto 16px; }
 .sheet-title { font-size: 15px; font-weight: 500; color: #111; margin-bottom: 16px; }
@@ -377,6 +382,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .picker-col label { font-size: 11px; color: #888; font-weight: 500; letter-spacing: 0.04em; }
 .picker-col select { padding: 9px 10px; border: 0.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; background: #f5f5f5; color: #111; font-family: inherit; }
 .picker-actions { display: flex; gap: 8px; }
+.btn-preset-rango { padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: 500; border: 0.5px solid #1a73e8; background: #e8f0fe; color: #1a73e8; cursor: pointer; font-family: inherit; transition: background 0.1s; }
+.btn-preset-rango:hover { background: #d2e3fc; }
 .btn-apply { flex: 1; padding: 12px; background: #111; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; }
 .btn-cancel-sm { padding: 12px 20px; background: #f5f5f5; color: #666; border: none; border-radius: 10px; font-size: 15px; cursor: pointer; font-family: inherit; }
 
@@ -1002,6 +1009,16 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
     <div class="screen" id="screen-admin">
       <div class="admin-section">
         <div class="admin-section-title">CATEGORÍAS Y SUBCATEGORÍAS</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <div style="position:relative;flex:1;">
+            <input class="admin-add-input" type="search" id="admin-search" placeholder="Buscar categoría o subcategoría..." style="width:100%;padding:7px 10px 7px 30px;" />
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:12px;" id="admin-filter-chips">
+          <button class="admin-chip active" data-filter="todas" onclick="setAdminFilter('todas')">Todas</button>
+          <button class="admin-chip" data-filter="activas" onclick="setAdminFilter('activas')">Solo activas</button>
+          <button class="admin-chip" data-filter="ocultas" onclick="setAdminFilter('ocultas')">Ocultas</button>
+        </div>
         <div id="admin-cat-lista"></div>
         <div class="add-cat-row">
           <input class="admin-add-input" id="nueva-cat-input" placeholder="Nueva categoría..." />
@@ -1300,6 +1317,12 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">Seleccionar rango</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
+      <button class="btn-preset-rango" onclick="presetRango('actual')">Mes actual</button>
+      <button class="btn-preset-rango" onclick="presetRango('3m')">Últimos 3 meses</button>
+      <button class="btn-preset-rango" onclick="presetRango('6m')">Últimos 6 meses</button>
+      <button class="btn-preset-rango" onclick="presetRango('12m')">Último año</button>
+    </div>
     <div class="picker-row">
       <div class="picker-col"><label>DESDE</label><select id="p-desde-mes"></select><select id="p-desde-anio"></select></div>
       <div class="picker-col"><label>HASTA</label><select id="p-hasta-mes"></select><select id="p-hasta-anio"></select></div>
@@ -1461,6 +1484,13 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
       <div class="admin-ie-group" id="admin-edit-ie">
         <div class="admin-ie-opt active-e" data-ie="E" onclick="selAdminIE(this,'E')">Egreso</div>
         <div class="admin-ie-opt" data-ie="I" onclick="selAdminIE(this,'I')">Ingreso</div>
+      </div>
+    </div>
+    <div class="admin-field">
+      <label>ESTADO</label>
+      <div class="admin-ie-group" id="admin-edit-estado">
+        <div class="admin-ie-opt" data-estado="Activo" onclick="selAdminEstado(this,'Activo')">Activo</div>
+        <div class="admin-ie-opt" data-estado="Oculto" onclick="selAdminEstado(this,'Oculto')">Oculto</div>
       </div>
     </div>
     <button class="btn-admin-guardar" onclick="guardarEditSubcat()">Guardar cambios</button>
