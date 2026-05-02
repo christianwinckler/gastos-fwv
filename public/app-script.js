@@ -757,13 +757,14 @@ async function cargarDatos(){
       const fecha=normalizarFecha(row[0]);
       const mesAnio=row[1]||calcMesAnio(fecha);
       if(!mesAnio)return;
+      const hasJ=row[9]!==undefined&&row[9]!==null&&String(row[9]).trim()!=='';
       const mv=parseMonto(row[9]),mr=parseMonto(row[8]);
-      const monto=Math.abs(!isNaN(mv)&&mv!==0?mv:(!isNaN(mr)?mr:0));
+      const montoValido=hasJ?(isNaN(mv)?0:mv):(isNaN(mr)?0:mr);
+      const monto=Math.abs(montoValido);
       const ie=(row[4]||'E').trim();
       const banco=(row[5]||'').trim();
       const g={id:idx+1,rowIndex:idx+2,fecha,sub:(row[2]||'').trim(),cat:(row[3]||'').trim(),ie,
-               banco,dev:(row[6]||'')==='X',desc:row[7]||'',monto,
-               montoValido:(!isNaN(mv)&&mv!==0?mv:(!isNaN(mr)?mr:0))};
+               banco,dev:(row[6]||'')==='X',desc:row[7]||'',monto,montoValido};
       if(!detalleData[mesAnio])detalleData[mesAnio]=[];
       detalleData[mesAnio].push(g);
     });
@@ -1969,6 +1970,11 @@ function abrirEditSubcat(sub){
   const label=sub.includes(' - ')?sub.split(' - ').slice(1).join(' - '):sub;
   document.getElementById('admin-edit-title').textContent='Editar: '+label;
   document.getElementById('admin-edit-nombre').value=label;
+  const catEditSelect=document.getElementById('admin-edit-cat');
+  if(catEditSelect){
+    const cats=[...new Set(subcats.map(s=>s.cat))].sort();
+    catEditSelect.innerHTML=cats.map(c=>`<option value="${c}"${c===sc.cat?' selected':''}>${c}</option>`).join('');
+  }
   document.querySelectorAll('#admin-edit-modo .admin-toggle-opt').forEach(o=>{o.className='admin-toggle-opt';});
   const modoOpts=document.querySelectorAll('#admin-edit-modo .admin-toggle-opt');
   if(sc.modo==='Transferencia')modoOpts[0].classList.add('active-transf');
@@ -2003,11 +2009,13 @@ async function guardarEditSubcat(){
   const nuevoEstado=estadoActivo?(estadoActivo.dataset.estado||''):(adminEditandoSubcat?.estado||'');
   const frecActiva=document.querySelector('#admin-edit-frecuencia .admin-ie-opt.active-mensual, #admin-edit-frecuencia .admin-ie-opt.active-variable');
   const nuevaFrecuencia=frecActiva?(frecActiva.dataset.frecuencia||''):(adminEditandoSubcat?.frecuencia||'');
-  const{oldSub,cat}=adminEditandoSubcat;
-  const prefix=oldSub.includes(' - ')?oldSub.substring(0,oldSub.indexOf(' - ')+3):'';
+  const catSelectEl=document.getElementById('admin-edit-cat');
+  const nuevaCat=catSelectEl?catSelectEl.value:adminEditandoSubcat.cat;
+  const{oldSub}=adminEditandoSubcat;
+  const prefix=oldSub.includes(' - ')?nuevaCat+' - ':'';
   const newSub=prefix+nuevoLabel;
   const idx=subcats.findIndex(s=>s.sub===oldSub);
-  if(idx>=0)subcats[idx]={sub:newSub,cat,ie:nuevoIE,modo:nuevoModo,estado:nuevoEstado,frecuencia:nuevaFrecuencia};
+  if(idx>=0)subcats[idx]={sub:newSub,cat:nuevaCat,ie:nuevoIE,modo:nuevoModo,estado:nuevoEstado,frecuencia:nuevaFrecuencia};
   const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'',s.estado||'',s.frecuencia||'']);
   cerrarAdminModal('ov-admin-edit');
   mostrarLoading('Guardando cambios...');
@@ -2107,10 +2115,27 @@ function abrirAgregarSubcat(cat,inputId){
   const nombre=inputId?(document.getElementById(inputId)?.value.trim()||''):'';
   document.getElementById('admin-add-title').textContent='Agregar a '+cat;
   document.getElementById('admin-add-nombre').value=nombre;
+
+  // Populate category select with all available cats, pre-select current
+  const cats=[...new Set(subcats.map(s=>s.cat))].sort((a,b)=>a.localeCompare(b));
+  const catSelect=document.getElementById('admin-add-cat');
+  catSelect.innerHTML=cats.map(c=>`<option value="${c}"${c===cat?' selected':''}>${c}</option>`).join('');
+
+  // Reset modo
   document.querySelectorAll('#admin-add-modo .admin-toggle-opt').forEach(o=>{o.className='admin-toggle-opt';});
   document.querySelectorAll('#admin-add-modo .admin-toggle-opt')[2].classList.add('active-vacio');
+
+  // Reset ie
   document.querySelectorAll('#admin-add-ie .admin-ie-opt').forEach(o=>{o.className='admin-ie-opt';});
   document.querySelectorAll('#admin-add-ie .admin-ie-opt')[0].classList.add('active-e');
+
+  // Reset estado → Activo por defecto
+  document.querySelectorAll('#admin-add-estado .admin-ie-opt').forEach(o=>{o.className='admin-ie-opt';});
+  document.querySelectorAll('#admin-add-estado .admin-ie-opt')[0].classList.add('active-activo');
+
+  // Reset frecuencia → sin selección
+  document.querySelectorAll('#admin-add-frecuencia .admin-ie-opt').forEach(o=>{o.className='admin-ie-opt';});
+
   document.getElementById('ov-admin-add').classList.add('open');
   bloquearScrollFondo();
 }
@@ -2120,13 +2145,22 @@ async function guardarNuevaSubcat(){
   const inputEl=document.getElementById('admin-add-nombre');
   const nombre=inputEl?inputEl.value.trim():'';
   if(!nombre){mostrarToast('Escribe un nombre');return;}
+
+  const catSelect=document.getElementById('admin-add-cat');
+  const cat=catSelect?catSelect.value:adminCatParaAgregar;
+
   const modoActivo=document.querySelector('#admin-add-modo .admin-toggle-opt.active-transf, #admin-add-modo .admin-toggle-opt.active-tc, #admin-add-modo .admin-toggle-opt.active-vacio');
   const modo=modoActivo?(modoActivo.dataset.modo||''):'';
   const ieActivo=document.querySelector('#admin-add-ie .admin-ie-opt.active-e, #admin-add-ie .admin-ie-opt.active-i');
   const ie=ieActivo?(ieActivo.dataset.ie||'E'):'E';
-  const newSub=adminCatParaAgregar+' - '+nombre;
+  const estadoActivo=document.querySelector('#admin-add-estado .admin-ie-opt.active-activo, #admin-add-estado .admin-ie-opt.active-oculto');
+  const estado=estadoActivo?(estadoActivo.dataset.estado||'Activo'):'Activo';
+  const frecActivo=document.querySelector('#admin-add-frecuencia .admin-ie-opt.active-mensual, #admin-add-frecuencia .admin-ie-opt.active-variable');
+  const frecuencia=frecActivo?(frecActivo.dataset.frecuencia||''):'';
+
+  const newSub=cat+' - '+nombre;
   if(subcats.find(s=>s.sub===newSub)){mostrarToast('Esa subcategoría ya existe');return;}
-  subcats.push({sub:newSub,cat:adminCatParaAgregar,ie,modo,frecuencia:''});
+  subcats.push({sub:newSub,cat,ie,modo,estado,frecuencia});
   const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'',s.estado||'',s.frecuencia||'']);
   cerrarAdminModal('ov-admin-add');
   mostrarLoading('Guardando...');

@@ -1491,6 +1491,10 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
       <button style="width:28px;height:28px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;font-size:14px;color:#666;" onclick="cerrarAdminModal('ov-admin-edit')">✕</button>
     </div>
     <div class="admin-field">
+      <label>CATEGORÍA</label>
+      <select id="admin-edit-cat" style="padding:11px 12px;border:0.5px solid #ddd;border-radius:10px;font-size:15px;font-family:inherit;background:#fafafa;outline:none;width:100%;"></select>
+    </div>
+    <div class="admin-field">
       <label>NOMBRE</label>
       <input type="text" id="admin-edit-nombre" placeholder="Nombre de la subcategoría" />
     </div>
@@ -1543,6 +1547,10 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
       <button style="width:28px;height:28px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;font-size:14px;color:#666;" onclick="cerrarAdminModal('ov-admin-add')">✕</button>
     </div>
     <div class="admin-field">
+      <label>CATEGORÍA</label>
+      <select id="admin-add-cat" style="padding:11px 12px;border:0.5px solid #ddd;border-radius:10px;font-size:15px;color:#111;font-family:inherit;background:#fafafa;outline:none;width:100%;appearance:none;-webkit-appearance:none;"></select>
+    </div>
+    <div class="admin-field">
       <label>NOMBRE</label>
       <input type="text" id="admin-add-nombre" placeholder="Ej: Agua Maihue" />
     </div>
@@ -1565,6 +1573,20 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
       <div class="admin-ie-group" id="admin-add-ie">
         <div class="admin-ie-opt active-e" data-ie="E" onclick="selAdminIE(this,'E')">Egreso</div>
         <div class="admin-ie-opt" data-ie="I" onclick="selAdminIE(this,'I')">Ingreso</div>
+      </div>
+    </div>
+    <div class="admin-field">
+      <label>ESTADO</label>
+      <div class="admin-ie-group" id="admin-add-estado">
+        <div class="admin-ie-opt" data-estado="Activo" onclick="selAdminEstado(this,'Activo')">Activo</div>
+        <div class="admin-ie-opt" data-estado="Oculto" onclick="selAdminEstado(this,'Oculto')">Oculto</div>
+      </div>
+    </div>
+    <div class="admin-field">
+      <label>FRECUENCIA DE PAGO</label>
+      <div class="admin-ie-group" id="admin-add-frecuencia">
+        <div class="admin-ie-opt" data-frecuencia="Mensual" onclick="selAdminFrecuencia(this,'Mensual')">Mensual</div>
+        <div class="admin-ie-opt" data-frecuencia="Variable" onclick="selAdminFrecuencia(this,'Variable')">Variable</div>
       </div>
     </div>
     <button class="btn-admin-guardar" onclick="guardarNuevaSubcat()">Agregar subcategoría</button>
