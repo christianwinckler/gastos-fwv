@@ -176,7 +176,7 @@ let intlSinDist = false;
 
 function checkIntlMode() {
   const sub = document.getElementById('f-subcat').value.trim();
-  const esIntl = sub === 'TC - Tarjeta Internacional';
+  const esIntl = sub === 'Banco - Tarjeta Internacional';
   const banner = document.getElementById('intl-banner');
   const btnSec = document.getElementById('btn-guardar-sin-dist');
   const btnG = document.getElementById('btn-guardar');
@@ -366,7 +366,7 @@ async function intlConfirmar() {
     document.getElementById('dev-hint').textContent = 'marcar con X';
     const tcBtn = document.querySelector('.banco-btn[data-banco="Tarjeta Crédito"]');
     if (tcBtn) tcBtn.classList.add('active');
-    ultimoGastoGuardado = { desc: 'Tarjeta Internacional', monto: montoCLP, sub: 'TC - Tarjeta Internacional' };
+    ultimoGastoGuardado = { desc: 'Tarjeta Internacional', monto: montoCLP, sub: 'Banco - Tarjeta Internacional' };
     document.getElementById('post-gasto-desc').textContent = `${count} gasto${count !== 1 ? 's' : ''} internacional${count !== 1 ? 'es' : ''} guardado${count !== 1 ? 's' : ''} — $${montoCLP.toLocaleString('es-CL')} CLP`;
     document.getElementById('ov-post-gasto').classList.add('open');
     bloquearScrollFondo();
@@ -1405,7 +1405,7 @@ async function confirmarCambioSubcat(newSub) {
 function _setDistribuirIntlBtn(){
   const btnDistIntl=document.getElementById('btn-distribuir-intl');
   if(btnDistIntl){
-    const esIntl=gastoActual&&gastoActual.sub&&gastoActual.sub.trim()==='TC - Tarjeta Internacional';
+    const esIntl=gastoActual&&gastoActual.sub&&gastoActual.sub.trim()==='Banco - Tarjeta Internacional';
     btnDistIntl.style.display=esIntl?'flex':'none';
   }
 }
@@ -2533,7 +2533,7 @@ document.getElementById('btn-guardar').addEventListener('click',async()=>{
   const monto=parseFloat(document.getElementById('f-monto').value)||0;
   const esDev=document.getElementById('dev-toggle').classList.contains('active');
   if(!fecha||!sub||!banco||!monto){mostrarToast('Completa fecha, subcategoría, banco y monto');return;}
-  if(!modoEdicion&&sub!=='TC - Tarjeta Internacional'&&!_skipDuplicadoCheck){
+  if(!modoEdicion&&sub!=='Banco - Tarjeta Internacional'&&!_skipDuplicadoCheck){
     const hayDuplicado=detectarDuplicadoMensual(sub,fecha);
     if(hayDuplicado){
       duplicadoPendiente={fecha,sub,banco,desc,monto:parseFloat(document.getElementById('f-monto').value)||0,esDev:document.getElementById('dev-toggle').classList.contains('active')};
@@ -2543,7 +2543,7 @@ document.getElementById('btn-guardar').addEventListener('click',async()=>{
     }
   }
   _skipDuplicadoCheck=false;
-  if(sub==='TC - Tarjeta Internacional'&&!intlSinDist){intlContinuar();return;}
+  if(sub==='Banco - Tarjeta Internacional'&&!intlSinDist){intlContinuar();return;}
   intlSinDist=false;
   const btn=document.getElementById('btn-guardar');
   btn.disabled=true;btn.textContent='Guardando...';
@@ -2677,7 +2677,9 @@ function renderHome(){
   const saldoAhorros=ahorros+traslados;
   const santEl=document.getElementById('kpi-sant');
   if(santEl){
-    santEl.querySelector('.kpi-valor').innerHTML=window._eyeHidden.santander?'••••••':fmt(sant);
+    santEl.querySelector('.kpi-valor').innerHTML = window._eyeHidden.santander
+      ? '••••••'
+      : `<span onclick="irADetalleBanco('Santander')" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">${fmt(sant)}</span>`;
   }
   // Parte 1: montoValido donde sub = "Banco - Ingreso a Falabella desde Ahorros"
   const fala1 = allGastos
@@ -2697,7 +2699,9 @@ function renderHome(){
   const fala = fala1 + fala2 + fala3;
   const falaEl=document.getElementById('kpi-fala');
   if(falaEl){
-    falaEl.querySelector('.kpi-valor').innerHTML=window._eyeHidden.falabella?'••••••':fmt(fala);
+    falaEl.querySelector('.kpi-valor').innerHTML = window._eyeHidden.falabella
+      ? '••••••'
+      : `<span onclick="irADetalleBanco('Falabella')" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">${fmt(fala)}</span>`;
   }
   const ahorrosEl=document.getElementById('kpi-ahorros-val');
   if(ahorrosEl){
@@ -2737,13 +2741,16 @@ function renderHome(){
   // ── KPI TARJETA DE CRÉDITO ───────────────────────
   const gastosTC=allGastos.filter(g=>g.banco==='Tarjeta Crédito').reduce((s,g)=>s+g.montoValido,0);
   const gastosAbsTC=Math.abs(gastosTC);
-  const pagosTC=allGastos.filter(g=>g.sub==='TC - Pago Nueva Tarjeta').reduce((s,g)=>s+g.montoValido,0)*-1;
+  const pagosTC=Math.abs(allGastos.filter(g=>g.sub==='Banco - Pago Nueva Tarjeta').reduce((s,g)=>s+g.montoValido,0));
   const deudaCuotas=cuotasData.filter(c=>c.cuotasRestantes>0).reduce((s,c)=>s+c.montoPendiente,0);
   const saldoTC=montoInicialTC-gastosAbsTC+pagosTC-deudaCuotas;
   const tcEl=document.getElementById('kpi-tc');
   if(tcEl){
-    tcEl.textContent=window._eyeHidden.tc?'••••••':(saldoTC>=0?'':'-')+fmt(Math.abs(saldoTC));
-    tcEl.style.color=window._eyeHidden.tc?'#8e8e93':saldoTC>=0?'#2e7d32':'#c62828';
+    tcEl.textContent = ''
+    tcEl.innerHTML = window._eyeHidden.tc
+      ? '••••••'
+      : `<span onclick="irADetalleBanco('Tarjeta Crédito')" style="cursor:pointer;color:${saldoTC >= 0 ? '#2e7d32' : '#c62828'};text-decoration:underline dotted;text-underline-offset:3px;">${(saldoTC >= 0 ? '' : '-') + fmt(Math.abs(saldoTC))}</span>`
+    tcEl.style.color = ''
   }
 
   // ── CATEGORÍAS CLAVE ─────────────────────────────
@@ -3079,7 +3086,7 @@ function abrirDetalleTarjeta() {
     allGastos.filter(g => g.banco === 'Tarjeta Crédito').reduce((s, g) => s + g.montoValido, 0)
   )
   const pagosTC = Math.abs(
-    allGastos.filter(g => g.sub === 'TC - Pago Nueva Tarjeta').reduce((s, g) => s + g.montoValido, 0)
+    allGastos.filter(g => g.sub === 'Banco - Pago Nueva Tarjeta').reduce((s, g) => s + g.montoValido, 0)
   )
   const deudaCuotas = cuotasData.filter(c => c.cuotasRestantes > 0).reduce((s, c) => s + c.montoPendiente, 0)
   const saldoTC = montoInicialTCB1 - gastosAbsTC + pagosTC - deudaCuotas + montoInicialTCB2
@@ -3115,6 +3122,21 @@ function abrirDetalleTarjeta() {
   bloquearScrollFondo()
 }
 window.abrirDetalleTarjeta = abrirDetalleTarjeta
+
+window.irADetalleBanco = irADetalleBanco
+
+function irADetalleBanco(banco) {
+  const mapaBanco = {
+    'Santander': 'santander',
+    'Falabella': 'falabella',
+    'Tarjeta Crédito': 'tc',
+  }
+  const hoy = new Date()
+  rangoDesde = { mes: 0, anio: hoy.getFullYear() }
+  rangoHasta = { mes: hoy.getMonth(), anio: hoy.getFullYear() }
+  detFiltros = { tipo: 'todos', cats: [], catsExcluidas: [], banco: mapaBanco[banco] || 'todos', orden: 'reciente' }
+  switchScreen('detalle')
+}
 
 // ── VALIDACIÓN PAGOS ─────────────────────────────────────
 
@@ -4309,9 +4331,10 @@ function abrirCuadratura(banco) {
       allGastos.filter(g => g.banco === 'Tarjeta Crédito')
         .reduce((s, g) => s + g.montoValido, 0)
     );
-    const pagosTC = allGastos
-      .filter(g => g.sub === 'TC - Pago Nueva Tarjeta')
-      .reduce((s, g) => s + g.montoValido, 0) * -1;
+    const pagosTC = Math.abs(
+      allGastos.filter(g => g.sub === 'Banco - Pago Nueva Tarjeta')
+        .reduce((s, g) => s + g.montoValido, 0)
+    );
     const deudaCuotas = cuotasData
       .filter(c => c.cuotasRestantes > 0)
       .reduce((s, c) => s + c.montoPendiente, 0);
