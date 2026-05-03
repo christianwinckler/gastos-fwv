@@ -102,6 +102,7 @@ window.actualizarAvisoCambioFecha=actualizarAvisoCambioFecha;
 window.abrirModalCambioSubcat=abrirModalCambioSubcat;
 window.filtrarSubcatsCambio=filtrarSubcatsCambio;
 window.confirmarCambioSubcat=confirmarCambioSubcat;
+window.actualizarTodo=actualizarTodo;
 
 window._eyeHidden = {santander: false, falabella: false, tc: false};
 window._eyeAllHidden = false;
@@ -783,6 +784,25 @@ async function cargarDatos(){
   }catch(e){
     desbloquearNavbar();
     mostrarError('No se pudo conectar con Google Sheets.\n'+e.message);
+  }
+}
+
+async function actualizarTodo() {
+  mostrarLoading('Actualizando datos...')
+  try {
+    await cargarDatos()
+    const screenActiva = document.querySelector('.screen.active')?.id
+    if (screenActiva === 'screen-home') renderHome()
+    if (screenActiva === 'screen-dashboard') renderDashboard()
+    if (screenActiva === 'screen-detalle') renderDetalle()
+    if (screenActiva === 'screen-presupuesto') renderPresupuesto()
+    if (screenActiva === 'screen-admin') renderAdmin()
+    if (screenActiva === 'screen-validacion') renderValidacion()
+    if (screenActiva === 'screen-cuotas') { await cargarCuotas(); renderCuotas() }
+    if (screenActiva === 'screen-historial-cuad') cargarHistorialCuad()
+    mostrarToast('Datos actualizados ✓')
+  } catch(e) {
+    mostrarToast('Error al actualizar: ' + e.message)
   }
 }
 

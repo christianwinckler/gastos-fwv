@@ -896,7 +896,15 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
         Historial Cuadraturas
       </button>
     </div>
-    <div style="padding:8px 16px 16px;">
+    <div style="padding:8px 16px 16px;display:flex;flex-direction:column;gap:8px;">
+      <button onclick="actualizarTodo();cerrarDrawer()"
+        style="width:100%;padding:10px;background:#f5f5f5;color:#555;border:0.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/>
+          <path d="M13.5 2v4h-4"/>
+        </svg>
+        Actualizar datos
+      </button>
       <button style="width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;" onclick="abrirNuevoGasto();cerrarDrawer()">+ Nuevo gasto</button>
     </div>
   </div>
