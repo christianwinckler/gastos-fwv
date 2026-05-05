@@ -12,7 +12,7 @@ export async function GET() {
       getParametros(),
       getMontoInicialTC(),
     ])
-    return Response.json({ rows: data, montoInicialTC: tcData.total, montoInicialTCB1: tcData.b1, montoInicialTCB2: tcData.b2 })
+    return Response.json({ rows: data, montoInicialTC: tcData.total, montoInicialTCB1: tcData.b1, montoInicialTCB2: tcData.b2, montoInicialAhorros: tcData.montoInicialAhorros })
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 })
   }

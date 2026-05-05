@@ -8,6 +8,8 @@ window.cargarDatos=cargarDatos;
 window.togglePptoCat=togglePptoCat;
 window.toggleFijo=toggleFijo;
 window.actualizarPpto=actualizarPpto;
+window.abrirInfoSubcat=abrirInfoSubcat;
+window.abrirInfoCat=abrirInfoCat;
 window.abrirCat=abrirCat;
 window.guardarPptoDesdeCat=guardarPptoDesdeCat;
 window.abrirGasto=abrirGasto;
@@ -602,6 +604,7 @@ let subcats=[];
 let montoInicialTC=0;
 let montoInicialTCB1=0;
 let montoInicialTCB2=0;
+let montoInicialAhorros=0;
 
 let pptoData={};
 let presupuestoAllRows=[];
@@ -752,6 +755,7 @@ async function cargarDatos(){
     montoInicialTC=Array.isArray(paramData)?0:(paramData.montoInicialTC||0);
     montoInicialTCB1=Array.isArray(paramData)?0:(paramData.montoInicialTCB1||0);
     montoInicialTCB2=Array.isArray(paramData)?0:(paramData.montoInicialTCB2||0);
+    montoInicialAhorros=Array.isArray(paramData)?0:(paramData.montoInicialAhorros||0);
 
     subcats=paramRows.slice(1).filter(r=>r&&r[0]).map(r=>({sub:r[0],cat:r[1]||'',ie:r[2]||'E',modo:r[3]||'',estado:r[4]||'',frecuencia:r[5]||''}));
     presupuestoAllRows=pptoRows.slice(1).filter(r=>r&&r[0]);
@@ -1813,7 +1817,7 @@ async function ejecutarDividir(){
 function renderPresupuesto(){
   document.getElementById('ppto-mes').textContent=`${meses[pptoPanelMes]} ${pptoPanelAnio}`;
   const q=(document.getElementById('ppto-search')?.value||'').toLowerCase().trim();
-  const subcatsE=pptoSubcats;
+  const subcatsE=pptoSubcats.filter(s=>s.estado!=='Oculto');
   const key=`${String(pptoPanelMes+1).padStart(2,'0')}-${pptoPanelAnio}`;
   const gastosMes=dashData[key]?dashData[key].categorias:[];
   let totalPptoConReal=0,totalRealConPpto=0;
@@ -1851,15 +1855,23 @@ function renderPresupuesto(){
       <div class="ppto-cat-header" onclick="togglePptoCat(this)">
         <div class="ppto-cat-icon" style="background:${catBgs[cat]||'#f5f5f5'};color:${catColores[cat]||'#666'}">${cat.charAt(0)}</div>
         <span class="ppto-cat-nombre">${cat}</span>
+        <button onclick="event.stopPropagation();abrirInfoCat('${cat.replace(/'/g,"\\'")}')" style="width:20px;height:20px;border-radius:50%;background:#e8f0fe;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;margin-left:auto;margin-right:6px;">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </button>
         <span class="ppto-cat-total">${fmt(totalCat)}</span>
         <span class="ppto-cat-chevron open">▼</span>
       </div>
       <div class="ppto-subcat-list open">
         ${sortedSubs.map(sc=>{const p=pptoData[sc.sub.trim()]||{monto:0,fijo:false};return `
           <div class="ppto-subcat-item">
-            <div class="ppto-subcat-info"><div class="ppto-subcat-nombre">${sc.sub.includes(' - ')?sc.sub.split(' - ').slice(1).join(' - '):sc.sub}</div></div>
+            <div class="ppto-subcat-info" style="flex:1;min-width:0;">
+              <div class="ppto-subcat-nombre">${sc.sub.includes(' - ')?sc.sub.split(' - ').slice(1).join(' - '):sc.sub}</div>
+            </div>
+            <button onclick="abrirInfoSubcat('${sc.sub.replace(/'/g,"\\'")}')" style="width:20px;height:20px;border-radius:50%;background:#e8f0fe;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;margin-right:6px;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </button>
             <div class="ppto-monto-wrap"><span class="ppto-monto-prefix">$</span>
-              <input class="ppto-monto-input" type="number" value="${p.monto}" min="0" onchange="actualizarPpto('${sc.sub}',this.value,this)" ${p.fijo?'style="background:#f0f4ff;"':''} />
+              <input class="ppto-monto-input" type="number" value="${p.monto}" min="0" onchange="actualizarPpto('${sc.sub}',this.value,this)" onfocus="if(this.value==='0'||this.value===0){this.value='';}" onblur="if(this.value===''||this.value===undefined){this.value='0';}" ${p.fijo?'style="background:#f0f4ff;"':''} />
             </div>
           </div>`;}).join('')}
       </div>
@@ -1876,6 +1888,99 @@ function togglePptoSort(){
 }
 function togglePptoCat(h){const l=h.nextElementSibling,c=h.querySelector('.ppto-cat-chevron');l.classList.toggle('open');c.classList.toggle('open');}
 function toggleFijo(sub){if(!pptoData[sub])pptoData[sub]={monto:0,fijo:false};pptoData[sub].fijo=!pptoData[sub].fijo;renderPresupuesto();}
+function abrirInfoSubcat(sub){
+  const hoy=new Date();
+  const puntos=[];
+  for(let i=11;i>=0;i--){
+    const{mes,anio}=prevMesAnio(hoy.getMonth(),hoy.getFullYear(),i);
+    const key=keyMesAnio(mes,anio);
+    const gastosMes=(detalleData[key]||[])
+      .filter(g=>g.sub.trim()===sub.trim()&&g.ie==='E')
+      .reduce((s,g)=>s+g.monto,0);
+    puntos.push({label:mesesC[mes]+' '+String(anio).slice(2),monto:gastosMes});
+  }
+  const mesesConGasto=puntos.filter(p=>p.monto>0);
+  const promedio=mesesConGasto.length>0?Math.round(mesesConGasto.reduce((s,p)=>s+p.monto,0)/mesesConGasto.length):0;
+  const promedioTotal=Math.round(puntos.reduce((s,p)=>s+p.monto,0)/12);
+  const maximo=Math.max(...puntos.map(p=>p.monto));
+  const label=sub.includes(' - ')?sub.split(' - ').slice(1).join(' - '):sub;
+  const filas=puntos.map(p=>{
+    const barPct=maximo>0?Math.round((p.monto/maximo)*100):0;
+    const color=p.monto>0?'#1a73e8':'#e0e0e0';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;">
+      <span style="font-size:11px;color:#888;width:44px;flex-shrink:0;">${p.label}</span>
+      <div style="flex:1;height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;">
+        <div style="width:${barPct}%;height:100%;background:${color};border-radius:3px;"></div>
+      </div>
+      <span style="font-size:11px;color:${p.monto>0?'#111':'#ccc'};width:72px;text-align:right;flex-shrink:0;">${p.monto>0?fmt(p.monto):'—'}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('info-subcat-content').innerHTML=`
+    <div style="font-size:13px;font-weight:500;color:#111;margin-bottom:12px;">${label}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      <div style="background:#e8f0fe;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:10px;font-weight:500;color:#1a73e8;letter-spacing:0.04em;margin-bottom:3px;">PROM. MESES ACTIVOS</div>
+        <div style="font-size:17px;font-weight:500;color:#111;">${fmt(promedio)}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px;">${mesesConGasto.length} de 12 meses</div>
+      </div>
+      <div style="background:#f5f5f5;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:10px;font-weight:500;color:#888;letter-spacing:0.04em;margin-bottom:3px;">PROM. 12 MESES</div>
+        <div style="font-size:17px;font-weight:500;color:#111;">${fmt(promedioTotal)}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px;">incluyendo $0</div>
+      </div>
+    </div>
+    <div style="font-size:10px;font-weight:500;color:#888;letter-spacing:0.04em;margin-bottom:8px;">ÚLTIMOS 12 MESES</div>
+    ${filas}
+  `;
+  document.getElementById('ov-info-subcat').classList.add('open');
+  bloquearScrollFondo();
+}
+function abrirInfoCat(cat){
+  const hoy=new Date();
+  const puntos=[];
+  for(let i=11;i>=0;i--){
+    const{mes,anio}=prevMesAnio(hoy.getMonth(),hoy.getFullYear(),i);
+    const key=keyMesAnio(mes,anio);
+    const gastosMes=(detalleData[key]||[])
+      .filter(g=>g.cat.trim()===cat.trim()&&g.ie==='E')
+      .reduce((s,g)=>s+g.monto,0);
+    puntos.push({label:mesesC[mes]+' '+String(anio).slice(2),monto:gastosMes});
+  }
+  const mesesConGasto=puntos.filter(p=>p.monto>0);
+  const promedio=mesesConGasto.length>0?Math.round(mesesConGasto.reduce((s,p)=>s+p.monto,0)/mesesConGasto.length):0;
+  const promedioTotal=Math.round(puntos.reduce((s,p)=>s+p.monto,0)/12);
+  const maximo=Math.max(...puntos.map(p=>p.monto));
+  const filas=puntos.map(p=>{
+    const barPct=maximo>0?Math.round((p.monto/maximo)*100):0;
+    const color=p.monto>0?'#1a73e8':'#e0e0e0';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;">
+      <span style="font-size:11px;color:#888;width:44px;flex-shrink:0;">${p.label}</span>
+      <div style="flex:1;height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;">
+        <div style="width:${barPct}%;height:100%;background:${color};border-radius:3px;"></div>
+      </div>
+      <span style="font-size:11px;color:${p.monto>0?'#111':'#ccc'};width:72px;text-align:right;flex-shrink:0;">${p.monto>0?fmt(p.monto):'—'}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('info-subcat-content').innerHTML=`
+    <div style="font-size:13px;font-weight:500;color:#111;margin-bottom:12px;">${cat}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      <div style="background:#e8f0fe;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:10px;font-weight:500;color:#1a73e8;letter-spacing:0.04em;margin-bottom:3px;">PROM. MESES ACTIVOS</div>
+        <div style="font-size:17px;font-weight:500;color:#111;">${fmt(promedio)}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px;">${mesesConGasto.length} de 12 meses</div>
+      </div>
+      <div style="background:#f5f5f5;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:10px;font-weight:500;color:#888;letter-spacing:0.04em;margin-bottom:3px;">PROM. 12 MESES</div>
+        <div style="font-size:17px;font-weight:500;color:#111;">${fmt(promedioTotal)}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px;">incluyendo $0</div>
+      </div>
+    </div>
+    <div style="font-size:10px;font-weight:500;color:#888;letter-spacing:0.04em;margin-bottom:8px;">ÚLTIMOS 12 MESES</div>
+    ${filas}
+  `;
+  document.getElementById('ov-info-subcat').classList.add('open');
+  bloquearScrollFondo();
+}
 function actualizarPpto(sub,val,inputEl){
   const nuevo=parseInt(val)||0,anterior=pptoData[sub]?pptoData[sub].monto:0;
   if(nuevo===anterior)return;
@@ -2160,6 +2265,24 @@ async function guardarEditSubcat(){
   const{oldSub}=adminEditandoSubcat;
   const prefix=oldSub.includes(' - ')?nuevaCat+' - ':'';
   const newSub=prefix+nuevoLabel;
+  const subcatActual=subcats.find(s=>s.sub===oldSub);
+  const estaOcultando=nuevoEstado==='Oculto'&&subcatActual?.estado!=='Oculto';
+  if(estaOcultando){
+    const tienePpto=Object.values(presupuestoAllRows).some(
+      r=>(r[1]||'').trim()===oldSub.trim()&&(parseFloat(r[3])||0)>0
+    );
+    if(tienePpto){
+      const confirmar=confirm(`"${nuevoLabel}" tiene presupuesto asignado. ¿Deseas eliminarlo (ponerlo en $0) al ocultarla?`);
+      if(!confirmar)return;
+      presupuestoAllRows=presupuestoAllRows.map(r=>{
+        if((r[1]||'').trim()===oldSub.trim())return[r[0],r[1],r[2],0];
+        return r;
+      });
+      if(pptoData[oldSub.trim()])pptoData[oldSub.trim()].monto=0;
+      if(pptoData[newSub.trim()])pptoData[newSub.trim()].monto=0;
+      await fetch('/api/presupuesto',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows:presupuestoAllRows})});
+    }
+  }
   const idx=subcats.findIndex(s=>s.sub===oldSub);
   if(idx>=0)subcats[idx]={sub:newSub,cat:nuevaCat,ie:nuevoIE,modo:nuevoModo,estado:nuevoEstado,frecuencia:nuevaFrecuencia};
   const rows=subcats.map(s=>[s.sub,s.cat,s.ie,s.modo||'',s.estado||'',s.frecuencia||'']);
@@ -2674,7 +2797,7 @@ function renderHome(){
   const sant=allGastos.filter(g=>g.banco==='Santander').reduce((s,g)=>s+g.montoValido,0);
   const ahorros=allGastos.filter(g=>g.cat==='Ahorro en Cuenta Vista').reduce((s,g)=>s+g.montoValido,0);
   const traslados=allGastos.filter(g=>g.sub==='Banco - Ingreso a Falabella desde Ahorros').reduce((s,g)=>s+g.montoValido,0);
-  const saldoAhorros=ahorros+traslados;
+  const saldoAhorros=montoInicialAhorros+ahorros+traslados;
   const santEl=document.getElementById('kpi-sant');
   if(santEl){
     santEl.querySelector('.kpi-valor').innerHTML = window._eyeHidden.santander
@@ -2705,7 +2828,7 @@ function renderHome(){
   }
   const ahorrosEl=document.getElementById('kpi-ahorros-val');
   if(ahorrosEl){
-    ahorrosEl.innerHTML=window._eyeHidden.santander?'••••••':fmt(saldoAhorros);
+    ahorrosEl.innerHTML=window._eyeHidden.santander?'••••••':`<span onclick="irADetalleBanco('Ahorros')" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">${fmt(saldoAhorros)}</span>`;
   }
 
   // ── KPI ÚLTIMO MES ACTIVO FALABELLA ──────────────
@@ -3134,7 +3257,11 @@ function irADetalleBanco(banco) {
   const hoy = new Date()
   rangoDesde = { mes: 0, anio: hoy.getFullYear() }
   rangoHasta = { mes: hoy.getMonth(), anio: hoy.getFullYear() }
-  detFiltros = { tipo: 'todos', cats: [], catsExcluidas: [], banco: mapaBanco[banco] || 'todos', orden: 'reciente' }
+  if (banco === 'Ahorros') {
+    detFiltros = { tipo: 'todos', cats: ['Ahorro en Cuenta Vista'], catsExcluidas: [], banco: 'todos', orden: 'reciente' }
+  } else {
+    detFiltros = { tipo: 'todos', cats: [], catsExcluidas: [], banco: mapaBanco[banco] || 'todos', orden: 'reciente' }
+  }
   switchScreen('detalle')
 }
 
@@ -4325,6 +4452,15 @@ function abrirCuadratura(banco) {
       .filter(g => g.ie === 'E' && g.banco === 'Falabella')
       .reduce((s, g) => s + g.montoValido, 0);
     montoApp = fala1 + fala2 + fala3;
+  } else if (banco === 'Cuenta Vista Ahorros') {
+    const allGastos = Object.values(detalleData).flat();
+    const ahorros = allGastos
+      .filter(g => g.cat === 'Ahorro en Cuenta Vista')
+      .reduce((s, g) => s + g.montoValido, 0);
+    const traslados = allGastos
+      .filter(g => g.sub === 'Banco - Ingreso a Falabella desde Ahorros')
+      .reduce((s, g) => s + g.montoValido, 0);
+    montoApp = Math.round(montoInicialAhorros + ahorros + traslados);
   } else if (banco === 'Tarjeta Crédito') {
     const allGastos = Object.values(detalleData).flat();
     const gastosAbsTC = Math.abs(
@@ -4343,9 +4479,9 @@ function abrirCuadratura(banco) {
 
   cuadMontoApp = Math.round(montoApp);
 
-  document.getElementById('cuad-titulo').textContent = `Cuadrar saldo — ${banco}`;
+  document.getElementById('cuad-titulo').textContent = `Cuadrar saldo — ${banco === 'Cuenta Vista Ahorros' ? 'Cuenta Vista Ahorros' : banco}`;
   document.getElementById('cuad-sub').textContent =
-    `Ingresa el saldo que figura en tu app de ${banco}`;
+    `Ingresa el saldo que figura en tu app de ${banco === 'Cuenta Vista Ahorros' ? 'Cuenta Vista' : banco}`;
   document.getElementById('cuad-monto-app').textContent = fmt(cuadMontoApp);
   document.getElementById('cuad-monto-banco').value = '';
 
@@ -4540,6 +4676,9 @@ document.getElementById('ov-duplicado-mensual').addEventListener('click',e=>{
 });
 document.getElementById('ov-tc-detalle').addEventListener('click', e => {
   if (e.target === document.getElementById('ov-tc-detalle')) cerrar('ov-tc-detalle');
+});
+document.getElementById('ov-info-subcat').addEventListener('click',e=>{
+  if(e.target===document.getElementById('ov-info-subcat'))cerrar('ov-info-subcat');
 });
 
 const btnEyeInit=document.getElementById('btn-eye-all');

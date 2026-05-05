@@ -1132,10 +1132,16 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
             </svg>
           </button>
         </div>
-        <div class="kpi-card" id="kpi-ahorros">
+        <div class="kpi-card" id="kpi-ahorros" style="position:relative;">
           <div class="kpi-label">CUENTA VISTA</div>
           <div class="kpi-valor" id="kpi-ahorros-val"><span class="skeleton skeleton-valor"></span></div>
           <div class="kpi-badge" style="background:#e8f0fe;color:#1a73e8;">Ahorros</div>
+          <button class="cuad-check-btn" onclick="abrirCuadratura('Cuenta Vista Ahorros')" title="Cuadrar saldo">
+            <svg viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" fill="#e8f5e9" stroke="#a5d6a7" stroke-width="1"/>
+              <path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="#2e7d32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
         </div>
         <div class="kpi-card" id="kpi-fala" style="position:relative;">
           <div class="kpi-label">FALABELLA</div>
@@ -1883,6 +1889,17 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
       <span style="background:#fff8e1;color:#f57f17;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:500;">Tarjeta WorldMember Limited</span>
     </div>
     <div id="tc-detalle-content"></div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-info-subcat">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 14px;">
+      <div class="sheet-title" style="margin-bottom:0;">Gasto histórico</div>
+      <button style="width:28px;height:28px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;font-size:14px;color:#666;" onclick="cerrar('ov-info-subcat')">✕</button>
+    </div>
+    <div id="info-subcat-content"></div>
   </div>
 </div>
 
