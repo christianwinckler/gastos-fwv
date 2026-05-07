@@ -1,3 +1,40 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Design tokens ─────────────────────────────────────────────── */
+:root {
+  --bg:         oklch(0.972 0.012 80);
+  --fg:         oklch(0.24 0.025 250);
+  --muted:      oklch(0.50 0.020 250);
+  --sub:        oklch(0.62 0.015 60);
+  --card:       oklch(1 0 0);
+  --card-hover: oklch(0.995 0.008 80);
+  --inner-card: oklch(0.965 0.012 80);
+  --chip-bg:    oklch(0.94 0.012 80);
+  --border:     oklch(0 0 0 / 0.06);
+  --accent:     #e87a6b;
+  --teal-bg:    oklch(0.92 0.04 195);
+  --teal-fg:    oklch(0.45 0.10 195);
+
+  /* Semantic (non-themeable) */
+  --error:      #dc2626;
+  --error-bg:   #fee2e2;
+  --success:    #2e7d32;
+  --warning:    #e65100;
+}
+
+html.dark {
+  --bg:         oklch(0.18 0.012 250);
+  --fg:         oklch(0.96 0.008 80);
+  --muted:      oklch(0.66 0.015 60);
+  --sub:        oklch(0.50 0.012 60);
+  --card:       oklch(0.23 0.012 250);
+  --card-hover: oklch(0.26 0.012 250);
+  --inner-card: oklch(0.20 0.010 250);
+  --chip-bg:    oklch(0.26 0.010 250);
+  --border:     oklch(1 0 0 / 0.08);
+  --accent:     #e87a6b;
+  --teal-bg:    oklch(0.30 0.05 195);
+  --teal-fg:    oklch(0.80 0.08 195);
+}

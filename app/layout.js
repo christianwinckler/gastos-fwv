@@ -1,4 +1,5 @@
 import './globals.css'
+import ThemeApplier from './components/ThemeApplier'
 
 export const metadata = {
   title: 'FWV App',
@@ -16,8 +17,12 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Gastos FWV" />
         <meta name="mobile-web-app-capable" content="yes" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&display=swap"
+        />
       </head>
-      <body>{children}</body>
+      <body><ThemeApplier />{children}</body>
     </html>
   )
 }
