@@ -3,10 +3,33 @@ import { signIn } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
 
+const IconGoogle = () => (
+  <svg width={14} height={14} viewBox="0 0 48 48">
+    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+  </svg>
+)
+
+const IconSun = () => (
+  <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="4"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+  </svg>
+)
+
+const IconMoon = () => (
+  <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+)
+
 function LoginContent() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
   const [dark, setDark] = useState(false)
+  const [transitioning, setTransitioning] = useState(false)
 
   useEffect(() => {
     const pending = sessionStorage.getItem('pwa_redirect')
@@ -19,19 +42,27 @@ function LoginContent() {
 
   useEffect(() => {
     try {
-      if (localStorage.getItem('fwv_dark') === '1') setDark(true)
+      const isDark = localStorage.getItem('fwv_dark') === '1'
+      setDark(isDark)
+      document.documentElement.classList.toggle('dark', isDark)
     } catch (e) {}
   }, [])
 
   const handleLogin = () => {
+    setTransitioning(true)
     sessionStorage.setItem('pwa_redirect', '/home')
-    signIn('google', { callbackUrl: '/home' })
+    setTimeout(() => {
+      signIn('google', { callbackUrl: '/home' })
+    }, 300)
   }
 
   const toggleDark = () => {
     const next = !dark
     setDark(next)
-    try { localStorage.setItem('fwv_dark', next ? '1' : '0') } catch (e) {}
+    try {
+      localStorage.setItem('fwv_dark', next ? '1' : '0')
+      document.documentElement.classList.toggle('dark', next)
+    } catch (e) {}
   }
 
   let errorMsg = null
@@ -41,120 +72,126 @@ function LoginContent() {
     errorMsg = 'Ocurrió un error al iniciar sesión. Intenta de nuevo.'
   }
 
-  const bg       = dark ? '#0f0f10'                : '#f5f5f7'
-  const card     = dark ? '#1c1c1e'                : '#ffffff'
-  const border   = dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'
-  const shadow   = dark
-    ? '0 2px 8px rgba(0,0,0,0.4), 0 8px 32px rgba(0,0,0,0.3)'
-    : '0 2px 8px rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.05)'
-  const text2    = dark ? '#98989f' : '#6b7280'
-  const text3    = dark ? '#636366' : '#9ca3af'
-  const iconBg   = dark ? '#f2f2f7' : '#111111'
-  const iconFill = dark ? '#111111' : '#ffffff'
-
   return (
-    <>
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap"
-      />
-      <div style={{
-        fontFamily: "'DM Sans', -apple-system, sans-serif",
-        background: bg,
-        color: dark ? '#f2f2f7' : '#111111',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-        transition: 'background 0.25s, color 0.25s',
-      }}>
+    <div style={{
+      position: 'fixed', inset: 0,
+      background: 'var(--bg)', color: 'var(--fg)',
+      display: 'flex', flexDirection: 'column',
+      padding: '32px 24px',
+      fontFamily: "'Geist', -apple-system, sans-serif",
+      transition: 'background 250ms, color 250ms, opacity 400ms, transform 500ms cubic-bezier(.2,.8,.2,1)',
+      opacity: transitioning ? 0 : 1,
+      transform: transitioning ? 'scale(1.02)' : 'scale(1)',
+      boxSizing: 'border-box',
+    }}>
 
-        {/* Dark mode toggle */}
+      {/* Top bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontSize: 11, letterSpacing: '0.14em', color: 'var(--sub)', fontWeight: 500, textTransform: 'uppercase' }}>
+          FWV · 2026
+        </div>
         <button
           onClick={toggleDark}
+          aria-label="Cambiar tema"
           style={{
-            position: 'fixed', top: '18px', right: '18px',
-            width: '36px', height: '36px', borderRadius: '11px',
-            border: `1px solid ${border}`,
-            background: card,
-            cursor: 'pointer',
+            width: 34, height: 34, borderRadius: 11,
+            border: '1px solid var(--border)', background: 'var(--card)',
+            color: 'var(--fg)', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '16px',
             transition: 'all 0.2s',
           }}
         >
-          {dark ? '🌙' : '☀️'}
+          {dark ? <IconSun /> : <IconMoon />}
+        </button>
+      </div>
+
+      {/* Hero */}
+      <div style={{
+        flex: 1, display: 'flex', flexDirection: 'column',
+        justifyContent: 'center', maxWidth: 420, margin: '0 auto', width: '100%',
+      }}>
+        <div style={{
+          marginBottom: 28,
+          transition: 'transform 500ms cubic-bezier(.2,.8,.2,1), opacity 500ms',
+          transform: transitioning ? 'translateY(-40px) scale(0.7)' : 'none',
+          opacity: transitioning ? 0 : 1,
+        }}>
+          <img
+            src="/fwv-icon.png"
+            alt="FWV"
+            width={56}
+            height={56}
+            style={{
+              display: 'block',
+              borderRadius: 13,
+              boxShadow: 'var(--mark-shadow)',
+            }}
+          />
+        </div>
+
+        <h1 style={{
+          fontFamily: "'Instrument Serif', serif",
+          fontSize: 38, lineHeight: 1.05, fontWeight: 400,
+          letterSpacing: '-0.02em',
+          margin: 0, marginBottom: 14,
+        }}>
+          Tu familia,<br />
+          <span style={{ fontStyle: 'italic', color: 'var(--muted)' }}>en un solo lugar.</span>
+        </h1>
+
+        <p style={{ fontSize: 14, lineHeight: 1.55, color: 'var(--muted)', margin: 0, marginBottom: 36, maxWidth: 320 }}>
+          Gastos, alimentación y mucho más — una casa digital para acompañarlos en el día a día.
+        </p>
+
+        {errorMsg && (
+          <div style={{
+            background: 'var(--error-bg)', color: 'var(--error)',
+            borderRadius: 10, padding: '10px 14px',
+            fontSize: 13, marginBottom: 16,
+            lineHeight: 1.4,
+          }}>
+            {errorMsg}
+          </div>
+        )}
+
+        <button
+          onClick={handleLogin}
+          style={{
+            width: '100%', padding: '14px 18px',
+            background: 'var(--fg)', color: 'var(--bg)',
+            border: 'none', borderRadius: 14,
+            fontFamily: 'inherit', fontSize: 14.5, fontWeight: 500,
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            transition: 'transform 0.15s, opacity 0.15s',
+            boxSizing: 'border-box',
+          }}
+          onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.98)' }}
+          onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
+        >
+          <span style={{
+            background: '#fff', borderRadius: '50%', padding: 3,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <IconGoogle />
+          </span>
+          Continuar con Google
         </button>
 
-        {/* Card */}
         <div style={{
-          width: '100%', maxWidth: '380px',
-          background: card,
-          borderRadius: '18px',
-          border: `1px solid ${border}`,
-          boxShadow: shadow,
-          padding: '36px 32px 32px',
-          display: 'flex', flexDirection: 'column',
+          marginTop: 14, fontSize: 12, color: 'var(--sub)',
+          display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center',
         }}>
-
-          {/* Brand */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '28px' }}>
-            <div style={{
-              width: '52px', height: '52px', borderRadius: '16px',
-              background: iconBg,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: '14px',
-            }}>
-              <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="4" y="11" width="18" height="12" rx="2.5" fill={iconFill} opacity="0.9"/>
-                <path d="M2 13L13 4L24 13" stroke={iconFill} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.6"/>
-                <rect x="9" y="16" width="8" height="7" rx="1.5" fill={iconBg} opacity="0.25"/>
-              </svg>
-            </div>
-            <div style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.02em' }}>FWV Apps</div>
-            <div style={{ fontSize: '12px', color: text3, marginTop: '2px' }}>Finanzas personales</div>
-          </div>
-
-          {/* Error message */}
-          {errorMsg && (
-            <div style={{
-              background: '#fee2e2', color: '#dc2626',
-              borderRadius: '10px', padding: '10px 14px',
-              fontSize: '13px', marginBottom: '16px',
-              textAlign: 'left', lineHeight: '1.4',
-            }}>
-              {errorMsg}
-            </div>
-          )}
-
-          {/* Google sign-in */}
-          <button
-            onClick={handleLogin}
-            style={{
-              width: '100%', padding: '12px',
-              background: bg,
-              color: text2,
-              border: `1px solid ${border}`,
-              borderRadius: '13px',
-              fontFamily: 'inherit', fontSize: '14px', fontWeight: 500,
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-              transition: 'background 0.15s, box-shadow 0.15s',
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-            </svg>
-            Continuar con Google
-          </button>
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
+          Acceso restringido a cuentas autorizadas
         </div>
       </div>
-    </>
+
+      {/* Footer */}
+      <div style={{ fontSize: 11, color: 'var(--sub)', textAlign: 'center', letterSpacing: '0.03em' }}>
+        FWV App · versión 1.0
+      </div>
+    </div>
   )
 }
 
