@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>FWV — Login + Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap"/>
+  <style>
+    html, body { margin: 0; padding: 0; background: #0c0c0d; font-family: 'Geist', sans-serif; }
+    * { box-sizing: border-box; }
+    code { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.4); }
+    }
+    .fwv-stage {
+      position: relative;
+      width: 100%; height: 100%;
+      overflow: hidden;
+    }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="fwv-prototype.jsx"></script>
+
+  <script type="text/babel" data-presets="react">
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "accent": "#e87a6b",
+      "density": "comfortable",
+      "dark": false
+    }/*EDITMODE-END*/;
+
+    function App() {
+      const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+      const tweaksObj = {
+        accent: t.accent,
+        density: t.density,
+        dark: t.dark,
+      };
+
+      return (
+        <>
+          <DesignCanvas title="FWV — Login + Selector de Apps" subtitle="Calm financial · editorial · mobile-first">
+
+            <DCSection id="mobile" title="Mobile (iPhone)">
+              <DCArtboard id="login-mobile" label="Flujo completo (iPhone)" width={460} height={900}>
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: 20, height: "100%", background: "#f4f4f5" }}>
+                  <IOSDevice width={380} height={820} dark={tweaksObj.dark}>
+                    <div className="fwv-stage" style={{ height: "100%", position: "relative" }}>
+                      <FWVApp tweaks={tweaksObj}/>
+                    </div>
+                  </IOSDevice>
+                </div>
+              </DCArtboard>
+
+              <DCArtboard id="login-only" label="Login (light)" width={420} height={820}>
+                <div style={{ display:"flex", justifyContent:"center", alignItems:"center", height:"100%", padding:14, background:"#f4f4f5" }}>
+                  <IOSDevice width={360} height={760} dark={false}>
+                    <div className="fwv-stage" style={{ height: "100%", position: "relative" }}>
+                      <FWVApp tweaks={{ ...tweaksObj, dark: false }}/>
+                    </div>
+                  </IOSDevice>
+                </div>
+              </DCArtboard>
+
+              <DCArtboard id="login-dark" label="Login (dark)" width={420} height={820}>
+                <div style={{ display:"flex", justifyContent:"center", alignItems:"center", height:"100%", padding:14, background:"#1a1a1c" }}>
+                  <IOSDevice width={360} height={760} dark={true}>
+                    <div className="fwv-stage" style={{ height: "100%", position: "relative" }}>
+                      <FWVApp tweaks={{ ...tweaksObj, dark: true }}/>
+                    </div>
+                  </IOSDevice>
+                </div>
+              </DCArtboard>
+            </DCSection>
+
+            <DCSection id="desktop" title="Desktop / tablet">
+              <DCArtboard id="login-desktop-light" label="Login — desktop (light)" width={1200} height={760}>
+                <div style={{ position:"relative", width:"100%", height:"100%", background: "oklch(0.985 0.003 80)" }}>
+                  <FWVAppDesktop initialRoute="login" dark={false} accent={t.accent} density={t.density}/>
+                </div>
+              </DCArtboard>
+
+              <DCArtboard id="home-desktop-light" label="Home — desktop (light)" width={1200} height={900}>
+                <div style={{ position:"relative", width:"100%", height:"100%", background: "oklch(0.985 0.003 80)" }}>
+                  <FWVAppDesktop initialRoute="home" dark={false} accent={t.accent} density={t.density}/>
+                </div>
+              </DCArtboard>
+
+              <DCArtboard id="home-desktop-dark" label="Home — desktop (dark)" width={1200} height={900}>
+                <div style={{ position:"relative", width:"100%", height:"100%", background: "oklch(0.16 0.005 260)" }}>
+                  <FWVAppDesktop initialRoute="home" dark={true} accent={t.accent} density={t.density}/>
+                </div>
+              </DCArtboard>
+            </DCSection>
+
+          </DesignCanvas>
+
+          <TweaksPanel title="Tweaks">
+            <TweakSection title="Identidad">
+              <TweakColor
+                label="Acento"
+                value={t.accent}
+                onChange={(v)=>setTweak("accent", v)}
+                options={["#e87a6b","#2f8a86","#e8a93b","#2c3e50","#7c5cff","#16a34a"]}
+              />
+            </TweakSection>
+            <TweakSection title="Densidad">
+              <TweakRadio
+                label="Espaciado"
+                value={t.density}
+                onChange={(v)=>setTweak("density", v)}
+                options={[
+                  {value:"compact", label:"Compacto"},
+                  {value:"comfortable", label:"Cómodo"},
+                  {value:"spacious", label:"Aireado"},
+                ]}
+              />
+            </TweakSection>
+            <TweakSection title="Tema (mobile)">
+              <TweakToggle
+                label="Modo oscuro"
+                value={t.dark}
+                onChange={(v)=>setTweak("dark", v)}
+              />
+            </TweakSection>
+          </TweaksPanel>
+        </>
+      );
+    }
+
+    // Versión desktop con layout split (hero izquierda, contenido derecha)
+    function FWVAppDesktop({ initialRoute, dark, accent, density }) {
+      const [route, setRoute] = React.useState(initialRoute);
+      const fg = dark ? "oklch(0.96 0.008 80)" : "oklch(0.24 0.025 250)";
+      const bg = dark ? "oklch(0.18 0.012 250)" : "oklch(0.972 0.012 80)";
+      const muted = dark ? "oklch(0.66 0.015 60)" : "oklch(0.50 0.020 250)";
+      const sub = dark ? "oklch(0.45 0.01 260)" : "oklch(0.65 0.01 260)";
+      const accentBg = dark ? "oklch(0.20 0.04 260)" : "oklch(0.95 0.03 260)";
+
+      if (route === "login") {
+        return (
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", height:"100%", color: fg, fontFamily:"'Geist', sans-serif" }}>
+            {/* Hero editorial */}
+            <div style={{ background: dark ? "oklch(0.13 0.005 260)" : "oklch(0.97 0.005 80)", padding: "60px 56px", display:"flex", flexDirection:"column", justifyContent:"space-between", borderRight: `1px solid ${dark?"oklch(1 0 0 / 0.06)":"oklch(0 0 0 / 0.05)"}` }}>
+              <div style={{ display:"flex", alignItems:"center", gap: 12 }}>
+                <img src="fwv-icon.png" alt="FWV" width={40} height={40} style={{ borderRadius: 10, display:"block" }}/>
+                <div style={{ fontSize: 13, fontWeight: 500, letterSpacing:"-0.01em" }}>FWV Apps</div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: 11, letterSpacing:"0.14em", color: sub, textTransform:"uppercase", fontWeight: 500, marginBottom: 18 }}>Mayo · 2026</div>
+                <h1 style={{ fontFamily:"'Instrument Serif',serif", fontSize: 64, lineHeight: 0.98, fontWeight: 400, letterSpacing:"-0.025em", margin:0, marginBottom: 18 }}>
+                  Tu familia,<br/>
+                  <span style={{ fontStyle:"italic", color: muted }}>en un solo lugar.</span>
+                </h1>
+                <p style={{ fontSize: 15, color: muted, maxWidth: 380, lineHeight: 1.6, margin:0 }}>
+                  Gastos, alimentación y mucho más — una casa digital para acompañarlos en el día a día.
+                </p>
+              </div>
+
+              <div style={{ display:"flex", gap: 28, fontSize: 11, color: sub, letterSpacing:"0.04em" }}>
+                <div>v0.4 · estable</div>
+                <div>·</div>
+                <div>Acceso restringido</div>
+              </div>
+            </div>
+
+            {/* Form */}
+            <div style={{ background: bg, display:"flex", alignItems:"center", justifyContent:"center", padding: 56 }}>
+              <div style={{ width: "100%", maxWidth: 360 }}>
+                <div style={{ fontSize: 11, letterSpacing:"0.14em", color: sub, textTransform:"uppercase", fontWeight: 500, marginBottom: 14 }}>Iniciar sesión</div>
+                <h2 style={{ fontFamily:"'Instrument Serif',serif", fontSize: 36, fontWeight: 400, letterSpacing:"-0.02em", margin: 0, marginBottom: 8 }}>
+                  Bienvenido <span style={{ fontStyle:"italic" }}>de vuelta</span>.
+                </h2>
+                <p style={{ fontSize: 14, color: muted, marginBottom: 32, marginTop: 0 }}>
+                  Continúa con tu cuenta de Google autorizada.
+                </p>
+
+                <button
+                  onClick={() => setRoute("home")}
+                  style={{
+                    width: "100%", padding: "14px 18px",
+                    background: dark?"oklch(0.96 0.008 80)":"oklch(0.24 0.025 250)",
+                    color: dark?"oklch(0.24 0.025 250)":"oklch(0.97 0.012 80)",
+                    border: "none", borderRadius: 14,
+                    fontFamily:"inherit", fontSize: 14.5, fontWeight: 500,
+                    cursor: "pointer", display:"flex", alignItems:"center", justifyContent:"center", gap: 10,
+                  }}
+                >
+                  <span style={{ background:"#fff", borderRadius: "50%", padding: 3, display:"flex" }}>
+                    <svg width="14" height="14" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                  </span>
+                  Continuar con Google
+                </button>
+
+                <div style={{ marginTop: 14, fontSize: 12, color: sub, display:"flex", alignItems:"center", gap: 6, justifyContent:"center" }}>
+                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: accent }}/>
+                  Acceso restringido a cuentas autorizadas
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // Home desktop
+      const card = dark ? "oklch(0.23 0.012 250)" : "oklch(1 0 0)";
+      const border = dark ? "oklch(1 0 0 / 0.08)" : "oklch(0 0 0 / 0.06)";
+      const innerCard = dark ? "oklch(0.20 0.010 250)" : "oklch(0.965 0.012 80)";
+      const chipBg = dark ? "oklch(0.26 0.010 250)" : "oklch(0.94 0.012 80)";
+
+      return (
+        <div style={{ background: bg, color: fg, fontFamily:"'Geist',sans-serif", minHeight:"100%", padding: "32px 56px 56px" }}>
+          {/* Top bar */}
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom: 56 }}>
+            <div style={{ display:"flex", alignItems:"center", gap: 10 }}>
+              <img src="fwv-icon.png" alt="FWV" width={32} height={32} style={{ borderRadius: 9, display:"block" }}/>
+              <div style={{ fontSize: 13, fontWeight: 500 }}>FWV Apps</div>
+            </div>
+            <div style={{ display:"flex", alignItems:"center", gap: 8, padding:"6px 6px 6px 14px", borderRadius: 999, background: chipBg, fontSize: 12, color: muted }}>
+              Felipe
+              <div style={{ width: 26, height: 26, borderRadius:"50%", background: accent, color:"#fff", fontSize: 11, fontWeight: 600, display:"flex", alignItems:"center", justifyContent:"center" }}>FV</div>
+            </div>
+          </div>
+
+          {/* Saludo */}
+          <div style={{ marginBottom: 36, maxWidth: 720 }}>
+            <div style={{ fontSize: 11, letterSpacing:"0.14em", color: sub, textTransform:"uppercase", fontWeight: 500, marginBottom: 12 }}>Buenas tardes</div>
+            <h1 style={{ fontFamily:"'Instrument Serif',serif", fontSize: 56, lineHeight: 1, fontWeight: 400, letterSpacing:"-0.025em", margin: 0 }}>
+              Felipe, <span style={{ fontStyle:"italic", color: muted }}>buen día.</span>
+            </h1>
+          </div>
+
+          {/* Apps */}
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom: 18 }}>
+            <div style={{ fontSize: 11, letterSpacing:"0.14em", color: sub, textTransform:"uppercase", fontWeight: 500 }}>Mis apps</div>
+            <div style={{ fontSize: 11, color: sub }}>3 espacios</div>
+          </div>
+
+          <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap: 16 }}>
+            {/* Hero card */}
+            <div style={{ background: card, border:`1px solid ${border}`, borderRadius: 22, padding: 26, position:"relative", cursor:"pointer" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom: 24 }}>
+                <div style={{ width: 48, height: 48, borderRadius: 13, background: accent, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Instrument Serif',serif", fontSize: 24 }}>$</div>
+              </div>
+              <div style={{ fontSize: 26, fontWeight: 600, letterSpacing:"-0.02em", marginBottom: 4 }}>Gastos FWV</div>
+              <div style={{ fontSize: 14, color: muted, marginBottom: 22 }}>Presupuestos, gastos compartidos y cuotas de tarjeta</div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap: 1, padding: 1, background: border, borderRadius: 12, overflow:"hidden", marginBottom: 18 }}>
+                <DStat label="Saldo Santander" value="$1.284K" bg={innerCard} fg={fg} muted={sub}/>
+                <DStat label="Saldo Falabella" value="$642K" bg={innerCard} fg={fg} muted={sub}/>
+                <DStat label="Últ. Falabella" value="11 · Abr" bg={innerCard} fg={fg} muted={sub}/>
+              </div>
+              <div style={{ display:"flex", justifyContent:"flex-end", fontSize: 13, fontWeight: 500 }}>Abrir →</div>
+            </div>
+
+            {/* Side cards */}
+            <div style={{ display:"flex", flexDirection:"column", gap: 16 }}>
+              <div style={{ background: card, border:`1px dashed ${border}`, borderRadius: 22, padding: 22, opacity: 0.85 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 11, background: dark?"oklch(0.30 0.05 195)":"oklch(0.92 0.04 195)", color: dark?"oklch(0.80 0.08 195)":"oklch(0.45 0.10 195)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Instrument Serif',serif", fontSize: 18, marginBottom: 14 }}>◦</div>
+                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Calendario Comida</div>
+                <div style={{ fontSize: 12, color: muted, marginBottom: 12 }}>Planifica menús semanales</div>
+                <div style={{ fontSize: 10.5, letterSpacing:"0.08em", textTransform:"uppercase", color: sub, fontWeight: 500 }}>Próximamente</div>
+              </div>
+              <div style={{ border:`1px dashed ${border}`, borderRadius: 22, padding: 22, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", color: sub, minHeight: 120, gap: 8, cursor:"pointer" }}>
+                <div style={{ fontSize: 32, fontFamily:"'Instrument Serif',serif", fontWeight: 300, lineHeight: 1 }}>+</div>
+                <div style={{ fontSize: 12 }}>Sugerir nueva app</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function DStat({ label, value, bg, fg, muted }) {
+      return (
+        <div style={{ background: bg, padding: "13px 14px" }}>
+          <div style={{ fontSize: 10, letterSpacing:"0.06em", textTransform:"uppercase", color: muted, fontWeight: 500, marginBottom: 4 }}>{label}</div>
+          <div style={{ fontSize: 16, fontWeight: 600, letterSpacing:"-0.01em", color: fg }}>{value}</div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>
