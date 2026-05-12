@@ -2,6 +2,9 @@
 // ── EXPONER FUNCIONES GLOBALES (primero, antes de cualquier código DOM) ──────
 window.switchScreen=switchScreen;
 window.cerrarDrawer=cerrarDrawer;
+window.toggleSidebarExpand=toggleSidebarExpand;
+window.abrirSidebarMobile=abrirSidebarMobile;
+window.cerrarSidebarMobile=cerrarSidebarMobile;
 window.cerrar=cerrar;
 window.abrirNuevoGasto=abrirNuevoGasto;
 window.cargarDatos=cargarDatos;
@@ -359,6 +362,8 @@ async function intlConfirmar() {
     document.getElementById('f-subcat').value = '';
     document.getElementById('f-desc').value = '';
     document.getElementById('f-monto').value = '';
+    document.getElementById('ng-monto-input').value = '';
+    ngCatSeleccionada=null; ngSubcatSeleccionada=null;
     document.getElementById('f-cat-badge').style.display = 'none';
     document.getElementById('intl-banner').style.display = 'none';
     document.getElementById('btn-guardar-sin-dist').style.display = 'none';
@@ -736,20 +741,38 @@ function buildPptoForMonth(mes,anio){
 }
 
 // ── CARGA DE DATOS ───────────────────────────────────────────
+function getCache(key){
+  try{
+    const raw=sessionStorage.getItem('fwv_cache_'+key);
+    if(!raw)return null;
+    const c=JSON.parse(raw);
+    if(Date.now()-c.ts>5*60*1000)return null;
+    return c.data;
+  }catch(e){return null;}
+}
+
 async function cargarDatos(){
-  const screenActual=document.querySelector('.screen.active')?.id;
-  if(screenActual!=='screen-home') mostrarLoading('Cargando datos...');
+  const cachedParam=getCache('parametros');
+  const cachedGastos=getCache('gastos');
+  const cachedPpto=getCache('presupuesto');
+  const fromCache=!!(cachedParam&&cachedGastos&&cachedPpto);
+  mostrarLoading('Cargando datos...');
   bloquearNavbar();
   try{
-    const[paramRes,gastosRes,pptoRes]=await Promise.all([
-      fetch('/api/parametros'),fetch('/api/gastos'),fetch('/api/presupuesto')
-    ]);
-    if(!paramRes.ok)throw new Error('Error al cargar parámetros ('+paramRes.status+')');
-    if(!gastosRes.ok)throw new Error('Error al cargar gastos ('+gastosRes.status+')');
-    if(!pptoRes.ok)throw new Error('Error al cargar presupuesto ('+pptoRes.status+')');
-    const paramData=await paramRes.json();
-    const gastosRows=await gastosRes.json();
-    const pptoRows=await pptoRes.json();
+    let paramData,gastosRows,pptoRows;
+    if(fromCache){
+      paramData=cachedParam;gastosRows=cachedGastos;pptoRows=cachedPpto;
+    }else{
+      const[paramRes,gastosRes,pptoRes]=await Promise.all([
+        fetch('/api/parametros'),fetch('/api/gastos'),fetch('/api/presupuesto')
+      ]);
+      if(!paramRes.ok)throw new Error('Error al cargar parámetros ('+paramRes.status+')');
+      if(!gastosRes.ok)throw new Error('Error al cargar gastos ('+gastosRes.status+')');
+      if(!pptoRes.ok)throw new Error('Error al cargar presupuesto ('+pptoRes.status+')');
+      paramData=await paramRes.json();
+      gastosRows=await gastosRes.json();
+      pptoRows=await pptoRes.json();
+    }
 
     const paramRows=Array.isArray(paramData)?paramData:(paramData.rows||[]);
     montoInicialTC=Array.isArray(paramData)?0:(paramData.montoInicialTC||0);
@@ -847,10 +870,12 @@ function cerrarDrawer(){
 
 // ── NAVEGACIÓN ──────────────────────────────────────────
 const screenTitles={home:'Home',dashboard:'Resumen',detalle:'Detalle',presupuesto:'Presupuestos',admin:'Categorías',validacion:'Validación Pagos',cuotas:'Pagos en Cuotas TC','historial-cuad':'Historial Cuadraturas'};
-function switchScreen(screen){
+const screenToPath={home:'/gastos',dashboard:'/gastos/resumen',detalle:'/gastos/detalle',validacion:'/gastos/validacion',cuotas:'/gastos/cuotas',presupuesto:'/gastos/presupuesto',admin:'/gastos/categorias','historial-cuad':'/gastos/historial'};
+const pathToScreen=Object.fromEntries(Object.entries(screenToPath).map(([k,v])=>[v,k]));
+function switchScreen(screen,pushHistory=true){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+screen).classList.add('active');
-  document.querySelectorAll('.nav-link,.drawer-link').forEach(l=>{
+  document.querySelectorAll('.nav-link,.drawer-link,.side-icon').forEach(l=>{
     l.classList.toggle('active',l.dataset.screen===screen);
   });
   const titleEl=document.getElementById('navbar-title');
@@ -864,15 +889,25 @@ function switchScreen(screen){
   if(screen==='validacion') renderValidacion();
   if(screen==='cuotas') { cargarCuotas().then(()=>renderCuotas()); }
   if(screen==='historial-cuad') { cargarHistorialCuad(); }
-  const btnEye=document.getElementById('btn-eye-all');
-  if(btnEye) btnEye.style.display=screen==='home'?'flex':'none';
+  const navbar=document.querySelector('.navbar');
+  if(navbar) navbar.style.display=screen==='home'?'none':'';
   window.scrollTo(0,0);
+  if(pushHistory) history.pushState({screen},'',(screenToPath[screen]||'/gastos'));
 }
+window.addEventListener('popstate',e=>{
+  const screen=(e.state&&e.state.screen)||pathToScreen[location.pathname]||'home';
+  switchScreen(screen,false);
+});
+(function initFromUrl(){
+  const screen=pathToScreen[location.pathname]||'home';
+  if(screen!=='home') switchScreen(screen,false);
+  history.replaceState({screen},'',(screenToPath[screen]||'/gastos'));
+})();
 
 function abrirNuevoGasto(){
   modoEdicion=false; gastoEditandoRowIndex=null;
   intlReset();
-  document.querySelector('#ov-nuevo .sheet-title').textContent='Nuevo gasto';
+  const _ngTitleEl=document.querySelector('#ov-nuevo .ng-sheet-title');if(_ngTitleEl)_ngTitleEl.textContent='Nuevo gasto';
   document.getElementById('btn-guardar').textContent='Guardar gasto';
   document.getElementById('f-fecha').valueAsDate=new Date();
   document.getElementById('f-subcat').value='';
@@ -885,6 +920,15 @@ function abrirNuevoGasto(){
   document.querySelectorAll('.banco-btn').forEach(b=>b.classList.remove('active'));
   const tcBtn=document.querySelector('.banco-btn[data-banco="Tarjeta Crédito"]');
   if(tcBtn) tcBtn.classList.add('active');
+  // New UI reset
+  document.getElementById('ng-monto-input').value='';
+  ngUpdateAmountDisplay();
+  ngCatSeleccionada=null; ngSubcatSeleccionada=null;
+  document.getElementById('ng-subcat-search-input').value='';
+  ngRenderSearchResults('');
+  ngUpdateDatePill();
+  ngRenderCatCarousel();
+  ngRenderSubcatCarousel('');
   document.getElementById('ov-nuevo').classList.add('open');
   bloquearScrollFondo();
 }
@@ -951,9 +995,31 @@ function renderDashboard(){
 document.getElementById('f-desc').addEventListener('focus',function(){
   setTimeout(()=>{this.scrollIntoView({behavior:'smooth',block:'center'});},400);
 });
-document.getElementById('f-monto').addEventListener('focus',function(){
-  setTimeout(()=>{this.scrollIntoView({behavior:'smooth',block:'center'});},400);
+// ── MONTO DISPLAY ────────────────────────────────────────
+const _ngMontoInput=document.getElementById('ng-monto-input');
+const _ngAmountDisplay=document.getElementById('ng-amount-display');
+function ngUpdateAmountDisplay(){
+  const raw=_ngMontoInput.value.replace(/\D/g,'');
+  const num=parseInt(raw)||0;
+  const text=num>0?'$'+num.toLocaleString('es-CL'):'$0';
+  const charCount=text.length;
+  const size=charCount<=3?48:charCount<=6?48:charCount<=9?42:charCount<=12?36:30;
+  _ngAmountDisplay.style.fontSize=size+'px';
+  _ngAmountDisplay.textContent=text;
+  _ngAmountDisplay.classList.toggle('empty',num===0);
+}
+document.getElementById('ng-amount-wrap').addEventListener('click',()=>_ngMontoInput.focus());
+_ngMontoInput.addEventListener('input',function(){
+  const raw=this.value.replace(/\D/g,'');
+  const num=parseInt(raw)||0;
+  this.value=num>0?num.toLocaleString('es-CL'):'';
+  document.getElementById('f-monto').value=raw;
+  ngUpdateAmountDisplay();
 });
+_ngMontoInput.addEventListener('focus',function(){
+  setTimeout(()=>{this.scrollIntoView({behavior:'smooth',block:'center'});},300);
+});
+ngUpdateAmountDisplay();
 
 // Dashboard buscar / orden
 document.getElementById('dash-cat-search').addEventListener('input',renderDashboard);
@@ -1499,7 +1565,7 @@ document.querySelector('.btn-editar').addEventListener('click',()=>{
   cerrar('ov-gasto');
   modoEdicion=true;
   gastoEditandoRowIndex=gastoActual.rowIndex;
-  document.querySelector('#ov-nuevo .sheet-title').textContent='Editar gasto';
+  const _ngEditTitleEl=document.querySelector('#ov-nuevo .ng-sheet-title');if(_ngEditTitleEl)_ngEditTitleEl.textContent='Editar gasto';
   document.getElementById('btn-guardar').textContent='Guardar cambios';
   document.getElementById('f-fecha').value=gastoActual.fecha;
   document.getElementById('f-subcat').value=gastoActual.sub;
@@ -1517,6 +1583,16 @@ document.querySelector('.btn-editar').addEventListener('click',()=>{
   const devToggleEl=document.getElementById('dev-toggle');
   devToggleEl.classList.toggle('active',gastoActual.dev===true);
   document.getElementById('dev-hint').textContent=gastoActual.dev?'marcado como X':'marcar con X';
+  // Sync new carousel UI
+  const montoVal=gastoActual.monto||0;
+  document.getElementById('ng-monto-input').value=montoVal>0?Math.round(montoVal).toLocaleString('es-CL'):'';
+  ngUpdateAmountDisplay();
+  ngCatSeleccionada=gastoActual.cat||null;
+  ngSubcatSeleccionada=gastoActual.sub||null;
+  document.getElementById('ng-subcat-search-input').value='';
+  ngUpdateDatePill();
+  ngRenderCatCarousel();
+  ngRenderSubcatCarousel('');
   document.getElementById('ov-nuevo').classList.add('open');
   bloquearScrollFondo();
 });
@@ -2551,50 +2627,209 @@ document.getElementById('ov-admin-del').addEventListener('click',e=>{if(e.target
 
 // ── FORMULARIO ───────────────────────────────────────────
 document.getElementById('f-fecha').valueAsDate=new Date();
-const subcatInput=document.getElementById('f-subcat'),sugBox=document.getElementById('f-suggestions'),btnLista=document.getElementById('btn-lista');
-function groupBy(arr){const g={};arr.forEach(s=>{if(!g[s.cat])g[s.cat]=[];g[s.cat].push(s);});return g;}
-function renderSugs(items){
-  if(!items.length){sugBox.style.display='none';return;}
-  const grps=groupBy(items);
-  sugBox.innerHTML=Object.entries(grps).map(([cat,subs])=>`<div class="sug-group">${cat}</div>`+subs.map(s=>`
-    <div class="sug-item" data-sub="${s.sub}" data-cat="${s.cat}" data-ie="${s.ie}">
-      <span>${s.sub.includes(' - ')?s.sub.split(' - ').slice(1).join(' - '):s.sub}</span>
-      <span style="font-size:11px;color:#bbb;">${s.ie==='E'?'Egreso':'Ingreso'}</span>
-    </div>`).join('')).join('');
-  sugBox.style.display='block';
+// Keep legacy refs alive for checkIntlMode and other code that touches these
+const subcatInput=document.getElementById('f-subcat');
+const sugBox=document.getElementById('f-suggestions');
+const btnLista=document.getElementById('btn-lista');
+
+// ── NUEVO GASTO: Amount input with Chilean formatting ────
+let ngCatSeleccionada=null;
+let ngSubcatSeleccionada=null;
+
+
+// ── NUEVO GASTO: Date pill ───────────────────────────────
+function ngUpdateDatePill(){
+  const fechaEl=document.getElementById('f-fecha');
+  const val=fechaEl.value;
+  if(!val){document.getElementById('ng-date-label').textContent='Hoy';return;}
+  const d=new Date(val+'T00:00:00');
+  const months=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const today=new Date();
+  const isToday=d.getDate()===today.getDate()&&d.getMonth()===today.getMonth()&&d.getFullYear()===today.getFullYear();
+  const label=`${isToday?'Hoy, ':''}${d.getDate()} ${months[d.getMonth()]}`;
+  document.getElementById('ng-date-label').textContent=label;
 }
-subcatInput.addEventListener('input',()=>{
-  listaOpen=false;btnLista.classList.remove('active');
-  const q=subcatInput.value.toLowerCase().trim();
-  if(!q){sugBox.style.display='none';checkIntlMode();return;}
-  renderSugs(subcats.filter(s=>s.sub.toLowerCase().includes(q)));
-  checkIntlMode();
-});
-btnLista.addEventListener('click',()=>{
-  listaOpen=!listaOpen;btnLista.classList.toggle('active',listaOpen);
-  if(listaOpen){subcatInput.value='';renderSugs(subcats);}else sugBox.style.display='none';
-});
-sugBox.addEventListener('click',e=>{
-  const item=e.target.closest('.sug-item');if(!item)return;
-  subcatInput.value=item.dataset.sub;
-  document.getElementById('f-cat-nombre').textContent=item.dataset.cat;
+document.getElementById('f-fecha').addEventListener('change',ngUpdateDatePill);
+ngUpdateDatePill();
+
+// ── NUEVO GASTO: Category carousel ──────────────────────
+const NG_CAT_EMOJIS={'Supermercado':'🛒','Auto':'🚗','Salud':'💊','Cuentas':'💡','Entretenimiento':'🎬','Mall':'🛍️','Hogar':'🏠','Banco':'🏦','Ingresos':'💰'};
+const NG_EXCLUDED_CATS=['Hogar','Banco'];
+
+function ngRenderCatCarousel(query=''){
+  const hoy=new Date();
+  const mesKey=String(hoy.getMonth()+1).padStart(2,'0')+'-'+hoy.getFullYear();
+  const catSet=new Set(subcats.filter(s=>s.ie==='E'&&!NG_EXCLUDED_CATS.includes(s.cat)).map(s=>s.cat));
+  const d=dashData[mesKey]||{categorias:[]};
+  let cats=[...catSet].map(cat=>{
+    const subcatsCat=pptoSubcats.filter(s=>s.cat===cat&&s.ie==='E');
+    const ppto=subcatsCat.reduce((s,sc)=>s+(pptoData[sc.sub.trim()]?.monto||0),0);
+    const catD=d.categorias.find(c=>c.nombre===cat);
+    const gastado=catD?catD.monto:0;
+    return{cat,ppto,gastado,restante:ppto-gastado};
+  });
+  cats.sort((a,b)=>b.ppto-a.ppto);
+  if(query){
+    const q=query.toLowerCase();
+    cats=cats.filter(({cat})=>
+      cat.toLowerCase().includes(q)||
+      subcats.some(s=>s.cat===cat&&s.sub.toLowerCase().includes(q)&&s.estado!=='Oculto')
+    );
+  }
+  const el=document.getElementById('ng-cat-carousel');
+  if(!cats.length){el.innerHTML='<div style="color:#C4B5AD;font-size:13px;padding:8px 0;">Sin resultados</div>';return;}
+  el.innerHTML=cats.map(({cat,ppto,gastado,restante})=>{
+    const isActive=cat===ngCatSeleccionada;
+    const pct=ppto>0?Math.min(Math.round((gastado/ppto)*100),100):0;
+    const isOver=ppto>0&&gastado>=ppto;
+    const barColor=isOver?'#E07860':'#5CB85C';
+    const restLabel=ppto>0?(restante>=0?'$'+Math.round(restante/1000)+'k restante':'-$'+Math.round(Math.abs(restante)/1000)+'k excedido'):'Sin presupuesto';
+    const restColor=isOver?'#E07860':'#999';
+    const emoji=NG_CAT_EMOJIS[cat]||'📦';
+    const safeCat=cat.replace(/'/g,"\\'");
+    return `<div class="ng-cat-card${isActive?' ng-active':''}" data-cat="${cat}" onclick="ngSelectCat('${safeCat}')">
+      <div class="ng-cat-emoji">${emoji}</div>
+      <div class="ng-cat-name">${cat}</div>
+      <div class="ng-cat-rest" style="color:${restColor}">${restLabel}</div>
+      ${ppto>0?`<div class="ng-cat-bar"><div class="ng-cat-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>`:''}
+    </div>`;
+  }).join('');
+}
+window.ngSelectCat=function(cat){
+  ngCatSeleccionada=cat; ngSubcatSeleccionada=null;
+  subcatInput.value=''; document.getElementById('f-cat-badge').style.display='none';
+  document.querySelectorAll('.ng-cat-card').forEach(c=>c.classList.toggle('ng-active',c.dataset.cat===cat));
+  const query=document.getElementById('ng-subcat-search-input').value.trim();
+  ngRenderSubcatCarousel(query);
+};
+
+// ── NUEVO GASTO: Subcategory carousel ───────────────────
+function ngShortName(sub){return sub.includes(' - ')?sub.split(' - ').slice(1).join(' - '):sub;}
+function ngRenderSubcatCarousel(query){
+  const labelEl=document.getElementById('ng-subcat-label');
+  const el=document.getElementById('ng-subcat-carousel');
+  if(!ngCatSeleccionada){
+    el.innerHTML='';
+    if(labelEl) labelEl.style.display='none';
+    return;
+  }
+  if(labelEl) labelEl.style.display='';
+  let subs=subcats.filter(s=>s.cat===ngCatSeleccionada&&s.estado!=='Oculto');
+  if(query)subs=subs.filter(s=>s.sub.toLowerCase().includes(query.toLowerCase()));
+  let html=subs.map(s=>{
+    const isActive=s.sub===ngSubcatSeleccionada;
+    const safeSub=s.sub.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const safeCat=s.cat.replace(/'/g,"\\'");
+    return `<div class="ng-subcat-chip${isActive?' ng-active':''}" data-sub="${s.sub.replace(/"/g,'&quot;')}" onclick="ngSelectSubcat('${safeSub}','${safeCat}','${s.ie}')">${ngShortName(s.sub)}</div>`;
+  }).join('');
+  if(!subs.length&&query){
+    const safeQ=query.replace(/'/g,"\\'");
+    html=`<div class="ng-subcat-chip ng-create-chip" onclick="ngCrearSubcat('${safeQ}')">+ Crear "${query}"</div>`;
+  }
+  el.innerHTML=html||'<div style="color:#C4B5AD;font-size:13px;padding:8px 0;">Sin subcategorías</div>';
+}
+window.ngSelectSubcat=function(sub,cat,ie){
+  ngSubcatSeleccionada=sub; subcatInput.value=sub;
+  document.getElementById('f-cat-nombre').textContent=cat;
   const ieb=document.getElementById('f-ie-badge');
-  ieb.textContent=item.dataset.ie==='E'?'Egreso':'Ingreso';
-  ieb.className='ie-badge ie-'+item.dataset.ie;
+  ieb.textContent=ie==='E'?'Egreso':'Ingreso'; ieb.className='ie-badge ie-'+ie;
   document.getElementById('f-cat-badge').style.display='block';
-  sugBox.style.display='none';listaOpen=false;btnLista.classList.remove('active');
+  document.querySelectorAll('.ng-subcat-chip').forEach(c=>c.classList.toggle('ng-active',c.dataset.sub===sub));
   checkIntlMode();
+};
+window.ngCrearSubcat=function(query){
+  const sub=ngCatSeleccionada+' - '+query;
+  subcatInput.value=sub; ngSubcatSeleccionada=sub; checkIntlMode();
+};
+function ngRenderSearchResults(query){
+  const resultsEl=document.getElementById('ng-search-results');
+  const catSection=document.getElementById('ng-cat-carousel');
+  const subcatSection=document.getElementById('ng-subcat-carousel');
+  const subcatLabel=document.getElementById('ng-subcat-label');
+  const catLabel=catSection&&catSection.previousElementSibling;
+  if(!query){
+    if(resultsEl) resultsEl.classList.remove('visible');
+    if(catSection) catSection.style.display='';
+    if(subcatSection) subcatSection.style.display='';
+    if(subcatLabel) subcatLabel.style.display=ngCatSeleccionada?'':'none';
+    if(catLabel&&catLabel.classList.contains('ng-section-label')) catLabel.style.display='';
+    ngRenderCatCarousel('');
+    ngRenderSubcatCarousel('');
+    return;
+  }
+  // Show results, hide carousels
+  if(catSection) catSection.style.display='none';
+  if(subcatSection) subcatSection.style.display='none';
+  if(subcatLabel) subcatLabel.style.display='none';
+  if(catLabel&&catLabel.classList.contains('ng-section-label')) catLabel.style.display='none';
+  const q=query.toLowerCase();
+  const grouped={};
+  subcats.filter(s=>s.ie==='E'&&!NG_EXCLUDED_CATS.includes(s.cat)&&s.estado!=='Oculto').forEach(s=>{
+    if(s.sub.toLowerCase().includes(q)||s.cat.toLowerCase().includes(q)){
+      if(!grouped[s.cat]) grouped[s.cat]=[];
+      grouped[s.cat].push(s);
+    }
+  });
+  const cats=Object.keys(grouped);
+  if(!cats.length){
+    resultsEl.innerHTML='<div style="padding:14px;font-size:13px;color:#C4B5AD;text-align:center;">Sin resultados</div>';
+    resultsEl.classList.add('visible');
+    return;
+  }
+  resultsEl.innerHTML=cats.map(cat=>`
+    <div class="ng-search-group">${cat}</div>
+    ${grouped[cat].map(s=>{
+      const safeSub=s.sub.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      const safeCat=s.cat.replace(/'/g,"\\'");
+      return `<div class="ng-search-item" onclick="ngSelectFromSearch('${safeSub}','${safeCat}','${s.ie}')">
+        <span class="ng-search-item-name">${ngShortName(s.sub)}</span>
+        <span class="ng-search-item-tag">${s.ie==='E'?'Egreso':'Ingreso'}</span>
+      </div>`;
+    }).join('')}
+  `).join('');
+  resultsEl.classList.add('visible');
+}
+window.ngSelectFromSearch=function(sub,cat,ie){
+  // Select category
+  ngCatSeleccionada=cat; ngSubcatSeleccionada=sub;
+  subcatInput.value=sub;
+  document.getElementById('f-cat-nombre').textContent=cat;
+  const ieb=document.getElementById('f-ie-badge');
+  ieb.textContent=ie==='E'?'Egreso':'Ingreso'; ieb.className='ie-badge ie-'+ie;
+  document.getElementById('f-cat-badge').style.display='block';
+  // Clear search and restore carousels
+  document.getElementById('ng-subcat-search-input').value='';
+  ngRenderSearchResults('');
+  // Re-render with selection visible
+  ngRenderCatCarousel('');
+  ngRenderSubcatCarousel('');
+  checkIntlMode();
+};
+document.getElementById('ng-subcat-search-input').addEventListener('input',e=>{
+  ngRenderSearchResults(e.target.value.trim());
 });
-document.addEventListener('click',e=>{if(!e.target.closest('.subcat-wrap')&&!e.target.closest('#btn-lista')){sugBox.style.display='none';listaOpen=false;btnLista.classList.remove('active');}});
-document.querySelectorAll('.banco-btn').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.banco-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');});});
+
+// Banco carousel (uses existing .banco-btn class for save logic compatibility)
+document.querySelectorAll('.banco-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.banco-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// Devolución toggle switch
 const devToggle=document.getElementById('dev-toggle');
-devToggle.addEventListener('click',()=>{devToggle.classList.toggle('active');document.getElementById('dev-hint').textContent=devToggle.classList.contains('active')?'marcado como X':'marcar con X';});
+devToggle.addEventListener('click',()=>{
+  devToggle.classList.toggle('active');
+  document.getElementById('dev-hint').textContent=devToggle.classList.contains('active')?'marcado como X':'marcar con X';
+});
+
 document.getElementById('ov-nuevo').addEventListener('click',e=>{
   if(e.target===document.getElementById('ov-nuevo')){
     cerrar('ov-nuevo');
     modoEdicion=false;gastoEditandoRowIndex=null;
     intlReset();
-    document.querySelector('#ov-nuevo .sheet-title').textContent='Nuevo gasto';
+    const _ngTitleEl=document.querySelector('#ov-nuevo .ng-sheet-title');if(_ngTitleEl)_ngTitleEl.textContent='Nuevo gasto';
     document.getElementById('btn-guardar').textContent='Guardar gasto';
   }
 });
@@ -2684,7 +2919,7 @@ document.getElementById('btn-guardar').addEventListener('click',async()=>{
       const res=await fetch('/api/gastos',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({rowIndex:gastoEditandoRowIndex,row})});
       if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'Error '+res.status);}
       modoEdicion=false;gastoEditandoRowIndex=null;
-      document.querySelector('#ov-nuevo .sheet-title').textContent='Nuevo gasto';
+      const _ngTitleEl=document.querySelector('#ov-nuevo .ng-sheet-title');if(_ngTitleEl)_ngTitleEl.textContent='Nuevo gasto';
       mostrarToast('Gasto actualizado \u2713');
       cerrar('ov-nuevo');
       await cargarDatos();
@@ -2792,46 +3027,52 @@ function prevMesAnio(mes,anio,n){
 function keyMesAnio(mes,anio){return String(mes+1).padStart(2,'0')+'-'+anio;}
 
 function renderHome(){
-  // ── KPI CUENTAS ──────────────────────────────────
+  try{
+  ocultarLoading();
   const allGastos=Object.values(detalleData).flat();
+
+  // ── 1. SALUDO DINÁMICO ────────────────────────────
+  const hora=new Date().getHours();
+  const saludo=hora<12?'Buenos días':hora<20?'Buenas tardes':'Buenas noches';
+  const nombre=((window.userName||'').split(' ')[0])||'tú';
+  const greetEl=document.getElementById('home-greeting-text');
+  if(greetEl) greetEl.innerHTML=`${saludo}, <i>${nombre}.</i>`;
+  const avatarEl=document.getElementById('home-avatar');
+  if(avatarEl) avatarEl.textContent=(nombre[0]||'?').toUpperCase();
+
+  // ── 2. SALDO SANTANDER ────────────────────────────
   const sant=allGastos.filter(g=>g.banco==='Santander').reduce((s,g)=>s+g.montoValido,0);
+  const santInner=document.getElementById('kpi-sant-inner');
+  if(santInner) santInner.innerHTML=window._eyeHidden.santander?'••••••':
+    `<span onclick="irADetalleBanco('Santander')" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">${fmt(sant)}</span>`;
+
+  // ── 2b. SALDO CUENTA VISTA AHORROS ───────────────
   const ahorros=allGastos.filter(g=>g.cat==='Ahorro en Cuenta Vista').reduce((s,g)=>s+g.montoValido,0);
   const traslados=allGastos.filter(g=>g.sub==='Banco - Ingreso a Falabella desde Ahorros').reduce((s,g)=>s+g.montoValido,0);
   const saldoAhorros=montoInicialAhorros+ahorros+traslados;
-  const santEl=document.getElementById('kpi-sant');
-  if(santEl){
-    santEl.querySelector('.kpi-valor').innerHTML = window._eyeHidden.santander
-      ? '••••••'
-      : `<span onclick="irADetalleBanco('Santander')" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">${fmt(sant)}</span>`;
-  }
-  // Parte 1: montoValido donde sub = "Banco - Ingreso a Falabella desde Ahorros"
-  const fala1 = allGastos
-    .filter(g => g.sub === 'Banco - Ingreso a Falabella desde Ahorros')
-    .reduce((s, g) => s + g.montoValido, 0);
+  const ahorrosInner=document.getElementById('kpi-ahorros-inner');
+  if(ahorrosInner) ahorrosInner.innerHTML=window._eyeHidden.santander?'••••••':
+    `<span onclick="irADetalleBanco('Ahorros')" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">${fmt(saldoAhorros)}</span>`;
 
-  // Parte 2: montoValido donde sub = "Banco - Ingreso a Falabella desde Cuenta Corriente", invertido
-  const fala2 = allGastos
-    .filter(g => g.sub === 'Banco - Ingreso a Falabella desde Cuenta Corriente')
-    .reduce((s, g) => s + g.montoValido, 0) * -1;
+  // ── 2c. SALDO FALABELLA ───────────────────────────
+  const fala1=allGastos.filter(g=>g.sub==='Banco - Ingreso a Falabella desde Ahorros').reduce((s,g)=>s+g.montoValido,0);
+  const fala2=allGastos.filter(g=>g.sub==='Banco - Ingreso a Falabella desde Cuenta Corriente').reduce((s,g)=>s+g.montoValido,0)*-1;
+  const fala3=allGastos.filter(g=>g.ie==='E'&&g.banco==='Falabella').reduce((s,g)=>s+g.montoValido,0);
+  const fala=fala1+fala2+fala3;
+  const falaInner=document.getElementById('kpi-fala-inner');
+  if(falaInner) falaInner.innerHTML=window._eyeHidden.falabella?'••••••':
+    `<span onclick="irADetalleBanco('Falabella')" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">${fmt(fala)}</span>`;
 
-  // Parte 3: montoValido donde ie = "E" y banco = "Falabella"
-  const fala3 = allGastos
-    .filter(g => g.ie === 'E' && g.banco === 'Falabella')
-    .reduce((s, g) => s + g.montoValido, 0);
+  // ── 2d. TARJETA DE CRÉDITO ────────────────────────
+  const gastosAbsTC=Math.abs(allGastos.filter(g=>g.banco==='Tarjeta Crédito').reduce((s,g)=>s+g.montoValido,0));
+  const pagosTC=Math.abs(allGastos.filter(g=>g.sub==='Banco - Pago Nueva Tarjeta').reduce((s,g)=>s+g.montoValido,0));
+  const deudaCuotas=cuotasData.filter(c=>c.cuotasRestantes>0).reduce((s,c)=>s+c.montoPendiente,0);
+  const saldoTC=montoInicialTC-gastosAbsTC+pagosTC-deudaCuotas;
+  const tcInner=document.getElementById('kpi-tc-inner');
+  if(tcInner) tcInner.innerHTML=window._eyeHidden.tc?'••••••':
+    `<span onclick="abrirDetalleTarjeta()" style="cursor:pointer;color:${saldoTC>=0?'var(--green)':'#c62828'};text-decoration:underline dotted;text-underline-offset:3px;">${(saldoTC>=0?'':'-')+fmt(Math.abs(saldoTC))}</span>`;
 
-  const fala = fala1 + fala2 + fala3;
-  const falaEl=document.getElementById('kpi-fala');
-  if(falaEl){
-    falaEl.querySelector('.kpi-valor').innerHTML = window._eyeHidden.falabella
-      ? '••••••'
-      : `<span onclick="irADetalleBanco('Falabella')" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">${fmt(fala)}</span>`;
-  }
-  const ahorrosEl=document.getElementById('kpi-ahorros-val');
-  if(ahorrosEl){
-    ahorrosEl.innerHTML=window._eyeHidden.santander?'••••••':`<span onclick="irADetalleBanco('Ahorros')" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">${fmt(saldoAhorros)}</span>`;
-  }
-
-  // ── KPI ÚLTIMO MES ACTIVO FALABELLA ──────────────
+  // ── 2e. ÚLTIMO MES FALABELLA ──────────────────────
   const sortedKeys=Object.keys(detalleData).sort((a,b)=>{
     const[ma,ya]=a.split('-').map(Number);
     const[mb,yb]=b.split('-').map(Number);
@@ -2839,70 +3080,128 @@ function renderHome(){
   });
   let ultimoMesFala='—',numComprasFala=0;
   for(let i=sortedKeys.length-1;i>=0;i--){
-    const gastosFala=detalleData[sortedKeys[i]].filter(g=>g.banco==='Falabella');
-    if(gastosFala.length>0){
+    const gF=detalleData[sortedKeys[i]].filter(g=>g.banco==='Falabella');
+    if(gF.length>0){
       const[m,y]=sortedKeys[i].split('-').map(Number);
       ultimoMesFala=meses[m-1]+' '+y;
-      numComprasFala=gastosFala.length;
+      numComprasFala=gF.length;
       break;
     }
   }
-  const falaMesEl=document.getElementById('kpi-fala-mes');
-  const falaCompEl=document.getElementById('kpi-fala-compras');
-  if(falaMesEl) falaMesEl.innerHTML=window._eyeAllHidden?'••••':ultimoMesFala;
-  if(falaCompEl){
-    falaCompEl.innerHTML=window._eyeAllHidden?'••':numComprasFala;
-    const bgColor=numComprasFala>=8?'#e8f5e9':numComprasFala>=4?'#fff8e1':'#fce4ec';
-    const textColor=numComprasFala>=8?'#2e7d32':numComprasFala>=4?'#f57f17':'#c62828';
-    const falaBox=falaCompEl.closest('.falabella-compras');
-    falaBox.style.background=bgColor;
-    falaCompEl.style.color=textColor;
-    const falaLabel=falaBox.querySelector('.falabella-compras-label');
-    if(falaLabel) falaLabel.style.color=textColor;
-  }
+  const falaMesEl=document.getElementById('kpi-fala-mes-v2');
+  const falaCompEl=document.getElementById('kpi-fala-compras-v2');
+  if(falaMesEl) falaMesEl.textContent=window._eyeAllHidden?'••••':ultimoMesFala;
+  if(falaCompEl) falaCompEl.textContent=window._eyeAllHidden?'••':numComprasFala;
 
-  // ── KPI TARJETA DE CRÉDITO ───────────────────────
-  const gastosTC=allGastos.filter(g=>g.banco==='Tarjeta Crédito').reduce((s,g)=>s+g.montoValido,0);
-  const gastosAbsTC=Math.abs(gastosTC);
-  const pagosTC=Math.abs(allGastos.filter(g=>g.sub==='Banco - Pago Nueva Tarjeta').reduce((s,g)=>s+g.montoValido,0));
-  const deudaCuotas=cuotasData.filter(c=>c.cuotasRestantes>0).reduce((s,c)=>s+c.montoPendiente,0);
-  const saldoTC=montoInicialTC-gastosAbsTC+pagosTC-deudaCuotas;
-  const tcEl=document.getElementById('kpi-tc');
-  if(tcEl){
-    tcEl.textContent = ''
-    tcEl.innerHTML = window._eyeHidden.tc
-      ? '••••••'
-      : `<span onclick="irADetalleBanco('Tarjeta Crédito')" style="cursor:pointer;color:${saldoTC >= 0 ? '#2e7d32' : '#c62828'};text-decoration:underline dotted;text-underline-offset:3px;">${(saldoTC >= 0 ? '' : '-') + fmt(Math.abs(saldoTC))}</span>`
-    tcEl.style.color = ''
-  }
+  // ── 3. CUOTAS PRÓXIMO MES ─────────────────────────
+  const ahora=new Date();
+  const proxMes=new Date(ahora.getFullYear(),ahora.getMonth()+1,1);
+  const proxMesIdx=proxMes.getMonth();
+  const proxAnio=proxMes.getFullYear();
+  const cuotasProxMes=cuotasData.filter(c=>c.cuotasRestantes>0).filter(c=>{
+    let baseDate;
+    if(c.ultimaCuotaFecha&&c.ultimaCuotaFecha.length>=10){
+      baseDate=new Date(c.ultimaCuotaFecha+'T00:00:00');
+    }else if(c.fechaCompra&&c.fechaCompra.length>=10){
+      baseDate=new Date(c.fechaCompra+'T00:00:00');
+    }else{return false;}
+    if(isNaN(baseDate.getTime()))return false;
+    const mesDestino=baseDate.getMonth()+1;
+    const anioDestino=mesDestino>11?baseDate.getFullYear()+1:baseDate.getFullYear();
+    const mesDestinoIdx=mesDestino%12;
+    return mesDestinoIdx===proxMesIdx&&anioDestino===proxAnio;
+  });
+  const totalProxMes=cuotasProxMes.reduce((s,c)=>s+c.valorCuota,0);
+  const cuotasMesLabelEl=document.getElementById('kpi-cuotas-mes-label');
+  const cuotasProxEl=document.getElementById('kpi-cuotas-prox');
+  if(cuotasMesLabelEl) cuotasMesLabelEl.textContent=meses[proxMesIdx]+' '+proxAnio;
+  if(cuotasProxEl) cuotasProxEl.textContent=window._eyeAllHidden?'••••••':fmt(totalProxMes);
 
-  // ── CATEGORÍAS CLAVE ─────────────────────────────
-  const catKey=[
-    {id:'cat-kpi-cuentas',cat:'Cuentas'},
-    {id:'cat-kpi-super',cat:'Supermercado'},
-    {id:'cat-kpi-mall',cat:'Mall'},
-    {id:'cat-kpi-comer',cat:'Salidas a Comer'}
-  ];
+  // ── 4. PRESUPUESTO VS REAL ────────────────────────
+  const HOME_EXCLUDED=[...EXCLUDED_CATS,'Banco'];
   const hoyHome=new Date();
+  const keyActual=String(hoyHome.getMonth()+1).padStart(2,'0')+'-'+hoyHome.getFullYear();
+  const dActual=dashData[keyActual]||{categorias:[],presupuesto:0};
+  const totalReal=dActual.categorias.filter(c=>!HOME_EXCLUDED.includes(c.nombre)).reduce((s,c)=>s+c.monto,0);
+  const totalPpto=dActual.presupuesto||0;
+  const pct=totalPpto>0?Math.min(Math.round(totalReal/totalPpto*100),100):0;
+  const pptoGastadoEl=document.getElementById('home-ppto-gastado');
+  const pptoTotalEl=document.getElementById('home-ppto-total');
+  const pptoFillEl=document.getElementById('home-ppto-fill');
+  const pptoMesEl=document.getElementById('home-ppto-mes-label');
+  const pptoPctEl=document.getElementById('home-ppto-pct');
+  if(pptoGastadoEl) pptoGastadoEl.textContent=window._eyeAllHidden?'••••••':fmt(totalReal);
+  if(pptoTotalEl) pptoTotalEl.textContent=window._eyeAllHidden?'••••••':fmt(totalPpto);
+  if(pptoFillEl) pptoFillEl.style.width=window._eyeAllHidden?'0%':pct+'%';
+  if(pptoMesEl) pptoMesEl.textContent='del presupuesto · '+meses[hoyHome.getMonth()]+' '+hoyHome.getFullYear();
+  if(pptoPctEl) pptoPctEl.textContent=window._eyeAllHidden?'—':pct+'%';
+
+  // ── 5. DONUT DISTRIBUCIÓN DEL GASTO ──────────────
+  const DONUT_COLORS=['#e87a6b','#c4a882','#d4765e','#b89b78','#e8a99e'];
+  const DONUT_R=55,DONUT_CX=75,DONUT_CY=75,DONUT_STROKE=22;
+  const cats=(dActual.categorias||[])
+    .filter(c=>!HOME_EXCLUDED.includes(c.nombre)&&c.monto>0)
+    .sort((a,b)=>b.monto-a.monto).slice(0,5);
+  const totalCats=cats.reduce((s,c)=>s+c.monto,0);
+  const svgEl=document.getElementById('home-donut-svg');
+  if(svgEl){
+    if(window._eyeAllHidden||cats.length===0){
+      svgEl.innerHTML=`<circle cx="75" cy="75" r="${DONUT_R}" fill="none" stroke="var(--inner-card)" stroke-width="${DONUT_STROKE}"/>
+        <text x="75" y="75" text-anchor="middle" dominant-baseline="middle" font-size="11" fill="var(--sub)" font-family="Geist,sans-serif">Sin datos</text>`;
+    }else{
+      let startAngle=-Math.PI/2;
+      const paths=cats.map((c,i)=>{
+        const angle=totalCats>0?(c.monto/totalCats)*2*Math.PI:0;
+        const endAngle=startAngle+angle;
+        const x1=DONUT_CX+DONUT_R*Math.cos(startAngle);
+        const y1=DONUT_CY+DONUT_R*Math.sin(startAngle);
+        const x2=DONUT_CX+DONUT_R*Math.cos(endAngle);
+        const y2=DONUT_CY+DONUT_R*Math.sin(endAngle);
+        const large=angle>Math.PI?1:0;
+        const d=`M ${x1} ${y1} A ${DONUT_R} ${DONUT_R} 0 ${large} 1 ${x2} ${y2}`;
+        startAngle=endAngle;
+        return `<path d="${d}" fill="none" stroke="${DONUT_COLORS[i]}" stroke-width="${DONUT_STROKE}"/>`;
+      });
+      const totalLabel=totalCats>=1000000?'$'+(totalCats/1000000).toFixed(1)+'M':'$'+Math.round(totalCats/1000)+'k';
+      const centerLabel=`<text x="75" y="70" text-anchor="middle" font-size="9" fill="var(--sub)" font-family="Geist,sans-serif">TOTAL</text>
+        <text x="75" y="84" text-anchor="middle" font-size="13" font-weight="600" fill="var(--fg)" font-family="Geist,sans-serif">${totalLabel}</text>
+        <text x="75" y="96" text-anchor="middle" font-size="8" fill="var(--sub)" font-family="Geist,sans-serif">${mesesC[hoyHome.getMonth()]}</text>`;
+      svgEl.innerHTML=paths.join('')+centerLabel;
+    }
+  }
+  const legendEl=document.getElementById('home-donut-legend');
+  if(legendEl){
+    legendEl.innerHTML=window._eyeAllHidden?'':cats.map((c,i)=>{
+      const pctCat=totalCats>0?Math.round(c.monto/totalCats*100):0;
+      return `<div class="donut-legend-item">
+        <div class="donut-legend-dot" style="background:${DONUT_COLORS[i]}"></div>
+        <span style="flex:1;font-size:11px;color:var(--fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.nombre}</span>
+        <span style="font-size:11px;font-weight:500;color:var(--muted);flex-shrink:0;">${pctCat}%</span>
+      </div>`;
+    }).join('');
+  }
+
+  // ── 6. CATEGORÍAS CLAVE ───────────────────────────
   const mesActualKey=keyMesAnio(hoyHome.getMonth(),hoyHome.getFullYear());
   const prev1=prevMesAnio(hoyHome.getMonth(),hoyHome.getFullYear(),1);
   const prev2=prevMesAnio(hoyHome.getMonth(),hoyHome.getFullYear(),2);
   const prev3=prevMesAnio(hoyHome.getMonth(),hoyHome.getFullYear(),3);
   const prevKeys=[keyMesAnio(prev3.mes,prev3.anio),keyMesAnio(prev2.mes,prev2.anio),keyMesAnio(prev1.mes,prev1.anio)];
-
-  const periodoEl=document.getElementById('home-cat-periodo');
+  const periodoEl=document.getElementById('home-cat-periodo-v2');
   if(periodoEl){
     const mActual=mesesC[hoyHome.getMonth()]+' '+hoyHome.getFullYear();
-    const m1=mesesC[prev3.mes];
-    const m3=mesesC[prev1.mes];
-    periodoEl.textContent=mActual+' vs prom. '+m1+'–'+m3;
+    periodoEl.textContent=`CATEGORÍAS CLAVE — ${mActual} vs prom. ${mesesC[prev3.mes]}–${mesesC[prev1.mes]}`;
   }
-
   function sumaEgresosCat(key,cat){
-    return (detalleData[key]||[]).filter(g=>g.ie==='E'&&g.cat===cat).reduce((s,g)=>s+g.monto,0);
+    return(detalleData[key]||[]).filter(g=>g.ie==='E'&&g.cat===cat).reduce((s,g)=>s+g.monto,0);
   }
-
-  catKey.forEach(({id,cat})=>{
+  const catKeyV2=[
+    {id:'cat-kpi-cuentas-v2',cat:'Cuentas'},
+    {id:'cat-kpi-super-v2',cat:'Supermercado'},
+    {id:'cat-kpi-mall-v2',cat:'Mall'},
+    {id:'cat-kpi-comer-v2',cat:'Salidas a Comer'}
+  ];
+  catKeyV2.forEach(({id,cat})=>{
     const el=document.getElementById(id);
     if(!el) return;
     const actual=sumaEgresosCat(mesActualKey,cat);
@@ -2910,25 +3209,24 @@ function renderHome(){
     const diff=prom>0?Math.round((actual-prom)/prom*100):0;
     const diffOk=diff<=0;
     const barPct=prom>0?Math.min((actual/prom)*100,100):0;
-    const barColor=diffOk?'#2e7d32':'#e53935';
-    el.querySelector('.cat-kpi-monto').innerHTML=window._eyeAllHidden?'<span style="color:var(--color-text-tertiary);letter-spacing:2px;">••••</span>':fmt(actual);
-    el.querySelector('.cat-kpi-comparacion').innerHTML=window._eyeAllHidden?'':
-      `<span class="cat-kpi-prom">prom ${fmt(prom)}</span>`+
-      (prom>0?`<span class="cat-kpi-diff ${diffOk?'diff-ok':'diff-over'}">${diff>0?'+':''}${diff}%</span>`:'');
-    el.querySelector('.cat-kpi-fill').style.width=window._eyeAllHidden?'100%':barPct+'%';
-    el.querySelector('.cat-kpi-fill').style.background=window._eyeAllHidden?'var(--color-border-tertiary)':barColor;
+    const montoEl=el.querySelector('.catkey-monto');
+    if(montoEl) montoEl.textContent=window._eyeAllHidden?'••••':fmt(actual);
+    const promEl=el.querySelector('.catkey-prom');
+    if(promEl) promEl.textContent=window._eyeAllHidden?'prom ••••':'prom '+fmt(prom);
+    const deltaEl=el.querySelector('.delta');
+    if(deltaEl){deltaEl.textContent=window._eyeAllHidden?'':((diff>0?'+':'')+diff+'%');deltaEl.className='delta '+(diffOk?'ok':'over');deltaEl.style.display=window._eyeAllHidden?'none':'';}
+    const fillEl=el.querySelector('.catkey-fill');
+    if(fillEl) fillEl.style.width=(window._eyeAllHidden?0:barPct)+'%';
   });
 
+  // ── 7. GRÁFICOS EXISTENTES ────────────────────────
   renderHomeGrafico();
-
-  // Gráfico proyección cuotas TC
   if(cuotasData&&cuotasData.length>0){
     renderCuotasHomeChart();
   }else{
-    cargarCuotas().then(()=>{
-      if(cuotasData.length>0)renderCuotasHomeChart();
-    });
+    cargarCuotas().then(()=>{if(cuotasData.length>0)renderCuotasHomeChart();});
   }
+  }catch(e){console.error('renderHome error:',e);}
 }
 
 let evoSelCat=null;
@@ -3719,9 +4017,14 @@ function fmtFechaCorta(fechaISO){
 
 async function cargarCuotas(){
   try{
-    const res=await fetch('/api/cuotas');
-    if(!res.ok)return;
-    const rows=await res.json();
+    let rows;
+    const cached=getCache('cuotas');
+    if(cached){rows=cached;}
+    else{
+      const res=await fetch('/api/cuotas');
+      if(!res.ok)return;
+      rows=await res.json();
+    }
     cuotasData=rows
       .filter(r=>r&&r[0])
       .map((r,idx)=>{
@@ -4681,6 +4984,34 @@ document.getElementById('ov-info-subcat').addEventListener('click',e=>{
   if(e.target===document.getElementById('ov-info-subcat'))cerrar('ov-info-subcat');
 });
 
-const btnEyeInit=document.getElementById('btn-eye-all');
-if(btnEyeInit) btnEyeInit.style.display='flex';
+const _navbarInit=document.querySelector('.navbar');
+if(_navbarInit) _navbarInit.style.display='none';
+
+// ── SIDEBAR ───────────────────────────────────────────────
+function toggleSidebarExpand(){
+  const sb=document.getElementById('app-sidebar');
+  if(!sb)return;
+  sb.classList.toggle('expanded');
+  try{localStorage.setItem('fwv_sb_exp',sb.classList.contains('expanded')?'1':'0');}catch(e){}
+}
+function abrirSidebarMobile(){
+  const sb=document.getElementById('app-sidebar');
+  const bd=document.getElementById('sidebar-backdrop');
+  if(sb)sb.classList.add('mobile-open');
+  if(bd)bd.classList.add('visible');
+  document.body.style.overflow='hidden';
+}
+function cerrarSidebarMobile(){
+  const sb=document.getElementById('app-sidebar');
+  const bd=document.getElementById('sidebar-backdrop');
+  if(sb)sb.classList.remove('mobile-open');
+  if(bd)bd.classList.remove('visible');
+  document.body.style.overflow='';
+}
+// Restaurar estado expandido
+try{
+  const sb=document.getElementById('app-sidebar');
+  if(sb&&localStorage.getItem('fwv_sb_exp')==='1')sb.classList.add('expanded');
+}catch(e){}
+
 cargarDatos();

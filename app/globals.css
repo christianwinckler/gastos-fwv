@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+html { overflow-x: clip; }
+body { overflow-x: hidden; }
+
 /* ── Design tokens ─────────────────────────────────────────────── */
 :root {
   --bg:         oklch(0.972 0.012 80);
@@ -23,6 +26,14 @@
   --error-bg:   #fee2e2;
   --success:    #2e7d32;
   --warning:    #e65100;
+
+  /* home redesign tokens */
+  --border-soft: rgba(0,0,0,0.045);
+  --accent-soft: #fdebe7;
+  --green:       #2e9b6f;
+  --green-soft:  #e3f3eb;
+  --gold-bg:     #fdf3df;
+  --gold-fg:     #c98a1a;
 }
 
 html.dark {
@@ -39,4 +50,12 @@ html.dark {
   --teal-bg:    oklch(0.30 0.05 195);
   --teal-fg:    oklch(0.80 0.08 195);
   --mark-shadow: 0 1px 0 rgba(255,255,255,0.06) inset, 0 2px 8px rgba(0,0,0,0.35);
+
+  /* home redesign tokens */
+  --border-soft: rgba(255,255,255,0.06);
+  --accent-soft: oklch(0.30 0.06 30);
+  --green:       oklch(0.70 0.10 160);
+  --green-soft:  oklch(0.28 0.04 160);
+  --gold-bg:     oklch(0.30 0.04 80);
+  --gold-fg:     oklch(0.78 0.10 80);
 }

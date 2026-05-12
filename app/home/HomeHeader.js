@@ -44,12 +44,6 @@ export default function HomeHeader({ name, image, initials }) {
 
       {/* Hero greeting */}
       <div style={{ padding: '28px 22px 22px' }}>
-        <div style={{
-          fontSize: 11, letterSpacing: '0.14em', color: 'var(--sub)',
-          textTransform: 'uppercase', fontWeight: 500, marginBottom: 10,
-        }}>
-          {greeting}
-        </div>
         <h1 style={{
           fontFamily: "'Instrument Serif', serif",
           fontSize: 36, lineHeight: 1.0, fontWeight: 400,

@@ -86,9 +86,7 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--bg); }
 /* ── CONTENT ───────────────────────────────────────────── */
 .content {
   flex: 1;
-  max-width: 900px;
   width: 100%;
-  margin: 0 auto;
   padding: 0 0 80px;
 }
 
@@ -524,7 +522,6 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--bg); }
 }
 
 @media (min-width: 1100px) {
-  .content { max-width: 1100px; }
   .cat-list { grid-template-columns: repeat(3, 1fr); }
 }
 
@@ -536,35 +533,9 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--bg); }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .section-label { padding:16px 16px 8px; font-size:11px; font-weight:500; color:var(--muted); letter-spacing:0.06em; }
-.kpi-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 12px; }
-.kpi-card { background:var(--card); border-radius:12px; padding:14px 12px; border:0.5px solid var(--border); display:flex; flex-direction:column; gap:4px; }
 .kpi-label { font-size:10px; color:var(--muted); font-weight:500; letter-spacing:0.04em; }
 .kpi-valor { font-size:17px; font-weight:600; color:var(--fg); margin-top:2px; }
 .kpi-sub { font-size:11px; color:var(--sub); margin-top:2px; }
-.kpi-badge { display:inline-block; padding:2px 7px; border-radius:10px; font-size:10px; font-weight:600; margin-top:4px; width:fit-content; }
-.badge-s { background:#fce4ec; color:#c62828; }
-.badge-f { background:#e8f5e9; color:#2e7d32; }
-.badge-tc { background:var(--card)8e1; color:#f57f17; }
-.kpi-card-full { background:var(--card); border-radius:12px; padding:14px 12px; border:0.5px solid var(--border); margin:0 12px; display:flex; align-items:center; gap:14px; }
-.kpi-card-falabella { background:var(--card); border-radius:12px; padding:14px 12px; border:0.5px solid var(--border); margin:0 12px; }
-.falabella-row { display:flex; align-items:center; gap:14px; }
-.falabella-compras { background:#e8f5e9; border-radius:10px; padding:8px 14px; text-align:center; flex-shrink:0; }
-.falabella-compras-num { font-size:22px; font-weight:700; color:#2e7d32; }
-.falabella-compras-label { font-size:10px; color:#2e7d32; font-weight:500; }
-.section-label-row { display:flex; align-items:baseline; justify-content:space-between; padding:16px 16px 8px; }
-.section-label-main { font-size:11px; font-weight:500; color:var(--muted); letter-spacing:0.06em; }
-.section-label-sub { font-size:10px; color:var(--sub); font-weight:400; }
-.cat-kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 12px; }
-.cat-kpi-card { background:var(--card); border-radius:12px; padding:12px; border:0.5px solid var(--border); }
-.cat-kpi-nombre { font-size:11px; font-weight:500; color:var(--muted); letter-spacing:0.03em; margin-bottom:6px; }
-.cat-kpi-monto { font-size:16px; font-weight:600; color:var(--fg); }
-.cat-kpi-comparacion { display:flex; align-items:center; gap:4px; margin-top:5px; flex-wrap:wrap; }
-.cat-kpi-prom { font-size:11px; color:var(--sub); }
-.cat-kpi-diff { font-size:11px; font-weight:600; padding:1px 5px; border-radius:6px; }
-.diff-ok { background:#e8f5e9; color:#2e7d32; }
-.diff-over { background:#fce4ec; color:#c62828; }
-.cat-kpi-barra { margin-top:7px; height:4px; background:var(--inner-card); border-radius:2px; overflow:hidden; }
-.cat-kpi-fill { height:100%; border-radius:2px; }
 .home-chart-container { background:var(--card); border-radius:12px; margin:0 12px; border:0.5px solid var(--border); padding:14px 12px 10px; position:relative; }
 .home-chart-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .home-chart-titulo { font-size:13px; font-weight:500; color:var(--fg); }
@@ -582,6 +553,154 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--bg); }
 .home-chart-legend { display:flex; gap:14px; margin-top:8px; flex-wrap:wrap; }
 .home-legend-item { display:flex; align-items:center; gap:5px; font-size:10px; color:var(--muted); }
 .home-legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+/* ── HOME REDESIGN ──────────────────────────────────────── */
+.shell { display:grid; grid-template-columns:72px 1fr; min-height:100svh; overflow-x:hidden; }
+.sidebar { background:var(--card); border-right:1px solid var(--border-soft); display:flex; flex-direction:column; align-items:center; padding:22px 0; gap:4px; position:sticky; top:0; height:100svh; width:72px; overflow:hidden; transition:width 0.25s cubic-bezier(.4,0,.2,1); }
+.side-label { opacity:0; max-width:0; overflow:hidden; white-space:nowrap; font-size:12.5px; font-weight:500; color:var(--fg); transition:opacity 0.15s, max-width 0.25s cubic-bezier(.4,0,.2,1); pointer-events:none; flex-shrink:0; }
+.sidebar.expanded { align-items:stretch; padding:22px 12px; width:220px; }
+.sidebar.expanded .side-icon { width:100%; justify-content:flex-start; padding:0 12px; gap:11px; }
+.sidebar.expanded .side-logo { margin-left:4px; }
+.sidebar.expanded .side-label { opacity:1; max-width:160px; }
+.sidebar.expanded .side-expand-btn { width:100%; justify-content:flex-start; padding:0 12px; gap:11px; }
+.sidebar.expanded .side-expand-btn .side-expand-icon { transform:rotate(180deg); }
+.side-section-hdr { display:none; font-size:10px; font-weight:600; color:var(--sub); letter-spacing:0.1em; text-transform:uppercase; padding:14px 12px 4px; white-space:nowrap; overflow:hidden; }
+.sidebar.expanded .side-section-hdr { display:block; }
+@media (max-width:920px) { .sidebar .side-section-hdr { display:block; } }
+.side-divider { width:32px; height:1px; background:var(--border-soft); margin:6px auto; flex-shrink:0; }
+.sidebar.expanded .side-divider { width:100%; margin:4px 0; }
+@media (max-width:920px) { .sidebar .side-divider { width:100%; margin:4px 0; } }
+.side-expand-btn { width:40px; height:36px; border-radius:10px; border:none; background:transparent; color:var(--sub); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background 0.15s, color 0.15s; flex-shrink:0; margin-top:6px; }
+.side-expand-btn:hover { background:var(--inner-card); color:var(--fg); }
+.side-expand-icon { width:16px; height:16px; flex-shrink:0; transition:transform 0.25s cubic-bezier(.4,0,.2,1); }
+.side-expand-lbl { font-size:12px; font-weight:500; color:var(--sub); }
+.sidebar-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.2); z-index:199; }
+.sidebar-backdrop.visible { display:block; }
+.shell-content { display:flex; flex-direction:column; min-width:0; flex:1; }
+@media (min-width:921px) {
+  .sidebar { position:fixed; left:0; top:0; bottom:0; height:100dvh; z-index:30; }
+  .shell { grid-template-columns:1fr; padding-left:72px; transition:padding-left 0.25s cubic-bezier(.4,0,.2,1); }
+  .shell:has(.sidebar.expanded) { padding-left:220px; }
+}
+.side-logo { width:36px; height:36px; border-radius:10px; margin-bottom:22px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,0.06); cursor:pointer; flex-shrink:0; }
+.side-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; border:none; background:transparent; color:var(--muted); transition:background 0.15s,color 0.15s; cursor:pointer; }
+.side-icon:hover { background:var(--inner-card); color:var(--fg); }
+.side-icon.active { background:var(--accent); color:#fff; box-shadow:0 4px 10px rgba(232,122,107,0.25); }
+.side-icon.active .side-label { color:#fff; }
+.side-icon svg { width:17px; height:17px; pointer-events:none; flex-shrink:0; }
+.side-spacer { flex:1; }
+.main { padding:28px 28px 60px; width:100%; overflow-x:hidden; }
+.topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+.topbar-right { display:flex; align-items:center; gap:8px; margin-left:auto; }
+.ham-btn { width:38px; height:38px; border-radius:10px; border:1px solid var(--border-soft); background:var(--card); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:var(--fg); cursor:pointer; }
+.ham-btn .ham-line { width:16px; height:1.5px; background:currentColor; border-radius:1px; transition:none; }
+.topbar-right { display:flex; align-items:center; gap:8px; }
+.icon-btn { width:38px; height:38px; border-radius:50%; border:1px solid var(--border-soft); background:var(--card); color:var(--muted); display:flex; align-items:center; justify-content:center; transition:background 0.15s; cursor:pointer; }
+.icon-btn:hover { background:var(--inner-card); }
+.icon-btn svg { width:14px; height:14px; }
+.icon-btn.add { background:var(--accent); color:#fff; border:none; font-size:22px; line-height:1; padding-bottom:3px; }
+.avatar { width:38px; height:38px; border-radius:50%; background:#4a3530; color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:500; flex-shrink:0; }
+.greeting { margin-bottom:24px; }
+.greeting h1 { font-family:'Instrument Serif',serif; font-size:38px; line-height:1.05; font-weight:400; letter-spacing:-0.02em; margin:0 0 6px; }
+.greeting-sub { font-size:13px; color:var(--muted); }
+.card { background:var(--card); border:1px solid var(--border-soft); border-radius:16px; padding:14px; }
+.accounts-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+.acc-card { background:var(--card); border:1px solid var(--border-soft); border-radius:14px; padding:14px; position:relative; display:flex; flex-direction:column; min-height:110px; min-width:0; }
+.acc-head { display:flex; align-items:flex-start; gap:9px; margin-bottom:auto; padding-right:24px; }
+.acc-icon { width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.acc-icon.s { background:#fce4ec; color:#c62828; }
+.acc-icon.f { background:var(--green-soft); color:var(--green); }
+.acc-icon.tc { background:var(--gold-bg); color:var(--gold-fg); }
+.acc-icon.v { background:#e8f0fe; color:#1a73e8; }
+.acc-icon svg { width:14px; height:14px; }
+.acc-info { flex:1; min-width:0; }
+.acc-name { font-size:12.5px; font-weight:500; color:var(--fg); line-height:1.2; }
+.acc-type { font-size:10.5px; color:var(--sub); letter-spacing:0.02em; margin-top:2px; }
+.acc-value { font-size:19px; font-weight:600; letter-spacing:-0.01em; margin-top:8px; }
+.acc-sub { font-size:10.5px; color:var(--sub); margin-top:2px; }
+.acc-check { position:absolute; top:12px; right:12px; width:18px; height:18px; border-radius:50%; background:var(--green-soft); border:1px solid #b8dcc7; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+.acc-check svg { width:10px; height:10px; }
+.info-card { background:var(--card); border:1px solid var(--border-soft); border-radius:14px; padding:14px; display:flex; flex-direction:column; min-height:110px; position:relative; border-left:3px solid var(--accent-soft); min-width:0; }
+.info-head { display:flex; align-items:flex-start; gap:9px; margin-bottom:auto; }
+.info-icon { width:30px; height:30px; border-radius:8px; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.info-icon svg { width:14px; height:14px; }
+.info-name { font-size:12.5px; font-weight:500; color:var(--fg); line-height:1.2; }
+.info-type { font-size:10.5px; color:var(--sub); letter-spacing:0.02em; margin-top:2px; }
+.info-num-row { display:flex; align-items:baseline; gap:6px; margin-top:8px; }
+.info-num { font-size:22px; font-weight:700; color:var(--accent); line-height:1; letter-spacing:-0.01em; }
+.info-num-text { font-size:12px; color:var(--fg); }
+.info-monto { font-size:19px; font-weight:600; color:var(--accent); margin-top:8px; letter-spacing:-0.01em; }
+.info-sub { font-size:10.5px; color:var(--sub); margin-top:2px; }
+.charts-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px; }
+.ppto-card { padding:22px 24px; display:flex; flex-direction:column; }
+.ppto-card-label { font-size:11px; font-weight:500; color:var(--muted); letter-spacing:0.08em; margin-bottom:12px; }
+.ppto-key { font-size:12px; color:var(--sub); margin-bottom:4px; }
+.ppto-val { font-size:26px; font-weight:600; letter-spacing:-0.02em; }
+.ppto-bar { height:8px; background:var(--inner-card); border-radius:4px; overflow:hidden; margin-top:18px; }
+.ppto-fill { height:100%; background:var(--accent); border-radius:4px; transition:width 0.4s ease; }
+#screen-home .ppto-pct { display:flex; justify-content:space-between; font-size:12px; margin-top:8px; font-weight:400; }
+.ppto-pct-num { color:var(--accent); font-weight:600; }
+.ppto-pct-label { color:var(--sub); }
+.donut-card { padding:22px 24px; }
+.donut-body { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.donut-legend { flex:1; display:flex; flex-direction:column; gap:9px; min-width:100px; }
+.donut-legend-item { display:flex; align-items:center; gap:9px; font-size:12.5px; }
+.donut-legend-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.catkey-section { margin-bottom:16px; }
+.catkey-title { font-size:11px; font-weight:500; color:var(--muted); letter-spacing:0.08em; margin-bottom:10px; padding:0 4px; }
+.catkey-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.catkey-card { background:var(--card); border:1px solid var(--border-soft); border-radius:14px; padding:14px 16px; min-width:0; }
+.catkey-label { font-size:10px; font-weight:500; color:var(--muted); letter-spacing:0.06em; margin-bottom:7px; }
+.catkey-monto { font-size:18px; font-weight:600; letter-spacing:-0.01em; }
+.catkey-comp { display:flex; align-items:center; gap:7px; margin-top:5px; font-size:11px; }
+.catkey-prom { color:var(--sub); }
+.delta { font-size:11px; font-weight:600; padding:1px 7px; border-radius:999px; }
+.delta.ok { background:var(--green-soft); color:var(--green); }
+.delta.over { background:#fbe4e2; color:var(--accent); }
+.catkey-bar { margin-top:9px; height:4px; background:var(--inner-card); border-radius:2px; overflow:hidden; }
+.catkey-fill { height:100%; border-radius:2px; background:var(--accent); }
+@media (max-width:1024px) {
+  .accounts-grid { grid-template-columns:repeat(2,1fr); }
+  .catkey-grid { grid-template-columns:repeat(2,1fr); }
+  .charts-row { grid-template-columns:1fr; }
+}
+/* Siempre ocultar navbar antigua cuando home está activo */
+.shell-content:has(#screen-home.active) > .navbar { display:none; }
+@media (min-width:921px) {
+  .ham-btn { display:none; }
+  .topbar-mobile-only { display:none !important; }
+}
+@media (max-width:920px) {
+  .shell { grid-template-columns:1fr; }
+  .sidebar { position:fixed; left:-230px; top:0; bottom:0; height:100dvh !important; z-index:200; width:220px !important; align-items:stretch; padding:22px 12px; box-shadow:none; transition:left 0.25s cubic-bezier(.4,0,.2,1); }
+  .sidebar.mobile-open { left:0; box-shadow:4px 0 28px rgba(0,0,0,0.12); }
+  .sidebar .side-label { opacity:1 !important; max-width:160px !important; }
+  .sidebar .side-icon { width:100% !important; justify-content:flex-start !important; padding:0 12px !important; gap:11px !important; }
+  .sidebar .side-expand-btn { display:none; }
+  .main { padding:18px 14px 80px; }
+  .greeting h1 { font-size:30px; }
+}
+@media (max-width:480px) {
+  .accounts-grid { grid-template-columns:repeat(2,1fr); gap:8px; }
+  .topbar-desktop-only { display:none !important; }
+  .acc-card, .info-card { padding:10px; min-height:90px; }
+  .catkey-card { padding:10px 12px; }
+  .acc-value { font-size:15px; }
+  .acc-name { font-size:13px; }
+  .acc-type { font-size:10px; }
+  .acc-sub { font-size:10px; }
+  .info-monto { font-size:15px; }
+  .info-num { font-size:17px; }
+  .info-name { font-size:12px; }
+  .info-sub { font-size:10px; }
+  .catkey-monto { font-size:15px; }
+  .ppto-card { padding:14px; }
+  .donut-card { padding:14px; }
+  .donut-body { flex-direction:column; align-items:center; gap:8px; }
+  #home-donut-svg { width:110px; height:110px; }
+  .donut-legend { min-width:unset; width:100%; }
+}
+.content:has(#screen-home.active) { max-width:100%; padding-bottom:0; }
 .home-tooltip { position:absolute; background:var(--accent); color:#fff; font-size:11px; padding:6px 10px; border-radius:8px; pointer-events:none; white-space:nowrap; z-index:200; display:none; line-height:1.6; }
 
 /* ── VALIDACIÓN ────────────────────────────────────────── */
@@ -745,24 +864,6 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--bg); }
 .cuotas-tarjeta-icon { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
 .cuotas-tarjeta-icon.gold { background:var(--card)8e1; color:#f57f17; }
 .cuotas-tarjeta-icon.visa { background:color-mix(in srgb, var(--accent) 12%, var(--card)); color:var(--accent); }
-.cuad-check-btn {
-  position: absolute; top: 10px; right: 10px;
-  width: 24px; height: 24px; border-radius: 50%;
-  background: #e8f5e9; border: 0.5px solid #a5d6a7;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; flex-shrink: 0;
-}
-.cuad-check-btn svg { width: 13px; height: 13px; }
-.eye-toggle-btn {
-  width: 26px; height: 26px; border-radius: 50%;
-  background: var(--inner-card); border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; color: var(--sub);
-}
-.eye-toggle-btn.hidden {
-  background: color-mix(in srgb, var(--accent) 12%, var(--card));
-  color: var(--accent);
-}
 .cuad-result-ok {
   background: #e8f5e9; border-radius: 10px;
   padding: 12px 14px; margin-bottom: 14px;
@@ -823,43 +924,83 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--bg); }
 .hcuad-nota { font-size:11px; color:var(--sub); margin-top:8px; padding-top:8px; border-top:0.5px solid var(--border); }
 body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
 
+/* ── NUEVO GASTO: Redesign ─────────────────────────────── */
+.ng-sheet { background: #F7F2EF !important; }
+.ng-header { display: flex; align-items: center; justify-content: space-between; padding: 0 0 4px; }
+.ng-sheet-title { font-family: 'Instrument Serif', serif; font-size: 26px; font-weight: 400; letter-spacing: -0.02em; color: var(--fg); margin-bottom: 0; }
+.ng-close-btn { width: 28px; height: 28px; border-radius: 50%; background: #EDE5E0; border: none; cursor: pointer; font-size: 14px; color: #666; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ng-amount-section { display: flex; flex-direction: column; align-items: center; padding: 20px 0 12px; }
+.ng-amount-wrap { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; min-height: 64px; cursor: text; }
+.ng-amount-display { font-family: 'Instrument Serif', serif; font-size: 48px; font-weight: 400; font-style: italic; letter-spacing: -0.02em; color: #1A1A1A; pointer-events: none; white-space: nowrap; transition: font-size 0.1s ease; line-height: 1.1; }
+.ng-amount-display.empty { color: #DDD5CF; }
+.ng-amount-input { position: absolute; inset: 0; opacity: 0; border: none; outline: none; background: transparent; width: 100%; height: 100%; font-size: 16px; cursor: text; }
+#ng-banco-carousel { overflow-x: visible; }
+#ng-banco-carousel .ng-banco-card { flex: 1; min-width: 0; }
+.ng-amount-input::placeholder { color: #DDD5CF; }
+.ng-search-results { background: #fff; border: 1px solid #EDE5E0; border-radius: 12px; overflow: hidden; margin-top: 4px; display: none; max-height: 260px; overflow-y: auto; }
+.ng-search-results.visible { display: block; }
+.ng-search-group { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #C4B5AD; padding: 10px 14px 4px; text-transform: uppercase; background: #FAF7F5; border-top: 1px solid #EDE5E0; }
+.ng-search-group:first-child { border-top: none; }
+.ng-search-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; cursor: pointer; border-top: 0.5px solid #F2EDE9; transition: background 0.12s; }
+.ng-search-item:hover { background: #FAF7F5; }
+.ng-search-item-name { font-size: 13.5px; color: #1A1A1A; font-weight: 500; }
+.ng-search-item-tag { font-size: 11px; color: #BBB; }
+.ng-date-pill { display: inline-flex; align-items: center; gap: 5px; padding: 6px 13px; border: 1px solid #EDE5E0; border-radius: 20px; background: #fff; cursor: pointer; font-size: 12px; color: #888; font-family: inherit; margin-top: 10px; transition: background 0.18s ease; }
+.ng-date-pill:active { background: #EDE5E0; }
+.ng-section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #C4B5AD; margin: 14px 0 7px; text-transform: uppercase; }
+.ng-carousel { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.ng-carousel::-webkit-scrollbar { display: none; }
+.ng-banco-card { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 11px 16px; border: 1.5px solid #EDE5E0; border-radius: 12px; background: #fff; cursor: pointer; font-family: inherit; flex-shrink: 0; min-width: 84px; transition: all 0.18s ease; }
+.ng-banco-card.active { border-color: #E07860 !important; background: #F5EAE6 !important; }
+.ng-banco-card.active .ng-banco-name, .ng-banco-card.active .ng-banco-sub { color: #E07860; }
+.ng-banco-name { font-size: 12px; color: #333; font-weight: 500; }
+.ng-banco-sub { font-size: 10px; color: #AAA; }
+.ng-cat-card { display: flex; flex-direction: column; gap: 3px; padding: 11px 13px; border: 1.5px solid #EDE5E0; border-radius: 12px; background: #fff; cursor: pointer; flex-shrink: 0; min-width: 112px; max-width: 130px; transition: all 0.18s ease; }
+.ng-cat-card.ng-active { border-color: #E07860; background: #F5EAE6; }
+.ng-cat-emoji { font-size: 20px; line-height: 1.2; }
+.ng-cat-name { font-size: 13px; font-weight: 600; color: #1A1A1A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ng-cat-rest { font-size: 10px; font-weight: 500; white-space: nowrap; margin-top: 1px; }
+.ng-cat-bar { height: 3px; background: #EDE5E0; border-radius: 2px; overflow: hidden; margin-top: 4px; }
+.ng-cat-bar-fill { height: 100%; border-radius: 2px; }
+.ng-subcat-chip { display: inline-flex; align-items: center; padding: 7px 13px; border: 1.5px solid #EDE5E0; border-radius: 20px; background: #fff; cursor: pointer; font-size: 13px; color: #333; flex-shrink: 0; transition: all 0.18s ease; white-space: nowrap; }
+.ng-subcat-chip.ng-active { border-color: #E07860; background: #F5EAE6; color: #E07860; font-weight: 500; }
+.ng-create-chip { border-color: #E07860; color: #E07860; background: #FFF5F3; }
+.ng-subcat-search-wrap { display: flex; align-items: center; gap: 8px; padding: 9px 13px; border: 1px solid #EDE5E0; border-radius: 10px; background: #fff; margin-top: 8px; }
+.ng-subcat-search-input { flex: 1; border: none; outline: none; font-size: 13px; color: #333; background: transparent; font-family: inherit; }
+.ng-subcat-search-input::placeholder { color: #C5BAB5; }
+.ng-desc { width: 100%; padding: 11px 13px; border: 1px solid #EDE5E0; border-radius: 10px; background: #fff; font-size: 14px; color: #333; font-family: inherit; resize: none; min-height: 68px; outline: none; box-sizing: border-box; transition: border-color 0.18s ease; }
+.ng-desc:focus { border-color: #E07860; }
+.ng-dev-row { display: flex; align-items: center; gap: 12px; padding: 12px 13px; border: 1px solid #EDE5E0; border-radius: 10px; background: #fff; cursor: pointer; transition: all 0.18s ease; }
+.ng-dev-row.active { border-color: #E07860; }
+.ng-toggle-track { width: 42px; height: 24px; border-radius: 12px; background: #D5CBC5; position: relative; flex-shrink: 0; transition: background 0.18s ease; }
+.ng-dev-row.active .ng-toggle-track { background: #E07860; }
+.ng-toggle-thumb { width: 20px; height: 20px; border-radius: 50%; background: #fff; position: absolute; top: 2px; left: 2px; transition: transform 0.18s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.18); }
+.ng-dev-row.active .ng-toggle-thumb { transform: translateX(18px); }
+.ng-dev-text { display: flex; flex-direction: column; gap: 1px; flex: 1; }
+.ng-dev-label { font-size: 14px; color: #1A1A1A; font-weight: 500; }
+.ng-dev-hint { font-size: 11px; color: #AAA; }
+.ng-dev-row.active .ng-dev-hint { color: #E07860; }
+.ng-btn-guardar { width: 100%; padding: 15px; background: #E07860; color: #fff; border: none; border-radius: 18px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 4px; transition: opacity 0.18s ease; letter-spacing: 0.01em; }
+.ng-btn-guardar:active { opacity: 0.85; }
+.ng-btn-guardar:disabled { opacity: 0.5; }
+
   `
 
   const htmlContent = `
 <div class="app">
 
-  <!-- NAVBAR -->
-  <nav class="navbar">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <div style="display:flex;align-items:center;gap:6px;">
-        <button class="btn-hamburger" id="btn-hamburger" onclick="abrirDrawer()">
-          <div class="ham-line"></div>
-          <div class="ham-line"></div>
-          <div class="ham-line"></div>
-        </button>
-        <button onclick="switchScreen('home')" style="width:32px;height:32px;border-radius:8px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;" title="Home">
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 9.5L10 3l7 6.5" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M5 8.5V16a1 1 0 001 1h3v-4h2v4h3a1 1 0 001-1V8.5" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-      </div>
-      <span class="navbar-brand" id="navbar-title"><span class="brand-prefix">Gastos FWV</span> - Resumen</span>
-    </div>
-    <div class="navbar-right" style="display:flex;align-items:center;gap:8px;">
-      <button id="btn-eye-all" onclick="toggleEyeAll()" style="width:32px;height:32px;border-radius:50%;background:var(--inner-card);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--sub);" title="Ocultar todos los montos">
-        <svg id="eye-all-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-      </button>
-      <button id="btn-add-nav" onclick="abrirNuevoGasto()" style="width:32px;height:32px;background:var(--accent);color:#fff;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;font-family:inherit;">+</button>
-    </div>
-  </nav>
-
   <!-- DRAWER (mobile) -->
   <div class="drawer-overlay" id="drawer-overlay" onclick="cerrarDrawer()"></div>
   <div class="drawer" id="drawer">
     <div class="drawer-header" style="flex-direction:column;align-items:stretch;gap:0;padding:0;">
-      <a href="/home" style="display:flex;align-items:center;gap:8px;padding:12px 20px 10px;font-size:13px;color:var(--accent);text-decoration:none;font-family:inherit;font-weight:500;border-bottom:0.5px solid #f0f0f0;">
-        <span style="font-size:15px;line-height:1;">←</span> Volver a Apps
+      <a href="/home" style="display:flex;align-items:center;gap:10px;padding:14px 20px 12px;text-decoration:none;border-bottom:0.5px solid #f0f0f0;">
+        <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" style="width:28px;height:28px;flex-shrink:0;border-radius:7px;overflow:hidden;">
+          <rect width="36" height="36" rx="9" fill="#fdebe7"/>
+          <path d="M8 19.5L18 11l10 8.5" stroke="#1f2c40" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <path d="M11 18v9h14v-9" stroke="#1f2c40" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <circle cx="23.5" cy="22" r="2.5" fill="#e87a6b"/>
+        </svg>
+        <span style="font-size:13px;color:var(--accent);font-family:inherit;font-weight:500;">← Volver a Apps</span>
       </a>
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px 12px;">
         <span class="drawer-brand">Gastos FWV</span>
@@ -868,7 +1009,7 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
     </div>
     <div class="drawer-links">
       <button class="drawer-link drawer-item-indent active" data-screen="home" onclick="switchScreen('home');cerrarDrawer()">
-        Home
+        Menú Principal
       </button>
       <div class="drawer-divider"></div>
       <div class="drawer-section-label">GASTOS</div>
@@ -897,20 +1038,74 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
       </button>
     </div>
     <div style="padding:8px 16px 16px;display:flex;flex-direction:column;gap:8px;">
-      <button onclick="actualizarTodo();cerrarDrawer()"
-        style="width:100%;padding:10px;background:#f5f5f5;color:#555;border:0.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/>
-          <path d="M13.5 2v4h-4"/>
-        </svg>
-        Actualizar datos
-      </button>
       <button style="width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;" onclick="abrirNuevoGasto();cerrarDrawer()">+ Nuevo gasto</button>
     </div>
   </div>
 
-  <!-- CONTENT -->
-  <main class="content">
+  <!-- SHELL: shared sidebar + content -->
+  <div class="shell">
+    <aside class="sidebar" id="app-sidebar">
+      <div class="side-logo" onclick="window.location='/home'" title="Menú Principal" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:18px;width:auto;height:auto;overflow:visible;border-radius:0;box-shadow:none;">
+        <img src="/fwv-icon.png" alt="FWV" style="width:36px;height:36px;border-radius:9px;flex-shrink:0;"/>
+        <span class="side-label" style="font-size:13px;font-weight:600;color:var(--fg);letter-spacing:0;text-transform:none;">Menú Principal</span>
+      </div>
+      <div class="side-section-hdr">Gastos</div>
+      <button class="side-icon active" data-screen="home" onclick="switchScreen('home');cerrarSidebarMobile()" title="Home">
+        <svg class="side-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21v-7h6v7"/></svg>
+        <span class="side-label">Home</span>
+      </button>
+      <button class="side-icon" data-screen="dashboard" onclick="switchScreen('dashboard');cerrarSidebarMobile()" title="Resumen">
+        <svg class="side-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span class="side-label">Resumen</span>
+      </button>
+      <button class="side-icon" data-screen="detalle" onclick="switchScreen('detalle');cerrarSidebarMobile()" title="Detalle">
+        <svg class="side-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1.5" fill="currentColor"/><circle cx="3.5" cy="12" r="1.5" fill="currentColor"/><circle cx="3.5" cy="18" r="1.5" fill="currentColor"/></svg>
+        <span class="side-label">Detalle</span>
+      </button>
+      <button class="side-icon" data-screen="validacion" onclick="switchScreen('validacion');cerrarSidebarMobile()" title="Validación">
+        <svg class="side-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7"/><path d="M3 10h18"/><path d="M16 19l2 2 4-4"/></svg>
+        <span class="side-label">Validación</span>
+      </button>
+      <button class="side-icon" data-screen="cuotas" onclick="switchScreen('cuotas');cerrarSidebarMobile()" title="Cuotas TC">
+        <svg class="side-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>
+        <span class="side-label">Cuotas TC</span>
+      </button>
+      <div class="side-divider"></div>
+      <div class="side-section-hdr">Administrador</div>
+      <button class="side-icon" data-screen="presupuesto" onclick="switchScreen('presupuesto');cerrarSidebarMobile()" title="Presupuestos">
+        <svg class="side-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span class="side-label">Presupuestos</span>
+      </button>
+      <button class="side-icon" data-screen="admin" onclick="switchScreen('admin');cerrarSidebarMobile()" title="Categorías">
+        <svg class="side-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg>
+        <span class="side-label">Categorías</span>
+      </button>
+      <button class="side-icon" data-screen="historial-cuad" onclick="switchScreen('historial-cuad');cerrarSidebarMobile()" title="Historial">
+        <svg class="side-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+        <span class="side-label">Historial</span>
+      </button>
+      <div class="side-spacer"></div>
+      <button class="side-expand-btn" onclick="toggleSidebarExpand()" title="Expandir menú">
+        <svg class="side-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="side-expand-lbl side-label">Colapsar</span>
+      </button>
+    </aside>
+    <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="cerrarSidebarMobile()"></div>
+    <div class="shell-content">
+      <nav class="navbar">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="btn-hamburger" id="btn-hamburger" onclick="abrirSidebarMobile()">
+            <div class="ham-line"></div>
+            <div class="ham-line"></div>
+            <div class="ham-line"></div>
+          </button>
+          <span class="navbar-brand" id="navbar-title"><span class="brand-prefix">Gastos FWV</span> - Resumen</span>
+        </div>
+        <div class="navbar-right" style="display:flex;align-items:center;gap:8px;">
+          <button id="btn-add-nav" onclick="abrirNuevoGasto()" style="width:32px;height:32px;background:var(--accent);color:#fff;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;font-family:inherit;">+</button>
+        </div>
+      </nav>
+      <main class="content">
 
     <!-- DASHBOARD -->
     <div class="screen" id="screen-dashboard">
@@ -1118,156 +1313,217 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
 
     <!-- HOME -->
     <div class="screen active" id="screen-home">
-      <div class="section-label">CUENTAS CORRIENTES</div>
-      <div style="height:8px;"></div>
-      <div class="kpi-grid-2">
-        <div class="kpi-card" id="kpi-sant" style="position:relative;">
-          <div class="kpi-label">SANTANDER</div>
-          <div class="kpi-valor" id="kpi-sant-val"><span class="skeleton skeleton-valor"></span></div>
-          <div class="kpi-badge badge-s">Cuenta corriente</div>
-          <button class="cuad-check-btn" onclick="abrirCuadratura('Santander')" title="Cuadrar saldo">
-            <svg viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" fill="#e8f5e9" stroke="#a5d6a7" stroke-width="1"/>
-              <path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="#2e7d32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-        </div>
-        <div class="kpi-card" id="kpi-ahorros" style="position:relative;">
-          <div class="kpi-label">CUENTA VISTA</div>
-          <div class="kpi-valor" id="kpi-ahorros-val"><span class="skeleton skeleton-valor"></span></div>
-          <div class="kpi-badge" style="background:#e8f0fe;color:var(--accent);">Ahorros</div>
-          <button class="cuad-check-btn" onclick="abrirCuadratura('Cuenta Vista Ahorros')" title="Cuadrar saldo">
-            <svg viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" fill="#e8f5e9" stroke="#a5d6a7" stroke-width="1"/>
-              <path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="#2e7d32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-        </div>
-        <div class="kpi-card" id="kpi-fala" style="position:relative;">
-          <div class="kpi-label">FALABELLA</div>
-          <div class="kpi-valor" id="kpi-fala-val"><span class="skeleton skeleton-valor"></span></div>
-          <div class="kpi-badge badge-f">Cuenta corriente</div>
-          <button class="cuad-check-btn" onclick="abrirCuadratura('Falabella')" title="Cuadrar saldo">
-            <svg viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" fill="#e8f5e9" stroke="#a5d6a7" stroke-width="1"/>
-              <path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="#2e7d32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">ÚLTIMO MES FALABELLA</div>
-          <div class="falabella-row" style="margin-top:4px;">
-            <div class="falabella-compras">
-              <div class="falabella-compras-num" id="kpi-fala-compras"><span class="skeleton" style="height:28px;width:32px;display:inline-block;"></span></div>
-              <div class="falabella-compras-label">compras</div>
+      <div class="main">
+
+          <!-- Topbar -->
+          <div class="topbar">
+            <button class="ham-btn" onclick="abrirSidebarMobile()" title="Menú">
+              <span class="ham-line"></span><span class="ham-line"></span><span class="ham-line"></span>
+            </button>
+            <div class="topbar-right">
+              <button class="icon-btn" id="btn-eye-all" onclick="toggleEyeAll()" title="Ocultar saldos">
+                <svg id="eye-all-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+              <button class="icon-btn" onclick="actualizarTodo()" title="Actualizar datos">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/><path d="M13.5 2v4h-4"/></svg>
+              </button>
+              <button class="icon-btn add" onclick="abrirNuevoGasto()" title="Nuevo gasto">+</button>
             </div>
-            <div class="kpi-valor" id="kpi-fala-mes" style="font-size:13px;"><span class="skeleton skeleton-valor"></span></div>
           </div>
-        </div>
-      </div>
-      <div style="height:8px;"></div>
-      <div class="kpi-card-full">
-        <div style="position:relative;flex:1;">
-          <div class="kpi-label">TARJETA DE CRÉDITO</div>
-          <div class="kpi-valor" id="kpi-tc"><span class="skeleton skeleton-valor"></span></div>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
-            <div class="kpi-sub">Saldo disponible real</div>
-            <div class="kpi-badge badge-tc">Tarjeta WorldMember Limited</div>
-          </div>
-          <div style="position:absolute;top:0;right:0;display:flex;align-items:center;gap:6px;">
-            <button onclick="abrirDetalleTarjeta()"
-              style="width:24px;height:24px;border-radius:50%;background:#e8f0fe;border:0.5px solid #aac4f0;display:flex;align-items:center;justify-content:center;cursor:pointer;"
-              title="Ver detalle">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            </button>
-            <button class="cuad-check-btn" style="position:relative;top:auto;right:auto;" onclick="abrirCuadratura('Tarjeta Crédito')" title="Cuadrar saldo">
-              <svg viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="8" r="7" fill="#e8f5e9" stroke="#a5d6a7" stroke-width="1"/>
-                <path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="#2e7d32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
 
-      <div class="section-label-row" style="padding-top:20px;">
-        <span class="section-label-main">CATEGORÍAS CLAVE</span>
-        <span class="section-label-sub" id="home-cat-periodo">—</span>
-      </div>
-      <div class="cat-kpi-grid">
-        <div class="cat-kpi-card" id="cat-kpi-cuentas">
-          <div class="cat-kpi-nombre">CUENTAS</div>
-          <div class="cat-kpi-monto" id="cat-kpi-cuentas-val"><span class="skeleton skeleton-valor"></span></div>
-          <div class="cat-kpi-comparacion"><span class="cat-kpi-prom">—</span></div>
-          <div class="cat-kpi-barra"><div class="cat-kpi-fill" style="width:0%;background:var(--accent);"></div></div>
-        </div>
-        <div class="cat-kpi-card" id="cat-kpi-super">
-          <div class="cat-kpi-nombre">SUPERMERCADO</div>
-          <div class="cat-kpi-monto" id="cat-kpi-super-val"><span class="skeleton skeleton-valor"></span></div>
-          <div class="cat-kpi-comparacion"><span class="cat-kpi-prom">—</span></div>
-          <div class="cat-kpi-barra"><div class="cat-kpi-fill" style="width:0%;background:var(--accent);"></div></div>
-        </div>
-        <div class="cat-kpi-card" id="cat-kpi-mall">
-          <div class="cat-kpi-nombre">MALL</div>
-          <div class="cat-kpi-monto" id="cat-kpi-mall-val"><span class="skeleton skeleton-valor"></span></div>
-          <div class="cat-kpi-comparacion"><span class="cat-kpi-prom">—</span></div>
-          <div class="cat-kpi-barra"><div class="cat-kpi-fill" style="width:0%;background:var(--accent);"></div></div>
-        </div>
-        <div class="cat-kpi-card" id="cat-kpi-comer">
-          <div class="cat-kpi-nombre">SALIDAS A COMER</div>
-          <div class="cat-kpi-monto" id="cat-kpi-comer-val"><span class="skeleton skeleton-valor"></span></div>
-          <div class="cat-kpi-comparacion"><span class="cat-kpi-prom">—</span></div>
-          <div class="cat-kpi-barra"><div class="cat-kpi-fill" style="width:0%;background:var(--accent);"></div></div>
-        </div>
-      </div>
-
-      <!-- PROYECCIÓN CUOTAS TC -->
-      <div class="section-label" style="padding-top:20px;">PROYECCIÓN CUOTAS TC</div>
-      <div class="home-chart-container" style="padding:14px 0 10px;overflow:hidden;">
-        <div style="padding:0 12px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-          <span class="home-chart-titulo">Pagos futuros por tarjeta de crédito</span>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:0 12px 12px;" id="cuotas-home-kpis"></div>
-        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 12px 4px;">
-          <div id="cuotas-home-chart-wrap" style="min-width:600px;position:relative;height:220px;">
-            <div id="cuotas-home-tooltip" style="position:absolute;background:#1a1a1a;color:#fff;padding:8px 11px;border-radius:8px;font-size:12px;pointer-events:none;display:none;line-height:1.7;white-space:nowrap;z-index:10;"></div>
-            <canvas id="cuotasHomeChart" role="img" aria-label="Gráfico de proyección mensual de pagos en cuotas de tarjeta de crédito" style="display:block;"></canvas>
+          <!-- Greeting -->
+          <div class="greeting">
+            <h1 id="home-greeting-text">Hola, <i>...</i></h1>
+            <div class="greeting-sub">Este es el estado de tus finanzas.</div>
           </div>
-        </div>
-        <div id="cuotas-home-legend" style="display:flex;flex-wrap:wrap;gap:12px;padding:10px 12px 0;"></div>
-      </div>
 
-      <div class="section-label" style="padding-top:20px;">EVOLUCIÓN 12 MESES</div>
-      <div style="display:flex;gap:8px;padding:0 12px 8px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:120px;position:relative;" id="wrap-evo-cat">
-          <div style="font-size:10px;font-weight:500;color:#888;letter-spacing:.04em;margin-bottom:3px;">CATEGORÍA</div>
-          <input id="inp-evo-cat" placeholder="Todas las categorías" autocomplete="off"
-            style="width:100%;padding:6px 28px 6px 10px;border:0.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;background:#f5f5f5;color:#111;outline:none;box-sizing:border-box;" />
-          <button id="clear-evo-cat" onclick="resetEvoCat()" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:14px;color:#999;cursor:pointer;padding:0;margin-top:10px;">×</button>
-          <div id="dd-evo-cat" style="display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;background:#fff;border:0.5px solid #ddd;border-radius:8px;z-index:100;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+          <!-- Accounts grid 3×2 -->
+          <div class="accounts-grid">
+
+            <!-- Card 1: Santander -->
+            <div class="acc-card">
+              <button class="acc-check" onclick="abrirCuadratura('Santander')" title="Cuadrar saldo">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M4 8.5l2.5 2.5 5.5-6" stroke="#2e9b6f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="acc-head">
+                <div class="acc-icon s"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7h18v4H3zM3 13h18v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1zM7 17h3v2H7z"/></svg></div>
+                <div class="acc-info"><div class="acc-name">Santander</div><div class="acc-type">Cuenta corriente</div></div>
+              </div>
+              <div class="acc-value" id="kpi-sant-v2"><span id="kpi-sant-inner">—</span></div>
+              <div class="acc-sub">Saldo estimado</div>
+            </div>
+
+            <!-- Card 2: Cuenta Vista Ahorros -->
+            <div class="acc-card">
+              <button class="acc-check" onclick="abrirCuadratura('Cuenta Vista Ahorros')" title="Cuadrar saldo">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M4 8.5l2.5 2.5 5.5-6" stroke="#2e9b6f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="acc-head">
+                <div class="acc-icon v"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L3 7v6c0 5 4 8.5 9 9 5-.5 9-4 9-9V7z"/></svg></div>
+                <div class="acc-info"><div class="acc-name">Cuenta Vista</div><div class="acc-type">Ahorros</div></div>
+              </div>
+              <div class="acc-value" id="kpi-ahorros-v2"><span id="kpi-ahorros-inner">—</span></div>
+              <div class="acc-sub">Saldo estimado</div>
+            </div>
+
+            <!-- Card 3: Falabella -->
+            <div class="acc-card">
+              <button class="acc-check" onclick="abrirCuadratura('Falabella')" title="Cuadrar saldo">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M4 8.5l2.5 2.5 5.5-6" stroke="#2e9b6f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="acc-head">
+                <div class="acc-icon f"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7h18v4H3zM3 13h18v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1zM7 17h3v2H7z"/></svg></div>
+                <div class="acc-info"><div class="acc-name">Falabella</div><div class="acc-type">Cuenta corriente</div></div>
+              </div>
+              <div class="acc-value" id="kpi-fala-v2"><span id="kpi-fala-inner">—</span></div>
+              <div class="acc-sub">Saldo estimado</div>
+            </div>
+
+            <!-- Card 4: Último mes Falabella (info) -->
+            <div class="info-card">
+              <div class="info-head">
+                <div class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+                <div><div class="info-name">Último mes Falabella</div><div class="info-type" id="kpi-fala-mes-v2">—</div></div>
+              </div>
+              <div class="info-num-row">
+                <div class="info-num" id="kpi-fala-compras-v2">—</div>
+                <div class="info-num-text">compras</div>
+              </div>
+              <div class="info-sub">Mes con actividad más reciente</div>
+            </div>
+
+            <!-- Card 5: Tarjeta Crédito -->
+            <div class="acc-card">
+              <button class="acc-check" onclick="abrirCuadratura('Tarjeta Crédito')" title="Cuadrar saldo">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M4 8.5l2.5 2.5 5.5-6" stroke="#2e9b6f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="acc-head">
+                <div class="acc-icon tc"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="5" width="20" height="14" rx="2.5"/><rect x="2" y="9" width="20" height="2.5" fill="#fff"/></svg></div>
+                <div class="acc-info"><div class="acc-name">Tarjeta Crédito</div><div class="acc-type">Santander</div></div>
+              </div>
+              <div class="acc-value" id="kpi-tc-v2">
+                <span id="kpi-tc-inner" onclick="abrirDetalleTarjeta()" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">—</span>
+              </div>
+              <div class="acc-sub">Saldo disponible real</div>
+            </div>
+
+            <!-- Card 6: Cuotas próximo mes (info) -->
+            <div class="info-card">
+              <div class="info-head">
+                <div class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></div>
+                <div><div class="info-name">Cuotas Próximo Mes</div><div class="info-type" id="kpi-cuotas-mes-label">—</div></div>
+              </div>
+              <div class="info-monto" id="kpi-cuotas-prox">—</div>
+              <div class="info-sub">Total a pagar en cuotas</div>
+            </div>
+
+          </div>
+
+          <!-- Presupuesto vs Real + Donut -->
+          <div class="charts-row">
+            <div class="card ppto-card">
+              <div class="ppto-card-label">PRESUPUESTO VS REAL</div>
+              <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+                <div><div class="ppto-key">Gastado</div><div class="ppto-val" id="home-ppto-gastado">—</div></div>
+                <div style="text-align:right;"><div class="ppto-key">Presupuesto</div><div class="ppto-val" id="home-ppto-total">—</div></div>
+              </div>
+              <div class="ppto-bar"><div class="ppto-fill" id="home-ppto-fill" style="width:0%"></div></div>
+              <div class="ppto-pct">
+                <span class="ppto-pct-label" id="home-ppto-mes-label">—</span>
+                <span class="ppto-pct-num" id="home-ppto-pct">—</span>
+              </div>
+            </div>
+            <div class="card donut-card">
+              <div class="ppto-card-label">DISTRIBUCIÓN DEL GASTO</div>
+              <div class="donut-body">
+                <svg id="home-donut-svg" width="150" height="150" viewBox="0 0 150 150" style="flex-shrink:0;"></svg>
+                <div class="donut-legend" id="home-donut-legend"></div>
+              </div>
+              <div style="font-size:11px;color:var(--accent);text-align:right;margin-top:8px;cursor:pointer;" onclick="switchScreen('dashboard')">Ver todas →</div>
+            </div>
+          </div>
+
+          <!-- Categorías clave -->
+          <div class="catkey-section">
+            <div class="catkey-title" id="home-cat-periodo-v2">CATEGORÍAS CLAVE</div>
+            <div class="catkey-grid">
+              <div class="catkey-card" id="cat-kpi-cuentas-v2">
+                <div class="catkey-label">CUENTAS</div>
+                <div class="catkey-monto">—</div>
+                <div class="catkey-comp"><span class="catkey-prom">prom —</span><span class="delta">—</span></div>
+                <div class="catkey-bar"><div class="catkey-fill" style="width:0%"></div></div>
+              </div>
+              <div class="catkey-card" id="cat-kpi-super-v2">
+                <div class="catkey-label">SUPERMERCADO</div>
+                <div class="catkey-monto">—</div>
+                <div class="catkey-comp"><span class="catkey-prom">prom —</span><span class="delta">—</span></div>
+                <div class="catkey-bar"><div class="catkey-fill" style="width:0%"></div></div>
+              </div>
+              <div class="catkey-card" id="cat-kpi-mall-v2">
+                <div class="catkey-label">MALL</div>
+                <div class="catkey-monto">—</div>
+                <div class="catkey-comp"><span class="catkey-prom">prom —</span><span class="delta">—</span></div>
+                <div class="catkey-bar"><div class="catkey-fill" style="width:0%"></div></div>
+              </div>
+              <div class="catkey-card" id="cat-kpi-comer-v2">
+                <div class="catkey-label">SALIDAS A COMER</div>
+                <div class="catkey-monto">—</div>
+                <div class="catkey-comp"><span class="catkey-prom">prom —</span><span class="delta">—</span></div>
+                <div class="catkey-bar"><div class="catkey-fill" style="width:0%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Proyección Cuotas TC -->
+          <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;">
+            <div style="padding:14px 14px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+              <span class="ppto-card-label" style="margin-bottom:0;">PROYECCIÓN CUOTAS TC</span>
+              <span class="home-chart-titulo">Pagos futuros por tarjeta de crédito</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:10px 14px 12px;" id="cuotas-home-kpis"></div>
+            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 14px 4px;">
+              <div id="cuotas-home-chart-wrap" style="min-width:600px;position:relative;height:220px;">
+                <div id="cuotas-home-tooltip" style="position:absolute;background:#1a1a1a;color:#fff;padding:8px 11px;border-radius:8px;font-size:12px;pointer-events:none;display:none;line-height:1.7;white-space:nowrap;z-index:10;"></div>
+                <canvas id="cuotasHomeChart" role="img" aria-label="Gráfico de proyección mensual de pagos en cuotas de tarjeta de crédito" style="display:block;"></canvas>
+              </div>
+            </div>
+            <div id="cuotas-home-legend" style="display:flex;flex-wrap:wrap;gap:12px;padding:10px 14px 14px;"></div>
+          </div>
+
+          <!-- Evolución 12 meses -->
+          <div class="card" style="padding:16px;margin-bottom:16px;">
+            <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:120px;position:relative;" id="wrap-evo-cat">
+                <div style="font-size:10px;font-weight:500;color:#888;letter-spacing:.04em;margin-bottom:3px;">CATEGORÍA</div>
+                <input id="inp-evo-cat" placeholder="Todas las categorías" autocomplete="off"
+                  style="width:100%;padding:6px 28px 6px 10px;border:0.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;background:#f5f5f5;color:#111;outline:none;box-sizing:border-box;" />
+                <button id="clear-evo-cat" onclick="resetEvoCat()" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:14px;color:#999;cursor:pointer;padding:0;margin-top:10px;">×</button>
+                <div id="dd-evo-cat" style="display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;background:#fff;border:0.5px solid #ddd;border-radius:8px;z-index:100;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+              </div>
+              <div style="flex:1;min-width:120px;position:relative;" id="wrap-evo-sub">
+                <div style="font-size:10px;font-weight:500;color:#888;letter-spacing:.04em;margin-bottom:3px;">SUBCATEGORÍA</div>
+                <input id="inp-evo-sub" placeholder="Todas" autocomplete="off" disabled
+                  style="width:100%;padding:6px 28px 6px 10px;border:0.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;background:#f5f5f5;color:#111;outline:none;box-sizing:border-box;opacity:0.5;" />
+                <button id="clear-evo-sub" onclick="resetEvoSub()" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:14px;color:#999;cursor:pointer;padding:0;margin-top:10px;">×</button>
+                <div id="dd-evo-sub" style="display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;background:#fff;border:0.5px solid #ddd;border-radius:8px;z-index:100;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+              </div>
+            </div>
+            <div class="home-chart-header">
+              <span class="home-chart-titulo">Gasto vs presupuesto</span>
+            </div>
+            <div style="position:relative;height:220px;">
+              <canvas id="home-line-chart-canvas"></canvas>
+            </div>
+            <div id="home-chart-legend-new" style="display:flex;gap:14px;padding:8px 0 0;flex-wrap:wrap;"></div>
+          </div>
+
+          <div style="height:16px;"></div>
         </div>
-        <div style="flex:1;min-width:120px;position:relative;" id="wrap-evo-sub">
-          <div style="font-size:10px;font-weight:500;color:#888;letter-spacing:.04em;margin-bottom:3px;">SUBCATEGORÍA</div>
-          <input id="inp-evo-sub" placeholder="Todas" autocomplete="off" disabled
-            style="width:100%;padding:6px 28px 6px 10px;border:0.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;background:#f5f5f5;color:#111;outline:none;box-sizing:border-box;opacity:0.5;" />
-          <button id="clear-evo-sub" onclick="resetEvoSub()" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:14px;color:#999;cursor:pointer;padding:0;margin-top:10px;">×</button>
-          <div id="dd-evo-sub" style="display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;background:#fff;border:0.5px solid #ddd;border-radius:8px;z-index:100;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
-        </div>
-      </div>
-      <div class="home-chart-container">
-        <div class="home-chart-header">
-          <span class="home-chart-titulo">Gasto vs presupuesto</span>
-        </div>
-        <div style="position:relative;height:220px;">
-          <canvas id="home-line-chart-canvas"></canvas>
-        </div>
-        <div id="home-chart-legend-new" style="display:flex;gap:14px;padding:8px 0 0;flex-wrap:wrap;"></div>
-      </div>
-      <div style="height:16px;"></div>
     </div>
 
-  </main>
-
+      </main>
+    </div>
+  </div>
 
 </div>
 
@@ -1386,46 +1642,93 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
 </div>
 
 <div class="overlay" id="ov-nuevo">
-  <div class="sheet">
+  <div class="sheet ng-sheet">
     <div class="sheet-handle"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 16px;">
-      <div class="sheet-title" style="margin-bottom:0;">Nuevo gasto</div>
-      <button style="width:28px;height:28px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;font-size:14px;color:#666;" onclick="cerrar('ov-nuevo');modoEdicion=false;gastoEditandoRowIndex=null;">✕</button>
+    <div class="ng-header">
+      <div class="ng-sheet-title">Nuevo gasto</div>
+      <button class="ng-close-btn" onclick="cerrar('ov-nuevo');modoEdicion=false;gastoEditandoRowIndex=null;">✕</button>
     </div>
-    <div class="form-body">
-      <div class="field"><label>FECHA</label><input type="date" id="f-fecha" /></div>
-      <div class="field">
-        <label>BANCO / MEDIO DE PAGO</label>
-        <div class="banco-group">
-          <button class="banco-btn" data-banco="Tarjeta Crédito"><div class="banco-icon t">TC</div><span class="banco-label">Tarjeta Crédito</span></button>
-          <button class="banco-btn" data-banco="Falabella"><div class="banco-icon f">F</div><span class="banco-label">Falabella</span></button>
-          <button class="banco-btn" data-banco="Santander"><div class="banco-icon s">S</div><span class="banco-label">Santander</span></button>
-        </div>
+
+    <!-- Hidden legacy fields: save/edit logic reads these directly -->
+    <input type="text" id="f-subcat" style="display:none;" autocomplete="off" />
+    <input type="hidden" id="f-monto" />
+    <div id="f-cat-badge" style="display:none;">
+      <div class="cat-badge-row">
+        <span style="font-size:12px;color:#999;">Categoría:</span>
+        <span class="cat-badge" id="f-cat-nombre"></span>
+        <span class="ie-badge" id="f-ie-badge"></span>
       </div>
-      <div class="field">
-        <label>SUBCATEGORÍA</label>
-        <div class="subcat-wrap">
-          <div class="subcat-row">
-            <input type="text" id="f-subcat" placeholder="Escribe o usa la lista..." autocomplete="off" />
-            <button class="btn-lista" id="btn-lista">&#9776;</button>
-          </div>
-          <div class="suggestions" id="f-suggestions" style="display:none;"></div>
-        </div>
-        <div id="f-cat-badge" style="display:none;">
-          <div class="cat-badge-row">
-            <span style="font-size:12px;color:#999;">Categoría:</span>
-            <span class="cat-badge" id="f-cat-nombre"></span>
-            <span class="ie-badge" id="f-ie-badge"></span>
-          </div>
-        </div>
-      </div>
-      <div class="field"><label>DESCRIPCIÓN</label><textarea id="f-desc" placeholder="Ej: Compra semanal en Jumbo..."></textarea></div>
-      <div class="field"><label>MONTO</label><div class="monto-wrap"><span class="monto-prefix">$</span><input type="number" id="f-monto" placeholder="0" min="0" /></div></div>
-      <div id="intl-banner" style="display:none;"><div class="intl-banner"><span class="intl-banner-icon">🌐</span><span>Gasto internacional. Ingresa el monto total en CLP que pagarás y luego distribuye en ítems USD.</span></div></div>
-      <div class="dev-row" id="dev-toggle"><div class="toggle-box"><span class="toggle-check">✓</span></div><span class="dev-label">Es una devolución</span><span class="dev-hint" id="dev-hint">marcar con X</span></div>
-      <button class="btn-guardar" id="btn-guardar">Guardar gasto</button>
-      <button class="btn-guardar-sec" id="btn-guardar-sin-dist" style="display:none;" onclick="intlGuardarSinDist()">Guardar sin distribuir</button>
     </div>
+    <div class="suggestions" id="f-suggestions" style="display:none;"></div>
+    <button id="btn-lista" style="display:none;" aria-hidden="true"></button>
+
+    <!-- 1. Amount -->
+    <div class="ng-amount-section">
+      <div class="ng-amount-wrap" id="ng-amount-wrap">
+        <div class="ng-amount-display empty" id="ng-amount-display">$0</div>
+        <input class="ng-amount-input" id="ng-monto-input" type="tel" inputmode="numeric" autocomplete="off" />
+      </div>
+      <div style="position:relative;display:inline-flex;margin-top:10px;">
+        <button class="ng-date-pill" id="ng-date-btn" type="button" style="margin-top:0;">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="1" y1="6" x2="15" y2="6" stroke="currentColor" stroke-width="1.5"/><line x1="5" y1="1" x2="5" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="1" x2="11" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <span id="ng-date-label">Hoy</span>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <input type="date" id="f-fecha" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;border:none;padding:0;" />
+      </div>
+    </div>
+
+    <!-- intl-banner (kept for international card feature) -->
+    <div id="intl-banner" style="display:none;"><div class="intl-banner"><span class="intl-banner-icon">🌐</span><span>Gasto internacional. Ingresa el monto total en CLP que pagarás y luego distribuye en ítems USD.</span></div></div>
+
+    <!-- 2. Payment method carousel -->
+    <div class="ng-section-label">MEDIO DE PAGO</div>
+    <div class="ng-carousel" id="ng-banco-carousel">
+      <button class="banco-btn ng-banco-card" data-banco="Tarjeta Crédito">
+        <div class="banco-icon t ng-banco-icon">TC</div>
+        <span class="banco-label ng-banco-name">Tarjeta Crédito</span>
+      </button>
+      <button class="banco-btn ng-banco-card" data-banco="Falabella">
+        <div class="banco-icon f ng-banco-icon">F</div>
+        <span class="banco-label ng-banco-name">Falabella</span>
+      </button>
+      <button class="banco-btn ng-banco-card" data-banco="Santander">
+        <div class="banco-icon s ng-banco-icon">S</div>
+        <span class="banco-label ng-banco-name">Santander</span>
+      </button>
+    </div>
+
+    <!-- 3. Search + Category carousel -->
+    <div style="position:relative;">
+      <div class="ng-subcat-search-wrap" style="margin-bottom:0;">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#BBB" stroke-width="1.5"/><line x1="10.5" y1="10.5" x2="14" y2="14" stroke="#BBB" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <input class="ng-subcat-search-input" id="ng-subcat-search-input" type="text" placeholder="Buscar categoría o subcategoría…" autocomplete="off" />
+      </div>
+      <div class="ng-search-results" id="ng-search-results"></div>
+    </div>
+    <div class="ng-section-label" style="margin-top:0;">CATEGORÍA</div>
+    <div class="ng-carousel" id="ng-cat-carousel"><div style="color:#C4B5AD;font-size:13px;padding:8px 0;">Cargando...</div></div>
+
+    <!-- 4. Subcategory carousel -->
+    <div class="ng-section-label" id="ng-subcat-label" style="display:none;">SUBCATEGORÍA</div>
+    <div class="ng-carousel" id="ng-subcat-carousel"></div>
+
+    <!-- 5. Description -->
+    <div class="ng-section-label">DESCRIPCIÓN</div>
+    <textarea class="ng-desc" id="f-desc" placeholder="Ej: Compra semanal en Jumbo…"></textarea>
+
+    <!-- 6. Devolución toggle switch -->
+    <div class="ng-dev-row" id="dev-toggle">
+      <div class="ng-toggle-track"><div class="ng-toggle-thumb"></div></div>
+      <div class="ng-dev-text">
+        <span class="ng-dev-label">Es una devolución</span>
+        <span class="ng-dev-hint" id="dev-hint">marcar con X</span>
+      </div>
+    </div>
+
+    <!-- 7. Save button -->
+    <button class="ng-btn-guardar" id="btn-guardar">Guardar gasto</button>
+    <button class="btn-guardar-sec" id="btn-guardar-sin-dist" style="display:none;" onclick="intlGuardarSinDist()">Guardar sin distribuir</button>
   </div>
 </div>
 
@@ -2061,10 +2364,12 @@ function cerrarDrawer(){
 
 // ── NAVEGACIÓN ──────────────────────────────────────────
 const screenTitles={dashboard:'Resumen',detalle:'Detalle',presupuesto:'Presupuestos',admin:'Categorías'};
-function switchScreen(screen){
+const screenToPath={home:'/gastos',dashboard:'/gastos/resumen',detalle:'/gastos/detalle',validacion:'/gastos/validacion',cuotas:'/gastos/cuotas',presupuesto:'/gastos/presupuesto',admin:'/gastos/categorias','historial-cuad':'/gastos/historial'};
+const pathToScreen=Object.fromEntries(Object.entries(screenToPath).map(([k,v])=>[v,k]));
+function switchScreen(screen,pushHistory=true){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+screen).classList.add('active');
-  document.querySelectorAll('.nav-link,.drawer-link').forEach(l=>{
+  document.querySelectorAll('.nav-link,.drawer-link,.side-icon').forEach(l=>{
     l.classList.toggle('active',l.dataset.screen===screen);
   });
   document.getElementById('navbar-title').textContent=screenTitles[screen]||screen;
@@ -2072,7 +2377,17 @@ function switchScreen(screen){
   if(screen==='admin') renderAdmin();
   if(screen==='detalle') renderDetalle();
   window.scrollTo(0,0);
+  if(pushHistory) history.pushState({screen},'',(screenToPath[screen]||'/gastos'));
 }
+window.addEventListener('popstate',e=>{
+  const screen=(e.state&&e.state.screen)||pathToScreen[location.pathname]||'home';
+  switchScreen(screen,false);
+});
+(function initFromUrl(){
+  const screen=pathToScreen[location.pathname]||'home';
+  if(screen!=='home') switchScreen(screen,false);
+  history.replaceState({screen},'',(screenToPath[screen]||'/gastos'));
+})();
 
 function abrirNuevoGasto(){document.getElementById('ov-nuevo').classList.add('open');}
 
@@ -2382,7 +2697,15 @@ cargarDatos();
   `
 
   useEffect(() => {
-    if (document.getElementById('app-script')) return
+    if (user?.name) window.userName = user.name
+  }, [user])
+
+  useEffect(() => {
+    if (document.getElementById('app-script')) {
+      // Script already present (React strict-mode remount) — re-trigger data load
+      if (typeof window.cargarDatos === 'function') window.cargarDatos()
+      return
+    }
     const script = document.createElement('script')
     script.id = 'app-script'
     script.src = '/app-script.js?v=' + Date.now()

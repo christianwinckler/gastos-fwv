@@ -1,14 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import HomeHeader from './HomeHeader'
-import Stat from './Stat'
 import SignOutButton from './SignOutButton'
-
-const IconArrow = () => (
-  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5 12h14M13 6l6 6-6 6"/>
-  </svg>
-)
 
 export default function ThemeWrapper({ name, image, initials }) {
   const [dark, setDark] = useState(false)
@@ -35,23 +28,22 @@ export default function ThemeWrapper({ name, image, initials }) {
         boxSizing: 'border-box',
       }}
     >
+      <div style={{ maxWidth: 560, margin: '0 auto', width: '100%' }}>
       <HomeHeader name={name} image={image} initials={initials} />
 
       {/* Apps section */}
       <div style={{ padding: '0 22px 32px' }}>
         <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+          fontSize: 11, letterSpacing: '0.14em', color: 'var(--sub)',
+          textTransform: 'uppercase', fontWeight: 500,
           marginBottom: 14,
         }}>
-          <div style={{ fontSize: 11, letterSpacing: '0.14em', color: 'var(--sub)', textTransform: 'uppercase', fontWeight: 500 }}>
-            Mis apps
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--sub)' }}>3 espacios</div>
+          Mis apps
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-          {/* Card 1 — Gastos (hero, activa) */}
+          {/* Card 1 — Gastos (activa) */}
           <a
             href="/gastos"
             style={{
@@ -66,7 +58,7 @@ export default function ThemeWrapper({ name, image, initials }) {
             onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--card-hover)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--card)'; e.currentTarget.style.transform = 'translateY(0)' }}
           >
-            <div style={{ marginBottom: 18 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={{
                 width: 42, height: 42, borderRadius: 12,
                 background: 'var(--accent)', color: '#fff',
@@ -79,28 +71,11 @@ export default function ThemeWrapper({ name, image, initials }) {
               </div>
             </div>
 
-            <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: 4 }}>
+            <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em', marginBottom: 4 }}>
               Gastos
             </div>
-            <div style={{ fontSize: 13.5, color: 'var(--muted)', marginBottom: 18 }}>
+            <div style={{ fontSize: 13, color: 'var(--muted)' }}>
               Presupuestos, gastos compartidos y cuotas de tarjeta
-            </div>
-
-            <div style={{
-              display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-              gap: 1, padding: 1,
-              background: 'var(--border)', borderRadius: 12, overflow: 'hidden',
-              marginBottom: 14,
-            }}>
-              <Stat label="Saldo Santander" value="$1.284K" />
-              <Stat label="Saldo Falabella" value="$642K" />
-              <Stat label="Últ. Falabella"  value="11 · Abr" />
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500 }}>
-                Abrir <IconArrow />
-              </div>
             </div>
           </a>
 
@@ -135,23 +110,13 @@ export default function ThemeWrapper({ name, image, initials }) {
             </div>
           </div>
 
-          {/* Card 3 — Slot vacío */}
-          <div style={{
-            border: '1px dashed var(--border)', borderRadius: 22,
-            padding: '22px 20px',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            minHeight: 110, gap: 8, color: 'var(--sub)',
-          }}>
-            <div style={{ fontSize: 28, fontFamily: "'Instrument Serif', serif", lineHeight: 1, fontWeight: 300 }}>+</div>
-            <div style={{ fontSize: 12, letterSpacing: '0.04em' }}>Sugerir nueva app</div>
-          </div>
-
         </div>
 
         {/* Footer */}
         <div style={{ marginTop: 28, textAlign: 'center', fontSize: 11, color: 'var(--sub)', letterSpacing: '0.04em' }}>
           FWV · 2026 · <SignOutButton inline />
         </div>
+      </div>
       </div>
     </div>
   )

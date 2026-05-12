@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Gastos FWV — Home rediseñado FINAL (referencia para Claude Code)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:         oklch(0.972 0.012 80);
+    --fg:         oklch(0.24 0.025 250);
+    --muted:      oklch(0.50 0.020 250);
+    --sub:        oklch(0.62 0.015 60);
+    --card:       #fff;
+    --card-hover: oklch(0.995 0.008 80);
+    --inner-card: oklch(0.965 0.012 80);
+    --chip-bg:    oklch(0.94 0.012 80);
+    --border:     rgba(0,0,0,0.07);
+    --border-soft: rgba(0,0,0,0.045);
+    --accent:     #e87a6b;
+    --accent-soft:#fdebe7;
+    --green:      #2e9b6f;
+    --green-soft: #e3f3eb;
+    --error:      #c62828;
+    --gold-bg:    #fdf3df;
+    --gold-fg:    #c98a1a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: 'Geist', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+  button { font-family: inherit; cursor: pointer; }
+
+  .shell { display: grid; grid-template-columns: 72px 1fr; min-height: 100vh; }
+  .sidebar { background: var(--card); border-right: 1px solid var(--border-soft); display: flex; flex-direction: column; align-items: center; padding: 22px 0; gap: 6px; position: sticky; top: 0; height: 100vh; }
+  .side-logo { width: 36px; height: 36px; border-radius: 10px; margin-bottom: 22px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.06); cursor: pointer; }
+  .side-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--muted); transition: background 0.15s, color 0.15s; }
+  .side-icon:hover { background: var(--inner-card); color: var(--fg); }
+  .side-icon.active { background: var(--accent); color: #fff; box-shadow: 0 4px 10px rgba(232,122,107,0.25); }
+  .side-icon svg { width: 17px; height: 17px; }
+  .side-spacer { flex: 1; }
+
+  .main { padding: 28px 36px 60px; max-width: 1200px; width: 100%; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .ham-btn { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border-soft); background: var(--card); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--fg); }
+  .ham-line { width: 16px; height: 1.5px; background: currentColor; border-radius: 1px; }
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
+  .icon-btn { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--border-soft); background: var(--card); color: var(--muted); display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+  .icon-btn:hover { background: var(--inner-card); }
+  .icon-btn svg { width: 14px; height: 14px; }
+  .icon-btn.add { background: var(--accent); color: #fff; border: none; font-size: 22px; line-height: 1; padding-bottom: 3px; }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; background: #4a3530; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; }
+
+  .greeting { margin-bottom: 24px; }
+  .greeting h1 { font-family: 'Instrument Serif', serif; font-size: 38px; line-height: 1.05; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 6px; }
+  .greeting-sub { font-size: 13px; color: var(--muted); }
+
+  .card { background: var(--card); border: 1px solid var(--border-soft); border-radius: 16px; padding: 14px; }
+
+  .accounts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+
+  .acc-card { background: var(--card); border: 1px solid var(--border-soft); border-radius: 14px; padding: 14px; position: relative; display: flex; flex-direction: column; min-height: 110px; }
+  .acc-head { display: flex; align-items: flex-start; gap: 9px; margin-bottom: auto; padding-right: 24px; }
+  .acc-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .acc-icon.s { background: #fce4ec; color: var(--error); }
+  .acc-icon.f { background: var(--green-soft); color: var(--green); }
+  .acc-icon.tc { background: var(--gold-bg); color: var(--gold-fg); }
+  .acc-icon.v { background: #e8f0fe; color: #1a73e8; }
+  .acc-icon svg { width: 14px; height: 14px; }
+  .acc-info { flex: 1; min-width: 0; }
+  .acc-name { font-size: 12.5px; font-weight: 500; color: var(--fg); line-height: 1.2; }
+  .acc-type { font-size: 10.5px; color: var(--sub); letter-spacing: 0.02em; margin-top: 2px; }
+  .acc-value { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; margin-top: 8px; }
+  .acc-sub { font-size: 10.5px; color: var(--sub); margin-top: 2px; }
+  .acc-check { position: absolute; top: 12px; right: 12px; width: 18px; height: 18px; border-radius: 50%; background: var(--green-soft); border: 1px solid #b8dcc7; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .acc-check svg { width: 10px; height: 10px; }
+
+  .info-card { background: var(--card); border: 1px solid var(--border-soft); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; min-height: 110px; position: relative; border-left: 3px solid var(--accent-soft); }
+  .info-head { display: flex; align-items: flex-start; gap: 9px; margin-bottom: auto; }
+  .info-icon { width: 30px; height: 30px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .info-icon svg { width: 14px; height: 14px; }
+  .info-name { font-size: 12.5px; font-weight: 500; color: var(--fg); line-height: 1.2; }
+  .info-type { font-size: 10.5px; color: var(--sub); letter-spacing: 0.02em; margin-top: 2px; }
+  .info-num-row { display: flex; align-items: baseline; gap: 6px; margin-top: 8px; }
+  .info-num { font-size: 22px; font-weight: 700; color: var(--accent); line-height: 1; letter-spacing: -0.01em; }
+  .info-num-text { font-size: 12px; color: var(--fg); }
+  .info-monto { font-size: 19px; font-weight: 600; color: var(--accent); margin-top: 8px; letter-spacing: -0.01em; }
+  .info-sub { font-size: 10.5px; color: var(--sub); margin-top: 2px; }
+
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+  .ppto-card { padding: 22px 24px; display: flex; flex-direction: column; }
+  .ppto-card-label { font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 12px; }
+  .ppto-key { font-size: 12px; color: var(--sub); margin-bottom: 4px; }
+  .ppto-val { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+  .ppto-bar { height: 8px; background: var(--inner-card); border-radius: 4px; overflow: hidden; margin-top: 18px; }
+  .ppto-fill { height: 100%; background: var(--accent); border-radius: 4px; }
+  .ppto-pct { display: flex; justify-content: space-between; font-size: 12px; margin-top: 8px; }
+  .ppto-pct-num { color: var(--accent); font-weight: 600; }
+  .ppto-pct-label { color: var(--sub); }
+
+  .donut-card { padding: 22px 24px; }
+  .donut-title { font-size: 14px; font-weight: 500; color: var(--fg); margin-bottom: 16px; }
+  .donut-wrap { display: flex; align-items: center; gap: 22px; }
+  .donut { width: 150px; height: 150px; flex-shrink: 0; position: relative; }
+  .donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .donut-center-label { font-size: 10px; color: var(--sub); letter-spacing: 0.06em; }
+  .donut-center-val { font-size: 17px; font-weight: 600; margin-top: 3px; letter-spacing: -0.01em; }
+  .donut-center-mes { font-size: 10px; color: var(--sub); margin-top: 2px; }
+  .donut-legend { flex: 1; display: flex; flex-direction: column; gap: 9px; }
+  .legend-item { display: flex; align-items: center; gap: 9px; font-size: 12.5px; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .legend-name { flex: 1; color: var(--fg); }
+  .legend-pct { color: var(--sub); font-weight: 500; }
+  .donut-foot { font-size: 11.5px; color: var(--accent); margin-top: 16px; display: flex; justify-content: flex-end; cursor: pointer; }
+
+  .catkey-section { margin-bottom: 16px; }
+  .catkey-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px; margin-bottom: 10px; }
+  .catkey-label { font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0.08em; }
+  .catkey-sub { font-size: 11px; color: var(--sub); }
+  .catkey-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .catkey-card { background: var(--card); border: 1px solid var(--border-soft); border-radius: 14px; padding: 14px 16px; }
+  .catkey-name { font-size: 10px; font-weight: 500; color: var(--muted); letter-spacing: 0.06em; margin-bottom: 7px; }
+  .catkey-val { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+  .catkey-comp { display: flex; align-items: center; gap: 7px; margin-top: 5px; font-size: 11px; }
+  .delta { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 999px; }
+  .delta.pos { background: var(--green-soft); color: var(--green); }
+  .delta.neg { background: #fbe4e2; color: var(--accent); }
+  .catkey-bar { margin-top: 9px; height: 4px; background: var(--inner-card); border-radius: 2px; overflow: hidden; }
+  .catkey-fill { height: 100%; border-radius: 2px; }
+
+  @media (max-width: 1024px) {
+    .accounts-grid { grid-template-columns: repeat(2, 1fr); }
+    .catkey-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 920px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { padding: 18px 14px 80px; }
+    .greeting h1 { font-size: 30px; }
+  }
+  @media (max-width: 480px) {
+    .accounts-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <aside class="sidebar">
+    <div class="side-logo" title="Volver a Apps">
+      <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+        <rect width="36" height="36" rx="9" fill="#fdebe7"/>
+        <path d="M8 19.5L18 11l10 8.5" stroke="#1f2c40" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M11 18v9h14v-9" stroke="#1f2c40" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M21 22.5c0-1 .8-1.8 1.8-1.8s1.8.8 1.8 1.8c0 1.5-1.8 3-1.8 3s-1.8-1.5-1.8-3z" fill="#e87a6b"/>
+      </svg>
+    </div>
+    <button class="side-icon active" title="Resumen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.2"/><rect x="14" y="3" width="7" height="5" rx="1.2"/><rect x="14" y="12" width="7" height="9" rx="1.2"/><rect x="3" y="16" width="7" height="5" rx="1.2"/></svg>
+    </button>
+    <button class="side-icon" title="Detalle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1.5" fill="currentColor"/><circle cx="3.5" cy="12" r="1.5" fill="currentColor"/><circle cx="3.5" cy="18" r="1.5" fill="currentColor"/></svg>
+    </button>
+    <button class="side-icon" title="Validación pagos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7"/><path d="M3 10h18"/><path d="M16 19l2 2 4-4"/></svg>
+    </button>
+    <button class="side-icon" title="Cuotas TC">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>
+    </button>
+    <button class="side-icon" title="Categorías">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg>
+    </button>
+    <div class="side-spacer"></div>
+  </aside>
+
+  <main class="main">
+
+    <div class="topbar">
+      <button class="ham-btn" title="Menú"><span class="ham-line"></span><span class="ham-line"></span><span class="ham-line"></span></button>
+      <div class="topbar-right">
+        <button class="icon-btn" title="Ocultar saldos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button class="icon-btn" title="Notificaciones"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+        <button class="icon-btn add" title="Nuevo gasto">+</button>
+        <div class="avatar">C</div>
+      </div>
+    </div>
+
+    <div class="greeting">
+      <h1>Buenas tardes, <span style="font-style:italic;color:var(--muted);">Christian.</span></h1>
+      <div class="greeting-sub">Este es el estado de tus finanzas.</div>
+    </div>
+
+    <div class="accounts-grid">
+
+      <div class="acc-card">
+        <button class="acc-check"><svg viewBox="0 0 16 16" fill="none"><path d="M4 8.5l2.5 2.5 5.5-6" stroke="#2e9b6f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="acc-head">
+          <div class="acc-icon s"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7h18v4H3zM3 13h18v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1zM7 17h3v2H7z"/></svg></div>
+          <div class="acc-info"><div class="acc-name">Santander</div><div class="acc-type">Cuenta corriente</div></div>
+        </div>
+        <div class="acc-value">$93.501</div>
+      </div>
+
+      <div class="acc-card">
+        <button class="acc-check"><svg viewBox="0 0 16 16" fill="none"><path d="M4 8.5l2.5 2.5 5.5-6" stroke="#2e9b6f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="acc-head">
+          <div class="acc-icon v"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L3 7v6c0 5 4 8.5 9 9 5-.5 9-4 9-9V7z"/></svg></div>
+          <div class="acc-info"><div class="acc-name">Cuenta Vista</div><div class="acc-type">Ahorros</div></div>
+        </div>
+        <div class="acc-value">$21.230.149</div>
+      </div>
+
+      <div class="acc-card">
+        <button class="acc-check"><svg viewBox="0 0 16 16" fill="none"><path d="M4 8.5l2.5 2.5 5.5-6" stroke="#2e9b6f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="acc-head">
+          <div class="acc-icon f"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7h18v4H3zM3 13h18v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1zM7 17h3v2H7z"/></svg></div>
+          <div class="acc-info"><div class="acc-name">Falabella</div><div class="acc-type">Cuenta corriente</div></div>
+        </div>
+        <div class="acc-value">$32.602</div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-head">
+          <div class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+          <div class="acc-info"><div class="info-name">Último mes</div><div class="info-type">Falabella</div></div>
+        </div>
+        <div class="info-num-row">
+          <span class="info-num">11</span>
+          <span class="info-num-text">compras</span>
+        </div>
+        <div class="info-sub">Abril 2026</div>
+      </div>
+
+      <div class="acc-card">
+        <button class="acc-check"><svg viewBox="0 0 16 16" fill="none"><path d="M4 8.5l2.5 2.5 5.5-6" stroke="#2e9b6f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="acc-head">
+          <div class="acc-icon tc"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="5" width="20" height="14" rx="2.5"/><rect x="2" y="9" width="20" height="2.5" fill="#fff"/></svg></div>
+          <div class="acc-info"><div class="acc-name">Tarjeta Crédito</div><div class="acc-type">Falabella</div></div>
+        </div>
+        <div class="acc-value">$8.942.355</div>
+        <div class="acc-sub">Disponible real</div>
+      </div>
+
+      <!-- Cuotas Próximo Mes (NUEVA versión) -->
+      <div class="info-card">
+        <div class="info-head">
+          <div class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></div>
+          <div class="acc-info"><div class="info-name">Cuotas Próximo Mes</div><div class="info-type">Junio 2026</div></div>
+        </div>
+        <div class="info-monto">$196.550</div>
+        <div class="info-sub">Total a pagar en cuotas</div>
+      </div>
+
+    </div>
+
+    <div class="charts-row">
+      <div class="card ppto-card">
+        <div class="ppto-card-label">PRESUPUESTO VS REAL</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+          <div><div class="ppto-key">Gastado</div><div class="ppto-val">$1.284.000</div></div>
+          <div style="text-align:right;"><div class="ppto-key">Presupuesto</div><div class="ppto-val">$1.550.000</div></div>
+        </div>
+        <div class="ppto-bar"><div class="ppto-fill" style="width:83%;"></div></div>
+        <div class="ppto-pct">
+          <span class="ppto-pct-label">del presupuesto · Abril 2026</span>
+          <span class="ppto-pct-num">83%</span>
+        </div>
+      </div>
+
+      <div class="card donut-card">
+        <div class="donut-title">Distribución del gasto</div>
+        <div class="donut-wrap">
+          <div class="donut">
+            <svg viewBox="0 0 150 150">
+              <circle cx="75" cy="75" r="58" fill="none" stroke="#fbe4e2" stroke-width="22"/>
+              <circle cx="75" cy="75" r="58" fill="none" stroke="#e87a6b" stroke-width="22" stroke-dasharray="76.5 364.4" stroke-dashoffset="0" transform="rotate(-90 75 75)"/>
+              <circle cx="75" cy="75" r="58" fill="none" stroke="#f4a591" stroke-width="22" stroke-dasharray="61.9 364.4" stroke-dashoffset="-76.5" transform="rotate(-90 75 75)"/>
+              <circle cx="75" cy="75" r="58" fill="none" stroke="#f7c4b3" stroke-width="22" stroke-dasharray="40.1 364.4" stroke-dashoffset="-138.4" transform="rotate(-90 75 75)"/>
+              <circle cx="75" cy="75" r="58" fill="none" stroke="#fad6c8" stroke-width="22" stroke-dasharray="21.9 364.4" stroke-dashoffset="-178.5" transform="rotate(-90 75 75)"/>
+              <circle cx="75" cy="75" r="58" fill="none" stroke="#d3c5b8" stroke-width="22" stroke-dasharray="164 364.4" stroke-dashoffset="-200.4" transform="rotate(-90 75 75)"/>
+            </svg>
+            <div class="donut-center"><div class="donut-center-label">TOTAL</div><div class="donut-center-val">$1.284.000</div><div class="donut-center-mes">Abril 2026</div></div>
+          </div>
+          <div class="donut-legend">
+            <div class="legend-item"><span class="legend-dot" style="background:#e87a6b;"></span><span class="legend-name">Supermercado</span><span class="legend-pct">21%</span></div>
+            <div class="legend-item"><span class="legend-dot" style="background:#f4a591;"></span><span class="legend-name">Servicios</span><span class="legend-pct">17%</span></div>
+            <div class="legend-item"><span class="legend-dot" style="background:#f7c4b3;"></span><span class="legend-name">Salidas a comer</span><span class="legend-pct">11%</span></div>
+            <div class="legend-item"><span class="legend-dot" style="background:#fad6c8;"></span><span class="legend-name">Mall</span><span class="legend-pct">6%</span></div>
+            <div class="legend-item"><span class="legend-dot" style="background:#d3c5b8;"></span><span class="legend-name">Otros</span><span class="legend-pct">45%</span></div>
+          </div>
+        </div>
+        <div class="donut-foot">Ver todas →</div>
+      </div>
+    </div>
+
+    <div class="catkey-section">
+      <div class="catkey-head"><span class="catkey-label">CATEGORÍAS CLAVE</span><span class="catkey-sub">Promedio últimos 3 meses</span></div>
+      <div class="catkey-grid">
+        <div class="catkey-card"><div class="catkey-name">CUENTAS</div><div class="catkey-val">$215.880</div><div class="catkey-comp"><span style="color:var(--sub);">Prom: $228.450</span><span class="delta pos">-5%</span></div><div class="catkey-bar"><div class="catkey-fill" style="width:94%;background:var(--accent);"></div></div></div>
+        <div class="catkey-card"><div class="catkey-name">SUPERMERCADO</div><div class="catkey-val">$269.464</div><div class="catkey-comp"><span style="color:var(--sub);">Prom: $250.120</span><span class="delta neg">+8%</span></div><div class="catkey-bar"><div class="catkey-fill" style="width:100%;background:var(--accent);"></div></div></div>
+        <div class="catkey-card"><div class="catkey-name">MALL</div><div class="catkey-val">$77.040</div><div class="catkey-comp"><span style="color:var(--sub);">Prom: $112.300</span><span class="delta pos">-31%</span></div><div class="catkey-bar"><div class="catkey-fill" style="width:35%;background:var(--accent);"></div></div></div>
+        <div class="catkey-card"><div class="catkey-name">SALIDAS A COMER</div><div class="catkey-val">$141.240</div><div class="catkey-comp"><span style="color:var(--sub);">Prom: $138.900</span><span class="delta neg">+2%</span></div><div class="catkey-bar"><div class="catkey-fill" style="width:62%;background:var(--accent);"></div></div></div>
+      </div>
+    </div>
+
+    <p style="margin:24px 4px 8px;font-size:11px;color:var(--muted);letter-spacing:0.06em;">↓ ABAJO SE MANTIENEN: Proyección Cuotas TC + Evolución 12 meses (no cambian)</p>
+
+  </main>
+</div>
+
+</body>
+</html>
