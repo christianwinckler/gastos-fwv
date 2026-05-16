@@ -1345,7 +1345,7 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
       </button>
     </div>
     <div style="padding:8px 16px 16px;display:flex;flex-direction:column;gap:8px;">
-      <button style="width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;" onclick="abrirNuevoGasto();cerrarDrawer()">+ Nuevo gasto</button>
+      <button style="width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;" onclick="if(window.abrirNuevoGasto)window.abrirNuevoGasto();cerrarDrawer()">+ Nuevo gasto</button>
     </div>
   </div>
 
@@ -1409,7 +1409,7 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
           <span class="navbar-brand" id="navbar-title"><span class="brand-prefix">Gastos FWV</span> - Resumen</span>
         </div>
         <div class="navbar-right" style="display:flex;align-items:center;gap:8px;">
-          <button id="btn-add-nav" onclick="abrirNuevoGasto()" style="width:32px;height:32px;background:var(--accent);color:#fff;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;font-family:inherit;">+</button>
+          <button id="btn-add-nav" onclick="if(window.abrirNuevoGasto)window.abrirNuevoGasto()" style="width:32px;height:32px;background:var(--accent);color:#fff;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;font-family:inherit;">+</button>
         </div>
       </nav>
       <main class="content">
@@ -1430,7 +1430,7 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
             <button class="icon-btn" onclick="actualizarTodo()" title="Actualizar datos">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/><path d="M13.5 2v4h-4"/></svg>
             </button>
-            <button class="icon-btn add" onclick="abrirNuevoGasto()" title="Nuevo gasto">+</button>
+            <button class="icon-btn add" onclick="if(window.abrirNuevoGasto)window.abrirNuevoGasto()" title="Nuevo gasto">+</button>
           </div>
         </div>
       </div>
@@ -1511,7 +1511,7 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
             <button class="icon-btn" onclick="actualizarTodo()" title="Actualizar datos">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/><path d="M13.5 2v4h-4"/></svg>
             </button>
-            <button class="icon-btn add" onclick="abrirNuevoGasto()" title="Nuevo gasto">+</button>
+            <button class="icon-btn add" onclick="if(window.abrirNuevoGasto)window.abrirNuevoGasto()" title="Nuevo gasto">+</button>
           </div>
         </div>
       </div>
@@ -1599,7 +1599,7 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
             <button class="icon-btn" onclick="actualizarTodo()" title="Actualizar datos">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/><path d="M13.5 2v4h-4"/></svg>
             </button>
-            <button class="icon-btn add" onclick="abrirNuevoGasto()" title="Nuevo gasto">+</button>
+            <button class="icon-btn add" onclick="if(window.abrirNuevoGasto)window.abrirNuevoGasto()" title="Nuevo gasto">+</button>
           </div>
         </div>
       </div>
@@ -1703,7 +1703,7 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
             <button class="icon-btn" onclick="actualizarTodo()" title="Actualizar datos">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/><path d="M13.5 2v4h-4"/></svg>
             </button>
-            <button class="icon-btn add" onclick="abrirNuevoGasto()" title="Nuevo gasto">+</button>
+            <button class="icon-btn add" onclick="if(window.abrirNuevoGasto)window.abrirNuevoGasto()" title="Nuevo gasto">+</button>
           </div>
         </div>
       </div>
@@ -1781,7 +1781,7 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
             <button class="icon-btn" onclick="actualizarTodo()" title="Actualizar datos">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/><path d="M13.5 2v4h-4"/></svg>
             </button>
-            <button class="icon-btn add" onclick="abrirNuevoGasto()" title="Nuevo gasto">+</button>
+            <button class="icon-btn add" onclick="if(window.abrirNuevoGasto)window.abrirNuevoGasto()" title="Nuevo gasto">+</button>
           </div>
         </div>
       </div>
@@ -1828,7 +1828,7 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
               <button class="icon-btn" onclick="actualizarTodo()" title="Actualizar datos">
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/><path d="M13.5 2v4h-4"/></svg>
               </button>
-              <button class="icon-btn add" onclick="abrirNuevoGasto()" title="Nuevo gasto">+</button>
+              <button class="icon-btn add" onclick="if(window.abrirNuevoGasto)window.abrirNuevoGasto()" title="Nuevo gasto">+</button>
             </div>
           </div>
 

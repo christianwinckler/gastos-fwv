@@ -2010,7 +2010,7 @@ function divAddPart(){
 function divBuildSubcatHtml(q){
   const query=(q||'').toLowerCase().trim();
   const grupos={};
-  subcats.filter(s=>s.ie==='E').forEach(s=>{
+  subcats.filter(s=>s.ie==='E'&&s.estado!=='Oculto').forEach(s=>{
     const label=s.sub.includes(' - ')?s.sub.split(' - ').slice(1).join(' - '):s.sub;
     if(query&&!label.toLowerCase().includes(query)&&!s.cat.toLowerCase().includes(query))return;
     if(!grupos[s.cat])grupos[s.cat]=[];
@@ -2977,7 +2977,7 @@ const NG_EXCLUDED_CATS=['Hogar','Banco'];
 function ngRenderCatCarousel(query=''){
   const hoy=new Date();
   const mesKey=String(hoy.getMonth()+1).padStart(2,'0')+'-'+hoy.getFullYear();
-  const catSet=new Set(subcats.filter(s=>s.ie==='E'&&!NG_EXCLUDED_CATS.includes(s.cat)).map(s=>s.cat));
+  const catSet=new Set(subcats.filter(s=>s.ie==='E'&&!NG_EXCLUDED_CATS.includes(s.cat)&&s.estado!=='Oculto').map(s=>s.cat));
   const d=dashData[mesKey]||{categorias:[]};
   let cats=[...catSet].map(cat=>{
     const subcatsCat=pptoSubcats.filter(s=>s.cat===cat&&s.ie==='E');
@@ -3088,7 +3088,7 @@ function ngRenderSearchResults(query){
   if(catLabel&&catLabel.classList.contains('ng-section-label')) catLabel.style.display='none';
   const q=query.toLowerCase();
   const grouped={};
-  subcats.filter(s=>s.ie==='E'&&!NG_EXCLUDED_CATS.includes(s.cat)&&s.estado!=='Oculto').forEach(s=>{
+  subcats.filter(s=>!NG_EXCLUDED_CATS.includes(s.cat)&&s.estado!=='Oculto').forEach(s=>{
     if(s.sub.toLowerCase().includes(q)||s.cat.toLowerCase().includes(q)){
       if(!grouped[s.cat]) grouped[s.cat]=[];
       grouped[s.cat].push(s);
@@ -3871,18 +3871,13 @@ window.abrirDetalleTarjeta = abrirDetalleTarjeta
 window.irADetalleBanco = irADetalleBanco
 
 function irADetalleBanco(banco) {
-  const mapaBanco = {
-    'Santander': 'santander',
-    'Falabella': 'falabella',
-    'Tarjeta Crédito': 'tc',
-  }
   const hoy = new Date()
   rangoDesde = { mes: 0, anio: hoy.getFullYear() }
   rangoHasta = { mes: hoy.getMonth(), anio: hoy.getFullYear() }
   if (banco === 'Ahorros') {
-    detFiltros = { tipo: 'todos', cats: ['Ahorro en Cuenta Vista'], catsExcluidas: [], banco: 'todos', orden: 'reciente' }
+    detFiltros = { tipo: 'todos', cats: ['Ahorro en Cuenta Vista'], catsExcluidas: [], banco: 'todos', orden: 'reciente', cat: 'todas', subcat: 'todas' }
   } else {
-    detFiltros = { tipo: 'todos', cats: [], catsExcluidas: [], banco: mapaBanco[banco] || 'todos', orden: 'reciente' }
+    detFiltros = { tipo: 'todos', cats: [], catsExcluidas: [], banco: banco, orden: 'reciente', cat: 'todas', subcat: 'todas' }
   }
   switchScreen('detalle')
 }

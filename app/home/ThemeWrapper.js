@@ -79,30 +79,73 @@ export default function ThemeWrapper({ name, image, initials }) {
             </div>
           </a>
 
-          {/* Card 2 — Calendario Comida (próximamente) */}
+          {/* Card 2 — Emma App (activa, en construcción) */}
+          <a
+            href="/emma"
+            style={{
+              display: 'block', textDecoration: 'none', color: 'inherit',
+              background: 'var(--card)',
+              border: '1px solid var(--border)',
+              borderRadius: 22,
+              padding: '22px 20px',
+              boxShadow: cardShadow,
+              transition: 'transform 0.18s ease, background 0.18s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--card-hover)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--card)'; e.currentTarget.style.transform = 'translateY(0)' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{
+                width: 42, height: 42, borderRadius: 12,
+                background: '#EEEDFE', color: '#7F77DD',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: "'Instrument Serif', serif", fontSize: 22, fontWeight: 400,
+              }}>
+                E
+              </div>
+              <div style={{
+                fontSize: 10, fontWeight: 500, letterSpacing: '0.08em',
+                textTransform: 'uppercase', padding: '3px 9px', borderRadius: 999,
+                background: '#EEEDFE', color: '#534AB7',
+              }}>
+                En construcción
+              </div>
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em', marginBottom: 4 }}>
+              Emma App
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+              Control de alimentación, rutinas y cuidados diarios de Emma
+            </div>
+          </a>
+
+          {/* Card 3 — Calendario Comida (próximamente, inactiva) */}
           <div style={{
-            background: 'var(--card)', border: '1px dashed var(--border)',
-            borderRadius: 22, padding: '22px 20px',
-            opacity: 0.85,
+            borderRadius: 22,
+            padding: '22px 20px',
+            border: '1px dashed var(--border)',
+            background: 'var(--inner-card)',
+            opacity: 0.55,
           }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={{
                 width: 42, height: 42, borderRadius: 12,
-                background: 'var(--teal-bg)', color: 'var(--teal-fg)',
+                background: 'var(--chip-bg)', color: 'var(--muted)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontFamily: "'Instrument Serif', serif", fontSize: 20,
               }}>
                 ◦
               </div>
               <div style={{
-                fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase',
-                color: 'var(--sub)', fontWeight: 500,
-                padding: '3px 8px', border: '1px solid var(--border)', borderRadius: 999,
+                fontSize: 10, fontWeight: 500, letterSpacing: '0.08em',
+                textTransform: 'uppercase', padding: '3px 9px', borderRadius: 999,
+                background: 'var(--chip-bg)', color: 'var(--muted)',
+                border: '0.5px solid var(--border)',
               }}>
                 Próximamente
               </div>
             </div>
-            <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em', marginBottom: 4 }}>
+            <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em', marginBottom: 4, color: 'var(--muted)' }}>
               Calendario Comida
             </div>
             <div style={{ fontSize: 13, color: 'var(--muted)' }}>
