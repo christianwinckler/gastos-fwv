@@ -2544,13 +2544,18 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
 <!-- POST-GASTO: opciones -->
 <div class="alcance-overlay" id="ov-post-gasto">
   <div class="alcance-card" style="max-width:360px;">
-    <div class="alcance-titulo">Gasto guardado ✓</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <div class="alcance-titulo" style="margin:0;">Gasto guardado ✓</div>
+      <button onclick="cerrar('ov-post-gasto')"
+        style="width:28px;height:28px;border-radius:50%;background:#f5f5f5;
+               border:none;cursor:pointer;font-size:14px;color:#666;
+               display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
     <div class="alcance-sub" id="post-gasto-desc" style="margin-bottom:18px;"></div>
     <div class="alcance-opciones">
       <button class="alcance-btn" id="post-btn-detalle"
         style="background:#e8f0fe;color:var(--accent);"
         onclick="postGastoDetalle()">
-        <span class="alcance-icon">📋</span>
         <div class="alcance-txt">
           <span class="alcance-txt-main">Ir al detalle</span>
           <span class="alcance-txt-sub">Ver todos los gastos del período</span>
@@ -2559,14 +2564,12 @@ body.sheet-open { overflow: hidden; position: fixed; width: 100%; }
       <button class="alcance-btn" id="post-btn-dividir"
         style="background:#f5f5f5;color:#111;"
         onclick="postGastoDividir()">
-        <span class="alcance-icon">⊕</span>
         <div class="alcance-txt">
           <span class="alcance-txt-main">Dividir gasto</span>
           <span class="alcance-txt-sub">Distribuir en subcategorías</span>
         </div>
       </button>
       <button class="alcance-btn todos" onclick="postGastoNuevo()">
-        <span class="alcance-icon">+</span>
         <div class="alcance-txt">
           <span class="alcance-txt-main">Ingresar otro gasto</span>
           <span class="alcance-txt-sub">Abrir formulario nuevamente</span>
