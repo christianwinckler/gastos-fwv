@@ -65,6 +65,7 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
   flex-shrink: 0; margin-top: 6px;
 }
 .side-expand-btn:hover { background: var(--emma-accent-soft); color: var(--emma-fg); }
+.side-expand-btn .side-label { font-weight: 400; }
 .side-expand-icon { width: 16px; height: 16px; flex-shrink: 0; transition: transform 0.25s cubic-bezier(.4,0,.2,1); }
 .sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); z-index: 199; }
 .sidebar-backdrop.visible { display: block; }
@@ -77,11 +78,9 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
 }
 
 .side-logo {
-  width: 36px; height: 36px; border-radius: 10px; margin-bottom: 22px;
-  overflow: hidden; cursor: pointer; flex-shrink: 0;
-  background: var(--emma-accent-soft);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Instrument Serif', serif; font-size: 20px; color: var(--emma-accent-mid);
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  margin-bottom: 18px; width: auto; height: auto;
+  overflow: visible; border-radius: 0; box-shadow: none; flex-shrink: 0;
 }
 .side-icon {
   width: 40px; height: 40px; border-radius: 10px;
@@ -95,13 +94,6 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
 .side-icon svg { width: 17px; height: 17px; pointer-events: none; flex-shrink: 0; }
 .side-spacer { flex: 1; }
 
-@media (min-width: 921px) {
-  .sidebar:not(.expanded) .emma-back-link { display: none; }
-  .sidebar.expanded .emma-logo-solo { display: none; }
-}
-@media (max-width: 920px) {
-  .emma-logo-solo { display: none; }
-}
 @media (max-width: 920px) {
   .shell { grid-template-columns: 1fr; }
   .sidebar {
@@ -276,6 +268,432 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
 
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.92); z-index: 500; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+
+/* Ocultar navbar global en pantallas secundarias */
+.shell-content:has(.screen:not(#screen-home).active) > .navbar { display: none; }
+
+/* Catálogo comidas */
+.comidas-add-btn {
+  width: 100%; padding: 13px;
+  background: var(--emma-accent-soft);
+  border: 1.5px solid rgba(127,119,221,0.35);
+  border-radius: 14px; color: var(--emma-accent-mid);
+  font-size: 15px; font-weight: 500;
+  font-family: inherit; cursor: pointer;
+  margin-bottom: 14px;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.comidas-search {
+  background: rgba(127,119,221,0.08);
+  border: 1px solid var(--emma-border-soft);
+  border-radius: 12px; padding: 11px 14px;
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px; color: var(--emma-muted); font-size: 14px;
+}
+.comidas-filter-chips { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.comidas-chip {
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  border: 1px solid rgba(127,119,221,0.25);
+  background: var(--emma-card); color: var(--emma-muted); font-family: inherit;
+}
+.comidas-chip.active {
+  background: var(--emma-accent-soft); color: var(--emma-accent-mid);
+  border-color: var(--emma-accent);
+}
+.comidas-section-hdr {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.08em; color: var(--emma-muted);
+  margin-bottom: 8px; margin-top: 12px;
+}
+.comidas-card {
+  background: var(--emma-card);
+  border: 0.5px solid var(--emma-border-soft);
+  border-radius: 14px; margin-bottom: 10px; overflow: hidden;
+}
+.comidas-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px;
+  border-bottom: 0.5px solid rgba(127,119,221,0.10);
+}
+.comidas-row:last-child { border-bottom: none; }
+.comidas-row.disabled { opacity: 0.45; }
+.comidas-emoji {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: var(--emma-accent-soft);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px; flex-shrink: 0;
+}
+.comidas-info { flex: 1; min-width: 0; }
+.comidas-name {
+  font-size: 14px; font-weight: 500; color: var(--emma-fg);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.comidas-name.disabled-text { text-decoration: line-through; color: var(--emma-muted); }
+.comidas-sub { font-size: 11px; color: var(--emma-muted); margin-top: 2px; }
+.comidas-amount { text-align: right; flex-shrink: 0; margin-right: 4px; }
+.comidas-val { font-size: 15px; font-weight: 500; color: var(--emma-accent); }
+.comidas-unit { font-size: 11px; color: var(--emma-muted); }
+.comidas-edit-btn {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: var(--emma-bg); border: 0.5px solid rgba(127,119,221,0.2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; font-size: 13px;
+}
+
+/* Modal comidas */
+.comidas-modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(31,29,58,0.45);
+  z-index: 300; align-items: flex-end; justify-content: center;
+}
+.comidas-modal-overlay.open { display: flex; }
+.comidas-modal-sheet {
+  background: #fff; border-radius: 24px 24px 0 0;
+  padding: 0 0 36px; width: 100%; max-width: 600px;
+  max-height: 92vh; overflow-y: auto;
+}
+.comidas-modal-handle {
+  width: 36px; height: 4px;
+  background: rgba(127,119,221,0.25);
+  border-radius: 2px; margin: 14px auto 20px;
+}
+.comidas-modal-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 20px; font-weight: 400; color: var(--emma-fg);
+  padding: 0 20px; margin-bottom: 20px;
+}
+.comidas-modal-body { padding: 0 20px; display: flex; flex-direction: column; gap: 12px; }
+.comidas-field-label {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.07em; color: var(--emma-muted); margin-bottom: 5px;
+}
+.comidas-field-hint { font-size: 11px; color: var(--emma-accent-light); margin-top: 3px; }
+.comidas-field-input {
+  background: var(--emma-bg);
+  border: 0.5px solid rgba(127,119,221,0.3);
+  border-radius: 10px; padding: 11px 13px;
+  font-size: 14px; color: var(--emma-fg);
+  font-family: inherit; outline: none; width: 100%;
+}
+.comidas-field-input:focus { border-color: var(--emma-accent); background: var(--emma-accent-soft); }
+.comidas-cat-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.comidas-cat-chip {
+  padding: 6px 13px; border-radius: 20px;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  border: 1px solid rgba(127,119,221,0.25);
+  background: var(--emma-card); color: var(--emma-muted); font-family: inherit;
+}
+.comidas-cat-chip.active {
+  background: var(--emma-accent-soft); color: var(--emma-accent-mid);
+  border-color: var(--emma-accent);
+}
+.comidas-cat-chip.add-cat { border-style: dashed; color: var(--emma-accent); background: transparent; }
+.comidas-unit-group { display: flex; gap: 6px; }
+.comidas-unit-pill {
+  flex: 1; padding: 10px 0; border-radius: 10px;
+  font-size: 14px; font-weight: 500; text-align: center;
+  cursor: pointer; border: 0.5px solid rgba(127,119,221,0.3); font-family: inherit;
+}
+.comidas-unit-pill.active { background: var(--emma-accent-soft); color: var(--emma-accent-mid); border-color: var(--emma-accent); }
+.comidas-unit-pill.inactive { background: var(--emma-card); color: var(--emma-muted); }
+.comidas-toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--emma-bg); border: 0.5px solid rgba(127,119,221,0.2);
+  border-radius: 10px; padding: 12px 14px;
+}
+.comidas-toggle-lbl { font-size: 14px; color: var(--emma-fg); font-weight: 500; }
+.comidas-toggle-sub { font-size: 11px; color: var(--emma-muted); margin-top: 2px; }
+.comidas-switch {
+  width: 44px; height: 26px; border-radius: 13px;
+  background: var(--emma-accent-light); position: relative;
+  cursor: pointer; flex-shrink: 0;
+}
+.comidas-switch.on { background: var(--emma-accent); }
+.comidas-switch-knob {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #fff; position: absolute; top: 2px; left: 2px; transition: left 0.15s;
+}
+.comidas-switch.on .comidas-switch-knob { left: 20px; }
+.comidas-modal-divider { height: 0.5px; background: rgba(127,119,221,0.12); margin: 0 -20px; }
+.comidas-btn-save {
+  width: 100%; padding: 14px; background: var(--emma-accent); color: #fff;
+  border: none; border-radius: 12px; font-size: 15px; font-weight: 500;
+  cursor: pointer; font-family: inherit;
+}
+.comidas-btn-cancel {
+  width: 100%; padding: 12px; background: transparent; color: var(--emma-muted);
+  border: none; font-size: 14px; cursor: pointer; font-family: inherit;
+}
+.comidas-btn-danger {
+  width: 100%; padding: 12px; background: transparent; color: #E24B4A;
+  border: none; font-size: 14px; cursor: pointer; font-family: inherit;
+}
+
+.rutinas-add-btn {
+  width:100%;padding:13px;background:var(--emma-accent-soft);
+  border:1.5px solid rgba(127,119,221,0.35);border-radius:14px;
+  color:var(--emma-accent-mid);font-size:15px;font-weight:500;
+  font-family:inherit;cursor:pointer;margin-bottom:14px;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+}
+.rutinas-filter-chips{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.rutinas-chip{
+  padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;
+  cursor:pointer;border:1px solid rgba(127,119,221,0.25);
+  background:var(--emma-card);color:var(--emma-muted);font-family:inherit;
+}
+.rutinas-chip.active{background:var(--emma-accent-soft);color:var(--emma-accent-mid);border-color:var(--emma-accent);}
+.rutinas-section-hdr{
+  font-size:10px;font-weight:600;letter-spacing:0.08em;
+  color:var(--emma-muted);margin-bottom:8px;margin-top:12px;
+}
+.rutinas-card{
+  background:var(--emma-card);border:0.5px solid var(--emma-border-soft);
+  border-radius:14px;margin-bottom:10px;overflow:hidden;
+}
+.rutinas-row{
+  display:flex;align-items:center;gap:10px;padding:13px 12px;
+  border-bottom:0.5px solid rgba(127,119,221,0.10);
+}
+.rutinas-row:last-child{border-bottom:none;}
+.rutinas-row.disabled{opacity:0.42;}
+.rutinas-emoji{
+  width:40px;height:40px;border-radius:10px;background:var(--emma-accent-soft);
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
+}
+.rutinas-info{flex:1;min-width:0;}
+.rutinas-name{font-size:14px;font-weight:500;color:var(--emma-fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rutinas-name.dis{text-decoration:line-through;color:var(--emma-muted);}
+.rutinas-sub{font-size:11px;color:var(--emma-muted);margin-top:2px;}
+.rutinas-tipo-badge{font-size:10px;font-weight:600;letter-spacing:0.04em;padding:4px 9px;border-radius:20px;flex-shrink:0;}
+.rutinas-tipo-badge.binario{background:#E1F5EE;color:#0F6E56;}
+.rutinas-tipo-badge.cantidad{background:var(--emma-accent-soft);color:var(--emma-accent-mid);}
+.rutinas-edit-btn{
+  width:28px;height:28px;border-radius:8px;background:var(--emma-bg);
+  border:0.5px solid rgba(127,119,221,0.2);display:flex;align-items:center;
+  justify-content:center;cursor:pointer;flex-shrink:0;font-size:13px;margin-left:4px;
+}
+.rutinas-modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(31,29,58,0.45);
+  z-index:300;align-items:flex-end;justify-content:center;
+}
+.rutinas-modal-overlay.open{display:flex;}
+.rutinas-modal-sheet{
+  background:#fff;border-radius:24px 24px 0 0;padding:0 0 36px;
+  width:100%;max-width:600px;max-height:92vh;overflow-y:auto;
+}
+.rutinas-modal-handle{width:36px;height:4px;background:rgba(127,119,221,0.25);border-radius:2px;margin:14px auto 20px;}
+.rutinas-modal-title{font-family:'Instrument Serif',serif;font-size:20px;font-weight:400;color:var(--emma-fg);padding:0 20px;margin-bottom:20px;}
+.rutinas-modal-body{padding:0 20px;display:flex;flex-direction:column;gap:13px;}
+.rutinas-field-label{font-size:10px;font-weight:600;letter-spacing:0.07em;color:var(--emma-muted);margin-bottom:5px;}
+.rutinas-field-hint{font-size:11px;color:var(--emma-accent-light);margin-top:3px;}
+.rutinas-field-input{
+  background:var(--emma-bg);border:0.5px solid rgba(127,119,221,0.3);
+  border-radius:10px;padding:11px 13px;font-size:14px;color:var(--emma-fg);
+  font-family:inherit;outline:none;width:100%;
+}
+.rutinas-field-input:focus{border-color:var(--emma-accent);background:var(--emma-accent-soft);}
+.rutinas-tipo-group{display:flex;gap:8px;}
+.rutinas-tipo-opt{
+  flex:1;padding:12px 8px;border-radius:12px;border:1.5px solid rgba(127,119,221,0.2);
+  background:var(--emma-card);cursor:pointer;text-align:center;font-family:inherit;
+}
+.rutinas-tipo-opt.active{border-color:var(--emma-accent);background:var(--emma-accent-soft);}
+.rutinas-tipo-icon{font-size:22px;margin-bottom:4px;}
+.rutinas-tipo-lbl{font-size:12px;font-weight:600;color:var(--emma-muted);}
+.rutinas-tipo-opt.active .rutinas-tipo-lbl{color:var(--emma-accent-mid);}
+.rutinas-tipo-sub{font-size:10px;color:var(--emma-muted);margin-top:2px;}
+.rutinas-toggle-row{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--emma-bg);border:0.5px solid rgba(127,119,221,0.2);
+  border-radius:10px;padding:12px 14px;
+}
+.rutinas-toggle-lbl{font-size:14px;color:var(--emma-fg);font-weight:500;}
+.rutinas-toggle-sub{font-size:11px;color:var(--emma-muted);margin-top:2px;}
+.rutinas-switch{width:44px;height:26px;border-radius:13px;background:var(--emma-accent-light);position:relative;cursor:pointer;flex-shrink:0;}
+.rutinas-switch.on{background:var(--emma-accent);}
+.rutinas-switch-knob{width:22px;height:22px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left 0.15s;}
+.rutinas-switch.on .rutinas-switch-knob{left:20px;}
+.rutinas-modal-divider{height:0.5px;background:rgba(127,119,221,0.12);margin:2px -20px;}
+.rutinas-btn-save{width:100%;padding:14px;background:var(--emma-accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;}
+.rutinas-btn-cancel{width:100%;padding:12px;background:transparent;color:var(--emma-muted);border:none;font-size:14px;cursor:pointer;font-family:inherit;}
+.rutinas-btn-danger{width:100%;padding:12px;background:transparent;color:#E24B4A;border:none;font-size:14px;cursor:pointer;font-family:inherit;}
+.planes-add-btn {
+  width:100%;padding:13px;background:var(--emma-accent-soft);
+  border:1.5px solid rgba(127,119,221,0.35);border-radius:14px;
+  color:var(--emma-accent-mid);font-size:15px;font-weight:500;
+  font-family:inherit;cursor:pointer;margin-bottom:16px;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+}
+.planes-plan-card {
+  background:var(--emma-card);border:0.5px solid var(--emma-border-soft);
+  border-radius:16px;margin-bottom:10px;overflow:hidden;cursor:pointer;
+}
+.planes-plan-header {
+  padding:14px 16px;display:flex;align-items:center;gap:12px;
+}
+.planes-dot-activo { width:8px;height:8px;border-radius:50%;background:var(--emma-accent);flex-shrink:0; }
+.planes-dot-inactivo { width:8px;height:8px;border-radius:50%;background:var(--emma-accent-light);flex-shrink:0; }
+.planes-plan-name { font-size:15px;font-weight:600;color:var(--emma-fg); }
+.planes-plan-meta { font-size:12px;color:var(--emma-muted);margin-top:3px; }
+.planes-badge-activo { font-size:10px;font-weight:700;letter-spacing:0.05em;padding:4px 10px;border-radius:20px;background:var(--emma-accent-soft);color:var(--emma-accent-mid); }
+.planes-badge-inactivo { font-size:10px;font-weight:700;letter-spacing:0.05em;padding:4px 10px;border-radius:20px;background:var(--emma-bg);color:var(--emma-muted);border:0.5px solid rgba(127,119,221,0.2); }
+.planes-preview { border-top:0.5px solid rgba(127,119,221,0.10);padding:10px 16px 14px;display:flex;flex-wrap:wrap;gap:6px; }
+.planes-preview-pill { font-size:11px;padding:3px 9px;border-radius:20px;background:var(--emma-bg);color:var(--emma-muted);border:0.5px solid rgba(127,119,221,0.15); }
+.planes-detail-topbar { background:var(--emma-bg);padding:16px 16px 10px;display:flex;align-items:center;gap:12px;flex-shrink:0; }
+.planes-back-btn { width:36px;height:36px;border-radius:10px;border:1px solid rgba(127,119,221,0.2);background:var(--emma-card);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;color:var(--emma-accent);flex-shrink:0; }
+.planes-detail-title { font-family:'Instrument Serif',serif;font-size:19px;font-weight:400;color:var(--emma-fg);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.planes-detail-edit { font-size:12px;font-weight:600;color:var(--emma-accent);background:var(--emma-accent-soft);border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:inherit;flex-shrink:0; }
+.planes-meta-row { padding:0 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0; }
+.planes-add-row { display:flex;gap:8px;padding:0 16px 12px;flex-shrink:0; }
+.planes-add-item-btn { flex:1;padding:11px 8px;background:var(--emma-accent-soft);border:1.5px dashed rgba(127,119,221,0.4);border-radius:12px;color:var(--emma-accent-mid);font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px; }
+.planes-scroll { flex:1;overflow-y:auto;padding:0 16px 24px; }
+.planes-section-hdr { font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--emma-muted);margin:8px 0 10px; }
+.planes-hour-block { margin-bottom:4px; }
+.planes-hour-header { display:flex;align-items:center;gap:10px;margin-bottom:4px; }
+.planes-hour-label { font-size:13px;font-weight:700;color:var(--emma-accent);width:42px;text-align:right;flex-shrink:0; }
+.planes-hour-line { flex:1;height:1px;background:rgba(127,119,221,0.15); }
+.planes-items-in-hour { padding-left:52px;display:flex;flex-direction:column;gap:5px;margin-bottom:8px; }
+.planes-item {
+  background:var(--emma-card);border:0.5px solid var(--emma-border-soft);
+  border-radius:12px;padding:10px 10px 10px 8px;
+  display:flex;align-items:center;gap:9px;
+  cursor:grab;user-select:none;touch-action:none;
+  transition:box-shadow 0.15s,opacity 0.15s;
+}
+.planes-item.sortable-ghost { opacity:0.35; }
+.planes-item.sortable-drag { box-shadow:0 8px 24px rgba(80,70,180,0.22);border-color:var(--emma-accent);opacity:0.95; }
+.planes-drag-handle { display:flex;flex-direction:column;gap:3px;flex-shrink:0;padding:2px 4px;cursor:grab; }
+.planes-drag-dot { width:3px;height:3px;border-radius:50%;background:var(--emma-accent-light); }
+.planes-item-emoji { font-size:18px;flex-shrink:0; }
+.planes-item-info { flex:1;min-width:0; }
+.planes-item-name { font-size:13px;font-weight:500;color:var(--emma-fg); }
+.planes-item-sub { font-size:11px;color:var(--emma-muted);margin-top:1px; }
+.planes-item-badge { font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;flex-shrink:0; }
+.planes-badge-leche { background:#EEF6FF;color:#2979C8; }
+.planes-badge-solidos { background:#FFF3E6;color:#C06A00; }
+.planes-badge-postre { background:#FFECEC;color:#C02929; }
+.planes-badge-rutina { background:var(--emma-accent-soft);color:var(--emma-accent-mid); }
+.planes-item-actions { display:flex;gap:4px;flex-shrink:0; }
+.planes-time-btn { font-size:10px;font-weight:600;color:var(--emma-accent);background:var(--emma-bg);border:0.5px solid rgba(127,119,221,0.25);border-radius:7px;padding:4px 7px;cursor:pointer;font-family:inherit;white-space:nowrap; }
+.planes-del-btn { width:24px;height:24px;border-radius:7px;border:none;background:var(--emma-bg);color:var(--emma-muted);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer; }
+.planes-flex-section { background:rgba(127,119,221,0.04);border:1px dashed rgba(127,119,221,0.25);border-radius:14px;padding:6px 12px 10px;margin:4px 0 10px; }
+.planes-flex-item { display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid rgba(127,119,221,0.10);cursor:grab;user-select:none; }
+.planes-flex-item:last-child { border-bottom:none;padding-bottom:2px; }
+.planes-flex-emoji { font-size:17px;width:26px;text-align:center;flex-shrink:0; }
+.planes-flex-name { font-size:13px;font-weight:500;color:var(--emma-fg);flex:1; }
+.planes-flex-sub { font-size:11px;color:var(--emma-muted); }
+.planes-flex-del { width:22px;height:22px;border-radius:6px;border:none;background:transparent;color:var(--emma-accent-light);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center; }
+.planes-move-btn { font-size:10px;font-weight:600;color:var(--emma-muted);background:var(--emma-bg);border:0.5px solid rgba(127,119,221,0.2);border-radius:7px;padding:4px 7px;cursor:pointer;font-family:inherit;white-space:nowrap;margin-right:4px; }
+.planes-modal-overlay { display:none;position:fixed;inset:0;background:rgba(31,29,58,0.45);z-index:300;align-items:flex-end;justify-content:center; }
+.planes-modal-overlay.open { display:flex; }
+.planes-modal-sheet { background:#fff;border-radius:24px 24px 0 0;padding:0 0 36px;width:100%;max-width:600px;max-height:92vh;overflow-y:auto; }
+.planes-modal-handle { width:36px;height:4px;background:rgba(127,119,221,0.25);border-radius:2px;margin:14px auto 20px; }
+.planes-modal-title { font-family:'Instrument Serif',serif;font-size:20px;font-weight:400;color:var(--emma-fg);padding:0 20px;margin-bottom:6px; }
+.planes-modal-sub { font-size:13px;color:var(--emma-muted);padding:0 20px;margin-bottom:22px; }
+.planes-modal-body { padding:0 20px;display:flex;flex-direction:column;gap:14px; }
+.planes-field-label { font-size:10px;font-weight:600;letter-spacing:0.07em;color:var(--emma-muted);margin-bottom:5px; }
+.planes-field-hint { font-size:11px;color:var(--emma-accent-light);margin-top:3px; }
+.planes-field-input { background:var(--emma-bg);border:0.5px solid rgba(127,119,221,0.3);border-radius:10px;padding:11px 13px;font-size:14px;color:var(--emma-fg);font-family:inherit;outline:none;width:100%; }
+.planes-field-input:focus { border-color:var(--emma-accent);background:var(--emma-accent-soft); }
+.planes-seg-group { display:flex;gap:6px;flex-wrap:wrap; }
+.planes-seg-opt { padding:8px 14px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid rgba(127,119,221,0.25);background:var(--emma-card);color:var(--emma-muted);cursor:pointer;font-family:inherit; }
+.planes-seg-opt.active { background:var(--emma-accent-soft);color:var(--emma-accent-mid);border-color:var(--emma-accent); }
+.planes-tipo-fija-group { display:flex;gap:8px; }
+.planes-tipo-fija-opt { flex:1;padding:11px 8px;border-radius:12px;border:1.5px solid rgba(127,119,221,0.2);background:var(--emma-card);cursor:pointer;text-align:center;font-family:inherit; }
+.planes-tipo-fija-opt.active { border-color:var(--emma-accent);background:var(--emma-accent-soft); }
+.planes-tipo-fija-icon { font-size:20px;margin-bottom:3px; }
+.planes-tipo-fija-lbl { font-size:12px;font-weight:600;color:var(--emma-muted); }
+.planes-tipo-fija-opt.active .planes-tipo-fija-lbl { color:var(--emma-accent-mid); }
+.planes-tipo-fija-sub { font-size:10px;color:var(--emma-muted);margin-top:2px; }
+.planes-hora-row { display:none; }
+.planes-hora-row.visible { display:block; }
+.planes-time-picker { display:flex;align-items:center;justify-content:center;gap:12px; }
+.planes-time-col { display:flex;flex-direction:column;align-items:center;gap:6px; }
+.planes-time-arrow { width:44px;height:36px;border-radius:10px;background:var(--emma-bg);border:0.5px solid rgba(127,119,221,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--emma-accent);cursor:pointer;user-select:none; }
+.planes-time-arrow:active { background:var(--emma-accent-soft); }
+.planes-time-val { font-size:42px;font-weight:300;color:var(--emma-fg);width:80px;text-align:center;line-height:1;font-variant-numeric:tabular-nums; }
+.planes-time-sep { font-size:42px;font-weight:200;color:var(--emma-muted);line-height:1;margin-top:2px; }
+.planes-time-unit { font-size:11px;color:var(--emma-muted);font-weight:500;letter-spacing:0.05em; }
+.planes-quick-times { display:flex;flex-wrap:wrap;gap:6px; }
+.planes-quick-pill { padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid rgba(127,119,221,0.2);background:var(--emma-card);color:var(--emma-muted);cursor:pointer;font-family:inherit; }
+.planes-quick-pill.active { background:var(--emma-accent-soft);color:var(--emma-accent-mid);border-color:var(--emma-accent); }
+.planes-btn-save { width:100%;padding:14px;background:var(--emma-accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit; }
+.planes-btn-cancel { width:100%;padding:12px;background:transparent;color:var(--emma-muted);border:none;font-size:14px;cursor:pointer;font-family:inherit; }
+.planes-modal-divider { height:0.5px;background:rgba(127,119,221,0.12);margin:2px 0; }
+.cal-date-nav { display:flex;align-items:center;gap:8px;padding:4px 16px 12px;flex-shrink:0; }
+.cal-date-arrow { width:36px;height:36px;border-radius:10px;border:1px solid rgba(127,119,221,0.2);background:var(--emma-card);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--emma-accent);cursor:pointer;flex-shrink:0;user-select:none; }
+.cal-date-center { flex:1;height:36px;background:var(--emma-card);border:1px solid rgba(127,119,221,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer; }
+.cal-date-text { font-size:15px;font-weight:500;color:var(--emma-fg); }
+.cal-kpi-row { display:flex;gap:8px;padding:0 16px 12px;flex-shrink:0; }
+.cal-kpi { flex:1;background:var(--emma-card);border:0.5px solid var(--emma-border-soft);border-radius:12px;padding:10px 10px 8px; }
+.cal-kpi-label { font-size:9px;font-weight:600;letter-spacing:0.07em;color:var(--emma-muted);margin-bottom:4px; }
+.cal-kpi-val { font-size:18px;font-weight:600;color:var(--emma-accent);line-height:1; }
+.cal-kpi-sub { font-size:10px;color:var(--emma-muted);margin-top:3px; }
+.cal-kpi-prog { height:3px;border-radius:2px;background:var(--emma-accent-soft);margin-top:6px;overflow:hidden; }
+.cal-kpi-prog-fill { height:100%;border-radius:2px;background:var(--emma-accent); }
+.cal-section-hdr { font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--emma-muted);margin:8px 0 10px; }
+.cal-hour-block { margin-bottom:6px; }
+.cal-hour-header { display:flex;align-items:center;gap:10px;margin-bottom:6px; }
+.cal-hour-label { font-size:13px;font-weight:700;color:var(--emma-accent);width:42px;text-align:right;flex-shrink:0; }
+.cal-hour-line { flex:1;height:1px;background:rgba(127,119,221,0.15); }
+.cal-items-in-hour { padding-left:52px;display:flex;flex-direction:column;gap:5px;margin-bottom:4px; }
+.cal-item { background:var(--emma-card);border:0.5px solid var(--emma-border-soft);border-radius:12px;display:flex;align-items:center;gap:9px;padding:11px 10px 11px 12px; }
+.cal-item.done { border-color:rgba(127,119,221,0.4);background:#FDFCFF; }
+.cal-item.parcial { border-color:rgba(127,119,221,0.28); }
+.cal-item-emoji { font-size:19px;flex-shrink:0; }
+.cal-item-info { flex:1;min-width:0; }
+.cal-item-name { font-size:13px;font-weight:500;color:var(--emma-fg); }
+.cal-item-sub { font-size:11px;color:var(--emma-muted);margin-top:2px; }
+.cal-compare-badge { font-size:10px;font-weight:600;padding:3px 7px;border-radius:20px;flex-shrink:0; }
+.cal-cb-plus { background:#E1F5EE;color:#0F6E56; }
+.cal-cb-minus { background:#FFECEC;color:#C02929; }
+.cal-cb-equal { background:var(--emma-bg);color:var(--emma-muted);border:0.5px solid rgba(127,119,221,0.2); }
+.cal-cb-na { background:var(--emma-bg);color:var(--emma-accent-light);font-size:9px;border:0.5px solid rgba(127,119,221,0.1); }
+.cal-cb-ok { background:#E1F5EE;color:#0F6E56; }
+.cal-check-btn { width:34px;height:34px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(127,119,221,0.25);background:var(--emma-bg);cursor:pointer;font-size:16px;color:var(--emma-accent-light); }
+.cal-check-btn.checked { background:var(--emma-accent);border-color:var(--emma-accent);color:#fff; }
+.cal-check-btn.parcial { background:var(--emma-accent-soft);border-color:var(--emma-accent);color:var(--emma-accent-mid);font-size:13px;font-weight:700; }
+.cal-cnt-wrap { display:flex;align-items:center;gap:0;flex-shrink:0; }
+.cal-cnt-btn { width:28px;height:28px;border-radius:8px;border:1px solid rgba(127,119,221,0.25);background:var(--emma-bg);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--emma-accent);cursor:pointer;user-select:none; }
+.cal-cnt-val { min-width:28px;text-align:center;font-size:15px;font-weight:600;color:var(--emma-fg);padding:0 4px; }
+.cal-flex-wrap { background:rgba(127,119,221,0.04);border:1px dashed rgba(127,119,221,0.22);border-radius:14px;padding:8px 10px;margin-bottom:8px;display:flex;flex-direction:column;gap:5px; }
+.cal-flex-item { background:var(--emma-card);border:0.5px solid rgba(127,119,221,0.15);border-radius:10px;display:flex;align-items:center;gap:9px;padding:10px 10px 10px 12px; }
+.cal-flex-badge { font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:transparent;color:var(--emma-muted);border:0.5px solid rgba(127,119,221,0.2);flex-shrink:0; }
+.cal-modal-overlay { display:none;position:absolute;inset:0;background:rgba(31,29,58,0.45);z-index:300;align-items:flex-end;justify-content:center; }
+.cal-modal-overlay.open { display:flex; }
+.cal-modal-sheet { background:#fff;border-radius:24px 24px 0 0;padding:0 0 36px;width:100%;max-width:600px;max-height:88vh;overflow-y:auto; }
+.cal-modal-handle { width:36px;height:4px;background:rgba(127,119,221,0.25);border-radius:2px;margin:14px auto 18px; }
+.cal-modal-header { padding:0 20px 16px;border-bottom:0.5px solid rgba(127,119,221,0.12); }
+.cal-modal-hora { font-size:13px;font-weight:700;color:var(--emma-accent);margin-bottom:2px; }
+.cal-modal-name { font-family:'Instrument Serif',serif;font-size:20px;font-weight:400;color:var(--emma-fg); }
+.cal-modal-sub { font-size:12px;color:var(--emma-muted);margin-top:2px; }
+.cal-modal-body { padding:18px 20px;display:flex;flex-direction:column;gap:16px; }
+.cal-qty-row { display:flex;align-items:center;justify-content:center;gap:16px; }
+.cal-qty-btn { width:48px;height:48px;border-radius:14px;background:var(--emma-accent-soft);border:none;color:var(--emma-accent-mid);font-size:26px;font-weight:300;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;flex-shrink:0; }
+.cal-qty-btn:active { background:var(--emma-accent-light); }
+.cal-qty-btn:disabled { opacity:0.3;cursor:not-allowed; }
+.cal-qty-input { width:100px;text-align:center;font-size:36px;font-weight:300;color:var(--emma-fg);border:none;background:transparent;outline:none;font-family:inherit;border-bottom:2px solid rgba(127,119,221,0.3);padding-bottom:4px; }
+.cal-qty-unit { font-size:16px;color:var(--emma-muted);font-weight:400; }
+.cal-auto-estado { display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;font-size:13px;font-weight:500; }
+.cal-auto-estado.completo { background:#E1F5EE;color:#0F6E56; }
+.cal-auto-estado.parcial { background:var(--emma-accent-soft);color:var(--emma-accent-mid); }
+.cal-auto-estado.pendiente { background:var(--emma-bg);color:var(--emma-muted); }
+.cal-compare-row { display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--emma-bg);border-radius:10px;font-size:12px;color:var(--emma-muted); }
+.cal-compare-val { font-weight:600; }
+.cal-compare-val.up { color:#0F6E56; }
+.cal-compare-val.down { color:#C02929; }
+.cal-compare-val.same { color:var(--emma-muted); }
+.cal-solido-hdr { font-size:10px;font-weight:600;letter-spacing:0.07em;color:var(--emma-muted);margin-bottom:6px; }
+.cal-solido-chips { display:flex;flex-wrap:wrap;gap:6px; }
+.cal-solido-chip { padding:7px 13px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid rgba(127,119,221,0.25);background:var(--emma-card);color:var(--emma-muted);cursor:pointer;font-family:inherit; }
+.cal-solido-chip.active { background:var(--emma-accent-soft);color:var(--emma-accent-mid);border-color:var(--emma-accent); }
+.cal-nota-lbl { font-size:10px;font-weight:600;letter-spacing:0.07em;color:var(--emma-muted);margin-bottom:6px; }
+.cal-nota-input { width:100%;background:var(--emma-bg);border:0.5px solid rgba(127,119,221,0.2);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--emma-fg);font-family:inherit;outline:none;resize:none; }
+.cal-modal-divider { height:0.5px;background:rgba(127,119,221,0.12); }
+.cal-btn-save { width:100%;padding:14px;background:var(--emma-accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit; }
+.cal-btn-cancel { width:100%;padding:11px;background:transparent;color:var(--emma-muted);border:none;font-size:14px;cursor:pointer;font-family:inherit; }
   `
 
   const htmlContent = `
@@ -283,29 +701,10 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
   <div class="shell">
 
     <aside class="sidebar" id="emma-sidebar">
-      <a href="/home" class="emma-back-link" style="display:flex;align-items:center;gap:10px;
-        padding:14px 20px 12px;text-decoration:none;
-        border-bottom:0.5px solid rgba(127,119,221,0.15);
-        margin:-22px -12px 18px;width:calc(100% + 24px);">
-        <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg"
-          style="width:28px;height:28px;flex-shrink:0;border-radius:7px;overflow:hidden;">
-          <rect width="36" height="36" rx="9" fill="#EEEDFE"/>
-          <path d="M8 19.5L18 11l10 8.5" stroke="#3C3489" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          <path d="M11 18v9h14v-9" stroke="#3C3489" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          <circle cx="23.5" cy="22" r="2.5" fill="#7F77DD"/>
-        </svg>
-        <span class="side-label" style="font-size:13px;color:var(--emma-accent);
-          font-family:inherit;font-weight:500;">← Volver a Apps</span>
-      </a>
-      <div class="emma-logo-solo" style="width:36px;height:36px;border-radius:9px;
-        background:var(--emma-accent-soft);
-        display:flex;align-items:center;justify-content:center;
-        font-family:'Instrument Serif',serif;font-size:20px;
-        color:var(--emma-accent-mid);margin-bottom:18px;
-        cursor:pointer;flex-shrink:0;"
-        onclick="window.location='/home'">E</div>
+      <div class="side-logo" onclick="window.location='/home'" title="Menú Principal">
+        <img src="/fwv-icon.png" alt="FWV" style="width:36px;height:36px;border-radius:9px;flex-shrink:0;"/>
+        <span class="side-label" style="font-size:13px;font-weight:600;color:var(--emma-fg);letter-spacing:0;text-transform:none;">Menú Principal</span>
+      </div>
 
       <div class="side-section-hdr">Comidas</div>
       <button class="side-icon active" data-screen="home" onclick="emmaSwitchScreen('home');emmaCerrarSidebarMobile()" title="Hoy">
@@ -316,6 +715,13 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
         <span class="side-label">Calendario</span>
       </button>
+
+      <div class="side-divider"></div>
+      <div class="side-section-hdr">Administrador</div>
+      <button class="side-icon" data-screen="planes" onclick="emmaSwitchScreen('planes');emmaCerrarSidebarMobile()" title="Planes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span class="side-label">Planes</span>
+      </button>
       <button class="side-icon" data-screen="comidas" onclick="emmaSwitchScreen('comidas');emmaCerrarSidebarMobile()" title="Comidas">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v7m0 0c-2.5 0-5 1.5-5 4v9h10v-9c0-2.5-2.5-4-5-4z"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg>
         <span class="side-label">Comidas</span>
@@ -325,25 +731,10 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
         <span class="side-label">Rutinas</span>
       </button>
 
-      <div class="side-divider"></div>
-      <div class="side-section-hdr">Administrador</div>
-      <button class="side-icon" data-screen="planes" onclick="emmaSwitchScreen('planes');emmaCerrarSidebarMobile()" title="Planes">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        <span class="side-label">Planes</span>
-      </button>
-      <button class="side-icon" data-screen="admin" onclick="emmaSwitchScreen('admin');emmaCerrarSidebarMobile()" title="Categorías">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg>
-        <span class="side-label">Categorías</span>
-      </button>
-      <button class="side-icon" data-screen="perfil" onclick="emmaSwitchScreen('perfil');emmaCerrarSidebarMobile()" title="Perfil Emma">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span class="side-label">Perfil Emma</span>
-      </button>
-
       <div class="side-spacer"></div>
       <button class="side-expand-btn" onclick="emmaToggleSidebarExpand()" title="Expandir menú">
         <svg class="side-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-        <span class="side-label">Colapsar</span>
+        <span class="side-label" style="font-weight:400;">Colapsar</span>
       </button>
     </aside>
 
@@ -372,9 +763,7 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
                   <div class="ham-line"></div>
                 </button>
               </div>
-              <div class="screen-title-wrap">
-                <span class="screen-title" style="font-size:22px;">Emma App</span>
-              </div>
+              <div class="screen-title-wrap"></div>
               <div class="screen-topbar-right">
                 <button class="icon-btn" onclick="emmaActualizarTodo()" title="Actualizar">
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/><path d="M13.5 2v4h-4"/></svg>
@@ -385,8 +774,8 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
           </div>
           <div class="main">
             <div class="greeting">
-              <h1 id="emma-greeting">Hola, <i>Emma.</i></h1>
-              <div class="greeting-sub">Este es el estado de su alimentación de hoy.</div>
+              <h1 id="emma-greeting">Buenos días, <i>Christian.</i></h1>
+              <div class="greeting-sub">Este es el estado de la alimentación de Emma de hoy.</div>
             </div>
 
             <div class="accounts-grid">
@@ -582,84 +971,617 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
         </div>
 
         <div class="screen" id="screen-calendario">
-          <div class="screen-topbar">
-            <div class="screen-topbar-row">
-              <div class="screen-topbar-left">
-                <button class="ham-btn" onclick="emmaAbrirSidebarMobile()"><div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div></button>
-              </div>
-              <div class="screen-title-wrap"><span class="screen-title">Calendario Emma</span></div>
-              <div class="screen-topbar-right">
-                <button class="icon-btn" onclick="emmaActualizarTodo()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/><path d="M13.5 2v4h-4"/></svg></button>
-              </div>
-            </div>
-          </div>
-          <div class="main" style="padding-top:8px;">
-            <div style="background:var(--emma-card);border:1px solid var(--emma-border-soft);border-radius:16px;padding:40px;text-align:center;color:var(--emma-muted);">
-              <div style="font-size:32px;margin-bottom:12px;">📅</div>
-              <div style="font-size:15px;font-weight:500;color:var(--emma-fg);margin-bottom:6px;">Calendario de rutinas</div>
-              <div style="font-size:13px;">Próxima iteración — conectar con Google Sheets</div>
-            </div>
-          </div>
-        </div>
+ <div class="screen-topbar" style="flex-shrink:0;">
+   <div class="screen-topbar-row">
+     <div class="screen-topbar-left">
+       <button class="ham-btn" onclick="emmaAbrirSidebarMobile()">
+         <div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div>
+       </button>
+     </div>
+     <div class="screen-title-wrap"><span class="screen-title">Calendario</span></div>
+     <div class="screen-topbar-right"></div>
+   </div>
+ </div>
+
+ <div class="cal-date-nav">
+   <div class="cal-date-arrow" onclick="emmaCalCambiarDia(-1)">‹</div>
+   <div class="cal-date-center">
+     <span>📅</span>
+     <span class="cal-date-text" id="cal-fecha-display">Hoy · —</span>
+     <span style="font-size:10px;color:var(--emma-muted);">▼</span>
+   </div>
+   <div class="cal-date-arrow" onclick="emmaCalCambiarDia(1)">›</div>
+ </div>
+
+ <div class="cal-kpi-row" id="cal-kpi-row">
+   <div class="cal-kpi">
+     <div class="cal-kpi-label">COMPLETADO</div>
+     <div class="cal-kpi-val" id="cal-kpi-comp">0/0</div>
+     <div class="cal-kpi-sub">ítems del plan</div>
+     <div class="cal-kpi-prog"><div class="cal-kpi-prog-fill" id="cal-kpi-comp-fill" style="width:0%"></div></div>
+   </div>
+   <div class="cal-kpi">
+     <div class="cal-kpi-label">LECHE HOY</div>
+     <div class="cal-kpi-val" id="cal-kpi-leche">0cc</div>
+     <div class="cal-kpi-sub" id="cal-kpi-leche-sub">del plan</div>
+     <div class="cal-kpi-prog"><div class="cal-kpi-prog-fill" id="cal-kpi-leche-fill" style="width:0%"></div></div>
+   </div>
+   <div class="cal-kpi">
+     <div class="cal-kpi-label">SÓLIDOS HOY</div>
+     <div class="cal-kpi-val" id="cal-kpi-solidos">0gr</div>
+     <div class="cal-kpi-sub" id="cal-kpi-solidos-sub">del plan</div>
+     <div class="cal-kpi-prog"><div class="cal-kpi-prog-fill" id="cal-kpi-solidos-fill" style="width:0%"></div></div>
+   </div>
+ </div>
+
+ <div class="main" id="cal-lista" style="padding-top:4px;overflow-y:auto;flex:1;"></div>
+</div>
+
+<!-- MODAL REGISTRO CALENDARIO -->
+<div class="cal-modal-overlay" id="cal-modal-registro" onclick="emmaCalCerrarSiOverlay(event,'cal-modal-registro')">
+ <div class="cal-modal-sheet">
+   <div class="cal-modal-handle"></div>
+   <div class="cal-modal-header">
+     <div class="cal-modal-hora" id="cal-modal-hora-lbl">—</div>
+     <div class="cal-modal-name" id="cal-modal-item-name">—</div>
+     <div class="cal-modal-sub" id="cal-modal-item-sub">—</div>
+   </div>
+   <div class="cal-modal-body">
+
+     <!-- SELECTOR SÓLIDO (solo visible si es sólido) -->
+     <div id="cal-solido-section" style="display:none;">
+       <div class="cal-solido-hdr">¿QUÉ COMIÓ?</div>
+       <div class="cal-solido-chips" id="cal-solido-chips"></div>
+     </div>
+
+     <!-- CANTIDAD -->
+     <div id="cal-qty-section">
+       <div class="cal-qty-row">
+         <button class="cal-qty-btn" id="cal-qty-minus" onclick="emmaCalCambiarQty(-1)">−</button>
+         <input class="cal-qty-input" id="cal-qty-input" type="number" min="0" value="0"
+                oninput="emmaCalActualizarEstado()">
+         <div class="cal-qty-unit" id="cal-qty-unit">cc</div>
+         <button class="cal-qty-btn" id="cal-qty-plus" onclick="emmaCalCambiarQty(1)">+</button>
+       </div>
+     </div>
+
+     <!-- AUTO ESTADO -->
+     <div class="cal-auto-estado pendiente" id="cal-auto-estado">
+       <span id="cal-auto-estado-icon">○</span>
+       <span id="cal-auto-estado-txt">Ingresa una cantidad para registrar</span>
+     </div>
+
+     <!-- COMPARATIVO -->
+     <div class="cal-compare-row">
+       <span>vs ayer</span>
+       <span class="cal-compare-val same" id="cal-compare-val">—</span>
+     </div>
+
+     <!-- NOTA -->
+     <div id="cal-nota-section">
+       <div class="cal-nota-lbl">NOTA (opcional)</div>
+       <textarea class="cal-nota-input" id="cal-nota-input" rows="2" placeholder="Opcional..."></textarea>
+     </div>
+
+     <button class="cal-btn-save" onclick="emmaCalGuardarRegistro()">Guardar</button>
+     <button class="cal-btn-cancel" onclick="emmaCalCerrar('cal-modal-registro')">Cancelar</button>
+   </div>
+ </div>
+</div>
 
         <div class="screen" id="screen-comidas">
-          <div class="screen-topbar">
-            <div class="screen-topbar-row">
-              <div class="screen-topbar-left">
-                <button class="ham-btn" onclick="emmaAbrirSidebarMobile()"><div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div></button>
-              </div>
-              <div class="screen-title-wrap"><span class="screen-title">Comidas</span></div>
-              <div class="screen-topbar-right">
-                <button class="icon-btn add" onclick="emmaAbrirNuevaComida()">+</button>
-              </div>
-            </div>
+  <div class="screen-topbar">
+    <div class="screen-topbar-row">
+      <div class="screen-topbar-left">
+        <button class="ham-btn" onclick="emmaAbrirSidebarMobile()">
+          <div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div>
+        </button>
+      </div>
+      <div class="screen-title-wrap"><span class="screen-title">Comidas</span></div>
+      <div class="screen-topbar-right"></div>
+    </div>
+  </div>
+  <div class="main" style="padding-top:8px;">
+
+    <button class="comidas-add-btn" onclick="emmaComidasAbrirNueva()">
+      <span style="font-size:18px;font-weight:400;">+</span> Agregar comida
+    </button>
+
+    <div class="comidas-search">🔍 Buscar comida...</div>
+
+    <div class="comidas-filter-chips">
+      <button class="comidas-chip active" onclick="emmaComidasSetFiltro(this,'todas')">Todas</button>
+      <button class="comidas-chip" onclick="emmaComidasSetFiltro(this,'activas')">Solo activas</button>
+      <button class="comidas-chip" onclick="emmaComidasSetFiltro(this,'deshabilitadas')">Deshabilitadas</button>
+    </div>
+
+    <div id="comidas-lista"></div>
+
+  </div>
+</div>
+
+<!-- MODAL NUEVA COMIDA -->
+<div class="comidas-modal-overlay" id="comidas-modal-nueva" onclick="emmaComidasCerrarSiOverlay(event,'comidas-modal-nueva')">
+  <div class="comidas-modal-sheet">
+    <div class="comidas-modal-handle"></div>
+    <div class="comidas-modal-title">Nueva comida</div>
+    <div class="comidas-modal-body">
+
+      <div>
+        <div class="comidas-field-label">NOMBRE</div>
+        <input class="comidas-field-input" id="nueva-nombre" type="text" placeholder="Ej: Mamadera">
+      </div>
+
+      <div>
+        <div class="comidas-field-label">CATEGORÍA</div>
+        <div class="comidas-cat-chips" id="nueva-cat-chips"></div>
+        <div id="nueva-cat-row" style="display:none;flex-direction:column;gap:6px;margin-top:8px;">
+          <div style="display:flex;gap:6px;">
+            <input id="nueva-cat-input" class="comidas-field-input" type="text" placeholder="Nueva categoría" style="flex:1;">
+            <button onclick="emmaComidasAgregarCat('nueva')" style="padding:0 14px;background:var(--emma-accent);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;white-space:nowrap;">Agregar</button>
           </div>
-          <div class="main" style="padding-top:8px;">
-            <div style="background:var(--emma-card);border:1px solid var(--emma-border-soft);border-radius:16px;padding:40px;text-align:center;color:var(--emma-muted);">
-              <div style="font-size:32px;margin-bottom:12px;">🥣</div>
-              <div style="font-size:15px;font-weight:500;color:var(--emma-fg);margin-bottom:6px;">Catálogo de comidas</div>
-              <div style="font-size:13px;">Próxima iteración — conectar con Google Sheets</div>
-            </div>
+          <div class="comidas-field-hint">La categoría se creará y quedará seleccionada.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;">
+          <div class="comidas-field-label">TAMAÑO</div>
+          <input class="comidas-field-input" id="nueva-tamano" type="number" placeholder="120">
+        </div>
+        <div style="flex:1;">
+          <div class="comidas-field-label">UNIDAD</div>
+          <div class="comidas-unit-group">
+            <button class="comidas-unit-pill active" onclick="emmaComidasToggleUnidad(this)">cc</button>
+            <button class="comidas-unit-pill inactive" onclick="emmaComidasToggleUnidad(this)">gr</button>
           </div>
         </div>
+      </div>
+
+      <div>
+        <div class="comidas-field-label">EMOJI</div>
+        <input class="comidas-field-input" id="nueva-emoji" type="text" placeholder="🍼" style="font-size:22px;text-align:center;letter-spacing:4px;">
+        <div class="comidas-field-hint">Abre el teclado de emojis con 🌐 o manteniendo presionado</div>
+      </div>
+
+      <button class="comidas-btn-save" onclick="emmaComidasGuardarNueva()">Guardar comida</button>
+      <button class="comidas-btn-cancel" onclick="emmaComidasCerrar('comidas-modal-nueva')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR COMIDA -->
+<div class="comidas-modal-overlay" id="comidas-modal-editar" onclick="emmaComidasCerrarSiOverlay(event,'comidas-modal-editar')">
+  <div class="comidas-modal-sheet">
+    <div class="comidas-modal-handle"></div>
+    <div class="comidas-modal-title">Editar comida</div>
+    <div class="comidas-modal-body">
+
+      <div>
+        <div class="comidas-field-label">NOMBRE</div>
+        <input class="comidas-field-input" id="editar-nombre" type="text">
+      </div>
+
+      <div>
+        <div class="comidas-field-label">CATEGORÍA</div>
+        <div class="comidas-cat-chips" id="editar-cat-chips"></div>
+        <div id="editar-cat-row" style="display:none;flex-direction:column;gap:6px;margin-top:8px;">
+          <div style="display:flex;gap:6px;">
+            <input id="editar-cat-input" class="comidas-field-input" type="text" placeholder="Nueva categoría" style="flex:1;">
+            <button onclick="emmaComidasAgregarCat('editar')" style="padding:0 14px;background:var(--emma-accent);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;white-space:nowrap;">Agregar</button>
+          </div>
+          <div class="comidas-field-hint">La categoría se creará y quedará seleccionada.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;">
+          <div class="comidas-field-label">TAMAÑO</div>
+          <input class="comidas-field-input" id="editar-tamano" type="number">
+        </div>
+        <div style="flex:1;">
+          <div class="comidas-field-label">UNIDAD</div>
+          <div class="comidas-unit-group" id="editar-unidad-group">
+            <button class="comidas-unit-pill active" onclick="emmaComidasToggleUnidad(this)">cc</button>
+            <button class="comidas-unit-pill inactive" onclick="emmaComidasToggleUnidad(this)">gr</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="comidas-field-label">EMOJI</div>
+        <input class="comidas-field-input" id="editar-emoji" type="text" style="font-size:22px;text-align:center;letter-spacing:4px;">
+        <div class="comidas-field-hint">Abre el teclado de emojis con 🌐 o manteniendo presionado</div>
+      </div>
+
+      <div class="comidas-modal-divider"></div>
+
+      <div class="comidas-toggle-row">
+        <div>
+          <div class="comidas-toggle-lbl">Comida activa</div>
+          <div class="comidas-toggle-sub">Desactiva para ocultar del selector</div>
+        </div>
+        <div class="comidas-switch on" id="editar-activo-switch" onclick="emmaComidasToggleSwitch(this)">
+          <div class="comidas-switch-knob"></div>
+        </div>
+      </div>
+
+      <button class="comidas-btn-save" onclick="emmaComidasGuardarEdicion()">Guardar cambios</button>
+      <button class="comidas-btn-danger" onclick="emmaComidasEliminar()">Eliminar comida</button>
+      <button class="comidas-btn-cancel" onclick="emmaComidasCerrar('comidas-modal-editar')">Cancelar</button>
+    </div>
+  </div>
+</div>
 
         <div class="screen" id="screen-rutinas">
-          <div class="screen-topbar">
-            <div class="screen-topbar-row">
-              <div class="screen-topbar-left">
-                <button class="ham-btn" onclick="emmaAbrirSidebarMobile()"><div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div></button>
-              </div>
-              <div class="screen-title-wrap"><span class="screen-title">Rutinas</span></div>
-              <div class="screen-topbar-right"></div>
-            </div>
+  <div class="screen-topbar">
+    <div class="screen-topbar-row">
+      <div class="screen-topbar-left">
+        <button class="ham-btn" onclick="emmaAbrirSidebarMobile()">
+          <div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div>
+        </button>
+      </div>
+      <div class="screen-title-wrap"><span class="screen-title">Rutinas</span></div>
+      <div class="screen-topbar-right"></div>
+    </div>
+  </div>
+  <div class="main" style="padding-top:8px;">
+
+    <button class="rutinas-add-btn" onclick="emmaRutinasAbrirNueva()">
+      <span style="font-size:18px;font-weight:400;">+</span> Agregar rutina
+    </button>
+
+    <div class="rutinas-filter-chips">
+      <button class="rutinas-chip active" onclick="emmaRutinasSetFiltro(this,'todas')">Todas</button>
+      <button class="rutinas-chip" onclick="emmaRutinasSetFiltro(this,'activas')">Solo activas</button>
+      <button class="rutinas-chip" onclick="emmaRutinasSetFiltro(this,'deshabilitadas')">Deshabilitadas</button>
+    </div>
+
+    <div id="rutinas-lista"></div>
+
+  </div>
+</div>
+
+<!-- MODAL NUEVA RUTINA -->
+<div class="rutinas-modal-overlay" id="rutinas-modal-nueva" onclick="emmaRutinasCerrarSiOverlay(event,'rutinas-modal-nueva')">
+  <div class="rutinas-modal-sheet">
+    <div class="rutinas-modal-handle"></div>
+    <div class="rutinas-modal-title">Nueva rutina</div>
+    <div class="rutinas-modal-body">
+      <div>
+        <div class="rutinas-field-label">NOMBRE</div>
+        <input class="rutinas-field-input" id="rutina-nueva-nombre" type="text" placeholder="Ej: Vitaminas">
+      </div>
+      <div>
+        <div class="rutinas-field-label">DESCRIPCIÓN (opcional)</div>
+        <input class="rutinas-field-input" id="rutina-nueva-desc" type="text" placeholder="Ej: Suplemento diario">
+      </div>
+      <div>
+        <div class="rutinas-field-label">EMOJI</div>
+        <input class="rutinas-field-input" id="rutina-nueva-emoji" type="text" placeholder="💊" style="font-size:22px;text-align:center;letter-spacing:4px;">
+        <div class="rutinas-field-hint">Abre el teclado de emojis con 🌐 o manteniendo presionado</div>
+      </div>
+      <div>
+        <div class="rutinas-field-label">TIPO DE REGISTRO</div>
+        <div class="rutinas-tipo-group" id="rutina-nueva-tipo">
+          <div class="rutinas-tipo-opt active" onclick="emmaRutinasSelTipo(this)">
+            <div class="rutinas-tipo-icon">✅</div>
+            <div class="rutinas-tipo-lbl">Sí / No</div>
+            <div class="rutinas-tipo-sub">Se hizo o no</div>
           </div>
-          <div class="main" style="padding-top:8px;">
-            <div style="background:var(--emma-card);border:1px solid var(--emma-border-soft);border-radius:16px;padding:40px;text-align:center;color:var(--emma-muted);">
-              <div style="font-size:32px;margin-bottom:12px;">📋</div>
-              <div style="font-size:15px;font-weight:500;color:var(--emma-fg);margin-bottom:6px;">Gestión de rutinas</div>
-              <div style="font-size:13px;">Próxima iteración — conectar con Google Sheets</div>
-            </div>
+          <div class="rutinas-tipo-opt" onclick="emmaRutinasSelTipo(this)">
+            <div class="rutinas-tipo-icon">🔢</div>
+            <div class="rutinas-tipo-lbl">Cantidad</div>
+            <div class="rutinas-tipo-sub">Número de veces</div>
           </div>
         </div>
+      </div>
+      <button class="rutinas-btn-save" onclick="emmaRutinasGuardarNueva()">Guardar rutina</button>
+      <button class="rutinas-btn-cancel" onclick="emmaRutinasCerrar('rutinas-modal-nueva')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR RUTINA -->
+<div class="rutinas-modal-overlay" id="rutinas-modal-editar" onclick="emmaRutinasCerrarSiOverlay(event,'rutinas-modal-editar')">
+  <div class="rutinas-modal-sheet">
+    <div class="rutinas-modal-handle"></div>
+    <div class="rutinas-modal-title">Editar rutina</div>
+    <div class="rutinas-modal-body">
+      <div>
+        <div class="rutinas-field-label">NOMBRE</div>
+        <input class="rutinas-field-input" id="rutina-editar-nombre" type="text">
+      </div>
+      <div>
+        <div class="rutinas-field-label">DESCRIPCIÓN</div>
+        <input class="rutinas-field-input" id="rutina-editar-desc" type="text">
+      </div>
+      <div>
+        <div class="rutinas-field-label">EMOJI</div>
+        <input class="rutinas-field-input" id="rutina-editar-emoji" type="text" style="font-size:22px;text-align:center;letter-spacing:4px;">
+        <div class="rutinas-field-hint">Abre el teclado de emojis con 🌐 o manteniendo presionado</div>
+      </div>
+      <div>
+        <div class="rutinas-field-label">TIPO DE REGISTRO</div>
+        <div class="rutinas-tipo-group" id="rutina-editar-tipo">
+          <div class="rutinas-tipo-opt active" onclick="emmaRutinasSelTipo(this)">
+            <div class="rutinas-tipo-icon">✅</div>
+            <div class="rutinas-tipo-lbl">Sí / No</div>
+            <div class="rutinas-tipo-sub">Se hizo o no</div>
+          </div>
+          <div class="rutinas-tipo-opt" onclick="emmaRutinasSelTipo(this)">
+            <div class="rutinas-tipo-icon">🔢</div>
+            <div class="rutinas-tipo-lbl">Cantidad</div>
+            <div class="rutinas-tipo-sub">Número de veces</div>
+          </div>
+        </div>
+      </div>
+      <div class="rutinas-modal-divider"></div>
+      <div class="rutinas-toggle-row">
+        <div>
+          <div class="rutinas-toggle-lbl">Rutina activa</div>
+          <div class="rutinas-toggle-sub">Desactiva para ocultar del registro diario</div>
+        </div>
+        <div class="rutinas-switch on" id="rutina-editar-switch" onclick="this.classList.toggle('on')">
+          <div class="rutinas-switch-knob"></div>
+        </div>
+      </div>
+      <button class="rutinas-btn-save" onclick="emmaRutinasGuardarEdicion()">Guardar cambios</button>
+      <button class="rutinas-btn-danger" onclick="emmaRutinasEliminar()">Eliminar rutina</button>
+      <button class="rutinas-btn-cancel" onclick="emmaRutinasCerrar('rutinas-modal-editar')">Cancelar</button>
+    </div>
+  </div>
+</div>
 
         <div class="screen" id="screen-planes">
-          <div class="screen-topbar">
-            <div class="screen-topbar-row">
-              <div class="screen-topbar-left">
-                <button class="ham-btn" onclick="emmaAbrirSidebarMobile()"><div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div></button>
-              </div>
-              <div class="screen-title-wrap"><span class="screen-title">Planes</span></div>
-              <div class="screen-topbar-right"></div>
-            </div>
-          </div>
-          <div class="main" style="padding-top:8px;">
-            <div style="background:var(--emma-card);border:1px solid var(--emma-border-soft);border-radius:16px;padding:40px;text-align:center;color:var(--emma-muted);">
-              <div style="font-size:32px;margin-bottom:12px;">📄</div>
-              <div style="font-size:15px;font-weight:500;color:var(--emma-fg);margin-bottom:6px;">Planes de alimentación</div>
-              <div style="font-size:13px;">Próxima iteración — conectar con Google Sheets</div>
-            </div>
+
+  <!-- VISTA LISTA -->
+  <div id="planes-vista-lista" style="display:flex;flex-direction:column;height:100%;">
+    <div class="screen-topbar" style="flex-shrink:0;">
+      <div class="screen-topbar-row">
+        <div class="screen-topbar-left">
+          <button class="ham-btn" onclick="emmaAbrirSidebarMobile()">
+            <div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div>
+          </button>
+        </div>
+        <div class="screen-title-wrap"><span class="screen-title">Planes</span></div>
+        <div class="screen-topbar-right"></div>
+      </div>
+    </div>
+    <div class="main" style="padding-top:8px;overflow-y:auto;flex:1;">
+      <button class="planes-add-btn" onclick="emmaPlaneAbrirNuevo()">
+        <span style="font-size:18px;font-weight:400;">+</span> Crear plan diario
+      </button>
+      <div id="planes-lista-container"></div>
+    </div>
+  </div>
+
+  <!-- VISTA DETALLE -->
+  <div id="planes-vista-detalle" style="display:none;flex-direction:column;height:100%;">
+    <div class="planes-detail-topbar">
+      <div class="planes-back-btn" onclick="emmaPlaneVolverLista()">‹</div>
+      <div class="planes-detail-title" id="planes-detail-title">—</div>
+      <button class="planes-detail-edit" onclick="emmaPlaneAbrirEditarNombre()">Editar</button>
+    </div>
+    <div class="planes-meta-row">
+      <span class="planes-badge-activo" id="planes-detail-badge">● PLAN ACTIVO</span>
+      <span style="font-size:12px;color:var(--emma-muted);" id="planes-detail-count">0 ítems</span>
+    </div>
+    <div class="planes-add-row">
+      <button class="planes-add-item-btn" onclick="emmaPlaneAbrirAddComida()">🍽️ + Comida</button>
+      <button class="planes-add-item-btn" onclick="emmaPlaneAbrirAddRutina()">📋 + Rutina</button>
+    </div>
+    <div class="planes-scroll" id="planes-scroll-area"></div>
+  </div>
+
+</div>
+
+<!-- MODAL NUEVO PLAN -->
+<div class="planes-modal-overlay" id="planes-modal-nuevo" onclick="emmaPlanesCerrarSiOverlay(event,'planes-modal-nuevo')">
+  <div class="planes-modal-sheet">
+    <div class="planes-modal-handle"></div>
+    <div class="planes-modal-title">Nuevo plan diario</div>
+    <div class="planes-modal-body">
+      <div>
+        <div class="planes-field-label">NOMBRE DEL PLAN</div>
+        <input class="planes-field-input" id="planes-nuevo-nombre" type="text" placeholder="Ej: Plan Emma — 6 meses">
+        <div class="planes-field-hint">Describe la etapa o edad para identificarlo fácilmente</div>
+      </div>
+      <button class="planes-btn-save" onclick="emmaPlaneGuardarNuevo()">Crear plan</button>
+      <button class="planes-btn-cancel" onclick="emmaPlanesCerrar('planes-modal-nuevo')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR NOMBRE PLAN -->
+<div class="planes-modal-overlay" id="planes-modal-editar-nombre" onclick="emmaPlanesCerrarSiOverlay(event,'planes-modal-editar-nombre')">
+  <div class="planes-modal-sheet">
+    <div class="planes-modal-handle"></div>
+    <div class="planes-modal-title">Editar plan</div>
+    <div class="planes-modal-body">
+      <div>
+        <div class="planes-field-label">NOMBRE</div>
+        <input class="planes-field-input" id="planes-editar-nombre-input" type="text">
+      </div>
+      <div class="planes-modal-divider"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--emma-bg);border:0.5px solid rgba(127,119,221,0.2);border-radius:10px;padding:12px 14px;">
+        <div>
+          <div style="font-size:14px;font-weight:500;color:var(--emma-fg);">Plan activo</div>
+          <div style="font-size:11px;color:var(--emma-muted);margin-top:2px;">Solo puede haber un plan activo a la vez</div>
+        </div>
+        <div class="rutinas-switch on" id="planes-activo-switch" onclick="this.classList.toggle('on')">
+          <div class="rutinas-switch-knob"></div>
+        </div>
+      </div>
+      <button class="planes-btn-save" onclick="emmaPlaneGuardarEdicionNombre()">Guardar</button>
+      <button class="planes-btn-cancel" onclick="emmaPlanesCerrar('planes-modal-editar-nombre')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AGREGAR COMIDA AL PLAN -->
+<div class="planes-modal-overlay" id="planes-modal-add-comida" onclick="emmaPlanesCerrarSiOverlay(event,'planes-modal-add-comida')">
+  <div class="planes-modal-sheet">
+    <div class="planes-modal-handle"></div>
+    <div class="planes-modal-title">Agregar comida</div>
+    <div class="planes-modal-body">
+      <div>
+        <div class="planes-field-label">CATEGORÍA</div>
+        <div class="planes-seg-group" id="planes-add-comida-cat">
+          <button class="planes-seg-opt active" onclick="emmaPlaneSelSeg(this,'planes-add-comida-cat')">🍼 Leche</button>
+          <button class="planes-seg-opt" onclick="emmaPlaneSelSeg(this,'planes-add-comida-cat')">🥕 Sólidos</button>
+          <button class="planes-seg-opt" onclick="emmaPlaneSelSeg(this,'planes-add-comida-cat')">🍌 Postre</button>
+        </div>
+      </div>
+      <div>
+        <div class="planes-field-label">ETIQUETA (opcional)</div>
+        <input class="planes-field-input" id="planes-add-comida-etiqueta" type="text" placeholder="Ej: Almuerzo, Cena, Desayuno">
+        <div class="planes-field-hint">Aparece como descripción en la línea de tiempo</div>
+      </div>
+      <div>
+        <div class="planes-field-label">CANTIDAD ORIENTATIVA (opcional)</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input class="planes-field-input" id="planes-add-comida-cantidad" type="number" placeholder="120" style="flex:1;">
+          <div class="planes-seg-group" id="planes-add-comida-unidad">
+            <button class="planes-seg-opt active" onclick="emmaPlaneSelSeg(this,'planes-add-comida-unidad')">cc</button>
+            <button class="planes-seg-opt" onclick="emmaPlaneSelSeg(this,'planes-add-comida-unidad')">gr</button>
           </div>
         </div>
+        <div class="planes-field-hint">Solo como referencia. El registro real se ingresa al momento</div>
+      </div>
+      <div>
+        <div class="planes-field-label">HORARIO</div>
+        <div class="planes-time-picker">
+          <div class="planes-time-col">
+            <div class="planes-time-arrow" onclick="emmaPlanesCambiarHora(1,'add-comida')">▲</div>
+            <div class="planes-time-val" id="planes-add-comida-h">6</div>
+            <div class="planes-time-arrow" onclick="emmaPlanesCambiarHora(-1,'add-comida')">▼</div>
+            <div class="planes-time-unit">HORA</div>
+          </div>
+          <div class="planes-time-sep">:</div>
+          <div class="planes-time-col">
+            <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin('add-comida')">▲</div>
+            <div class="planes-time-val" id="planes-add-comida-m">00</div>
+            <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin('add-comida')">▼</div>
+            <div class="planes-time-unit">MIN</div>
+          </div>
+        </div>
+      </div>
+      <button class="planes-btn-save" onclick="emmaPlaneGuardarComida()">Agregar al plan</button>
+      <button class="planes-btn-cancel" onclick="emmaPlanesCerrar('planes-modal-add-comida')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AGREGAR RUTINA AL PLAN -->
+<div class="planes-modal-overlay" id="planes-modal-add-rutina" onclick="emmaPlanesCerrarSiOverlay(event,'planes-modal-add-rutina')">
+  <div class="planes-modal-sheet">
+    <div class="planes-modal-handle"></div>
+    <div class="planes-modal-title">Agregar rutina</div>
+    <div class="planes-modal-body">
+      <div>
+        <div class="planes-field-label">RUTINA</div>
+        <div class="planes-seg-group" id="planes-add-rutina-sel"></div>
+      </div>
+      <div>
+        <div class="planes-field-label">¿HORARIO FIJO O FLEXIBLE?</div>
+        <div class="planes-tipo-fija-group">
+          <div class="planes-tipo-fija-opt" id="planes-opt-fija" onclick="emmaPlaneSelTipoFija('fija')">
+            <div class="planes-tipo-fija-icon">🕐</div>
+            <div class="planes-tipo-fija-lbl">Hora fija</div>
+            <div class="planes-tipo-fija-sub">Aparece en la línea de tiempo</div>
+          </div>
+          <div class="planes-tipo-fija-opt active" id="planes-opt-flexible" onclick="emmaPlaneSelTipoFija('flexible')">
+            <div class="planes-tipo-fija-icon">🔄</div>
+            <div class="planes-tipo-fija-lbl">Flexible</div>
+            <div class="planes-tipo-fija-sub">Queda en "cualquier momento"</div>
+          </div>
+        </div>
+      </div>
+      <div class="planes-hora-row" id="planes-add-rutina-hora-row">
+        <div class="planes-field-label">HORARIO</div>
+        <div class="planes-time-picker">
+          <div class="planes-time-col">
+            <div class="planes-time-arrow" onclick="emmaPlanesCambiarHora(1,'add-rutina')">▲</div>
+            <div class="planes-time-val" id="planes-add-rutina-h">6</div>
+            <div class="planes-time-arrow" onclick="emmaPlanesCambiarHora(-1,'add-rutina')">▼</div>
+            <div class="planes-time-unit">HORA</div>
+          </div>
+          <div class="planes-time-sep">:</div>
+          <div class="planes-time-col">
+            <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin('add-rutina')">▲</div>
+            <div class="planes-time-val" id="planes-add-rutina-m">00</div>
+            <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin('add-rutina')">▼</div>
+            <div class="planes-time-unit">MIN</div>
+          </div>
+        </div>
+      </div>
+      <button class="planes-btn-save" onclick="emmaPlaneGuardarRutina()">Agregar al plan</button>
+      <button class="planes-btn-cancel" onclick="emmaPlanesCerrar('planes-modal-add-rutina')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CAMBIAR HORA DE ÍTEM -->
+<div class="planes-modal-overlay" id="planes-modal-cambiar-hora" onclick="emmaPlanesCerrarSiOverlay(event,'planes-modal-cambiar-hora')">
+  <div class="planes-modal-sheet">
+    <div class="planes-modal-handle"></div>
+    <div class="planes-modal-title">Cambiar horario</div>
+    <div class="planes-modal-sub" id="planes-cambiar-hora-sub">—</div>
+    <div class="planes-modal-body">
+      <div class="planes-time-picker">
+        <div class="planes-time-col">
+          <div class="planes-time-arrow" onclick="emmaPlanesCambiarHora(1,'edit-hora')">▲</div>
+          <div class="planes-time-val" id="planes-edit-hora-h">9</div>
+          <div class="planes-time-arrow" onclick="emmaPlanesCambiarHora(-1,'edit-hora')">▼</div>
+          <div class="planes-time-unit">HORA</div>
+        </div>
+        <div class="planes-time-sep">:</div>
+        <div class="planes-time-col">
+          <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin('edit-hora')">▲</div>
+          <div class="planes-time-val" id="planes-edit-hora-m">30</div>
+          <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin('edit-hora')">▼</div>
+          <div class="planes-time-unit">MIN</div>
+        </div>
+      </div>
+      <div>
+        <div class="planes-field-label" style="margin-bottom:8px;">ACCESO RÁPIDO</div>
+        <div class="planes-quick-times" id="planes-quick-times">
+          <button class="planes-quick-pill" onclick="emmaPlaneSetQuick(6,0,this)">6:00</button>
+          <button class="planes-quick-pill" onclick="emmaPlaneSetQuick(6,30,this)">6:30</button>
+          <button class="planes-quick-pill" onclick="emmaPlaneSetQuick(9,0,this)">9:00</button>
+          <button class="planes-quick-pill" onclick="emmaPlaneSetQuick(9,30,this)">9:30</button>
+          <button class="planes-quick-pill" onclick="emmaPlaneSetQuick(12,0,this)">12:00</button>
+          <button class="planes-quick-pill" onclick="emmaPlaneSetQuick(12,30,this)">12:30</button>
+          <button class="planes-quick-pill" onclick="emmaPlaneSetQuick(15,0,this)">15:00</button>
+          <button class="planes-quick-pill" onclick="emmaPlaneSetQuick(15,30,this)">15:30</button>
+          <button class="planes-quick-pill" onclick="emmaPlaneSetQuick(18,0,this)">18:00</button>
+          <button class="planes-quick-pill" onclick="emmaPlaneSetQuick(18,30,this)">18:30</button>
+          <button class="planes-quick-pill" onclick="emmaPlaneSetQuick(21,0,this)">21:00</button>
+        </div>
+      </div>
+      <div class="planes-modal-divider"></div>
+      <div>
+        <div class="planes-field-label" style="margin-bottom:8px;">O MOVER A</div>
+        <div class="planes-tipo-fija-group">
+          <div class="planes-tipo-fija-opt active" id="planes-mover-fija" onclick="emmaPlanesSelMover('fija')">
+            <div class="planes-tipo-fija-icon">🕐</div>
+            <div class="planes-tipo-fija-lbl">Hora fija</div>
+            <div class="planes-tipo-fija-sub">Con el horario seleccionado</div>
+          </div>
+          <div class="planes-tipo-fija-opt" id="planes-mover-flexible" onclick="emmaPlanesSelMover('flexible')">
+            <div class="planes-tipo-fija-icon">🔄</div>
+            <div class="planes-tipo-fija-lbl">Flexible</div>
+            <div class="planes-tipo-fija-sub">Mover a "cualquier momento"</div>
+          </div>
+        </div>
+      </div>
+      <button class="planes-btn-save" onclick="emmaPlaneGuardarHora()">Guardar horario</button>
+      <button class="planes-btn-cancel" onclick="emmaPlanesCerrar('planes-modal-cambiar-hora')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 
         <div class="screen" id="screen-admin">
           <div class="screen-topbar">
@@ -712,17 +1634,30 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
   `
 
   useEffect(() => {
-    if (user?.name) window.emmaUserName = user.name
+    if (user?.name) {
+      window.emmaUserName = user.name
+      const el = document.getElementById('emma-greeting')
+      if (el) el.innerHTML = 'Buenos días, <i>' + user.name.split(' ')[0] + '.</i>'
+    }
   }, [user])
 
   useEffect(() => {
+    if (!document.getElementById('sortable-js')) {
+      const s = document.createElement('script')
+      s.id = 'sortable-js'
+      s.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js'
+      document.head.appendChild(s)
+    }
     if (document.getElementById('emma-script')) {
       if (typeof window.emmaCargarDatos === 'function') window.emmaCargarDatos()
       return
     }
     const script = document.createElement('script')
     script.id = 'emma-script'
-    script.src = '/emma-script.js?v=' + Date.now()
+    script.src = '/emma-script.js'
+    script.onload = () => {
+      if (typeof window.emmaCargarDatos === 'function') window.emmaCargarDatos()
+    }
     document.body.appendChild(script)
   }, [])
 
