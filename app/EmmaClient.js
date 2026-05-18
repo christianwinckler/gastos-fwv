@@ -340,6 +340,34 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; flex-shrink: 0; font-size: 13px;
 }
+.bulk-toggle-btn{
+  padding:6px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;
+  border:1px solid rgba(127,119,221,0.25);background:var(--emma-card);color:var(--emma-muted);
+  font-family:inherit;
+}
+.bulk-toggle-btn.active{background:var(--emma-accent-soft);color:var(--emma-accent-mid);border-color:var(--emma-accent);}
+.bulk-bar{
+  display:none;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--emma-accent-soft);border:1px solid rgba(127,119,221,0.25);
+  border-radius:12px;padding:10px 14px;margin-bottom:10px;
+}
+.bulk-bar-action{
+  padding:8px 16px;background:var(--emma-accent);color:#fff;border:none;
+  border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;
+}
+.bulk-bar-action:disabled{opacity:0.45;cursor:default;}
+.bulk-bar-cancel{
+  padding:8px 12px;background:transparent;color:var(--emma-muted);border:none;
+  font-size:13px;cursor:pointer;font-family:inherit;
+}
+.bulk-cb{
+  width:20px;height:20px;border-radius:6px;flex-shrink:0;
+  border:1.5px solid rgba(127,119,221,0.35);background:var(--emma-card);
+}
+.bulk-cb.checked{background:var(--emma-accent);border-color:var(--emma-accent);}
+.bulk-cb.checked::after{content:'✓';display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;height:100%;}
+.comidas-row.bulk-checked,.rutinas-row.bulk-checked{background:var(--emma-accent-soft);}
+.comidas-row[onclick],.rutinas-row[onclick]{cursor:pointer;}
 
 /* Modal comidas */
 .comidas-modal-overlay {
@@ -469,6 +497,7 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
 .rutinas-tipo-badge{font-size:10px;font-weight:600;letter-spacing:0.04em;padding:4px 9px;border-radius:20px;flex-shrink:0;}
 .rutinas-tipo-badge.binario{background:#E1F5EE;color:#0F6E56;}
 .rutinas-tipo-badge.cantidad{background:var(--emma-accent-soft);color:var(--emma-accent-mid);}
+.rutinas-tipo-badge.tiempo{background:var(--emma-gold-soft);color:var(--emma-gold);}
 .rutinas-edit-btn{
   width:28px;height:28px;border-radius:8px;background:var(--emma-bg);
   border:0.5px solid rgba(127,119,221,0.2);display:flex;align-items:center;
@@ -600,6 +629,7 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
 .planes-seg-group { display:flex;gap:6px;flex-wrap:wrap; }
 .planes-seg-opt { padding:8px 14px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid rgba(127,119,221,0.25);background:var(--emma-card);color:var(--emma-muted);cursor:pointer;font-family:inherit; }
 .planes-seg-opt.active { background:var(--emma-accent-soft);color:var(--emma-accent-mid);border-color:var(--emma-accent); }
+.planes-seg-opt-disabled { opacity:0.4;pointer-events:none;cursor:default; }
 .planes-tipo-fija-group { display:flex;gap:8px; }
 .planes-tipo-fija-opt { flex:1;padding:11px 8px;border-radius:12px;border:1.5px solid rgba(127,119,221,0.2);background:var(--emma-card);cursor:pointer;text-align:center;font-family:inherit; }
 .planes-tipo-fija-opt.active { border-color:var(--emma-accent);background:var(--emma-accent-soft); }
@@ -694,6 +724,27 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
 .cal-modal-divider { height:0.5px;background:rgba(127,119,221,0.12); }
 .cal-btn-save { width:100%;padding:14px;background:var(--emma-accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit; }
 .cal-btn-cancel { width:100%;padding:11px;background:transparent;color:var(--emma-muted);border:none;font-size:14px;cursor:pointer;font-family:inherit; }
+.cal-tiempo-picker { display:flex;align-items:center;justify-content:center;gap:12px; }
+.cal-tiempo-col { display:flex;flex-direction:column;align-items:center;gap:6px; }
+.cal-tiempo-arrow { width:44px;height:36px;border-radius:10px;background:var(--emma-bg);border:0.5px solid rgba(127,119,221,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--emma-accent);cursor:pointer;user-select:none; }
+.cal-tiempo-arrow:active { background:var(--emma-accent-soft); }
+.cal-tiempo-val { font-size:42px;font-weight:300;color:var(--emma-fg);width:80px;text-align:center;line-height:1;font-variant-numeric:tabular-nums; }
+.cal-tiempo-sep { font-size:42px;font-weight:200;color:var(--emma-muted);line-height:1;margin-top:2px; }
+.cal-tiempo-unit { font-size:11px;color:var(--emma-muted);font-weight:500;letter-spacing:0.05em; }
+.cal-tiempo-quick { display:flex;flex-wrap:wrap;gap:6px;justify-content:center; }
+.cal-tiempo-pill { padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid rgba(127,119,221,0.2);background:var(--emma-card);color:var(--emma-muted);cursor:pointer;font-family:inherit; }
+.cal-tiempo-pill.active { background:var(--emma-accent-soft);color:var(--emma-accent-mid);border-color:var(--emma-accent); }
+.comidas-section-row { display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:4px; }
+.rutinas-section-row { display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:4px; }
+.bulk-sel-btn { font-size:12px;font-weight:600;color:var(--emma-accent);background:transparent;border:1.5px solid rgba(127,119,221,0.35);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;white-space:nowrap; }
+.bulk-sel-btn.active { background:var(--emma-accent);color:#fff;border-color:var(--emma-accent); }
+.bulk-select-check { width:24px;height:24px;border-radius:7px;border:1.5px solid rgba(127,119,221,0.3);background:var(--emma-bg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:12px;color:#fff; }
+.bulk-select-check.checked { background:var(--emma-accent);border-color:var(--emma-accent); }
+.bulk-bar.visible { display:flex; }
+.bulk-btn { flex:1;padding:12px;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;border:none; }
+.bulk-btn-cancel { background:var(--emma-bg);color:var(--emma-muted); }
+.bulk-btn-disable { background:var(--emma-accent-soft);color:var(--emma-accent-mid); }
+.bulk-btn-disable:disabled { opacity:0.4;cursor:not-allowed; }
   `
 
   const htmlContent = `
@@ -979,7 +1030,11 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
        </button>
      </div>
      <div class="screen-title-wrap"><span class="screen-title">Calendario</span></div>
-     <div class="screen-topbar-right"></div>
+     <div class="screen-topbar-right">
+       <button class="icon-btn" onclick="emmaActualizarTodo()" title="Actualizar">
+         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/><path d="M13.5 2v4h-4"/></svg>
+       </button>
+     </div>
    </div>
  </div>
 
@@ -1078,7 +1133,11 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
         </button>
       </div>
       <div class="screen-title-wrap"><span class="screen-title">Comidas</span></div>
-      <div class="screen-topbar-right"></div>
+      <div class="screen-topbar-right">
+        <button class="icon-btn" onclick="emmaActualizarTodo()" title="Actualizar">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/><path d="M13.5 2v4h-4"/></svg>
+        </button>
+      </div>
     </div>
   </div>
   <div class="main" style="padding-top:8px;">
@@ -1093,6 +1152,11 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
       <button class="comidas-chip active" onclick="emmaComidasSetFiltro(this,'todas')">Todas</button>
       <button class="comidas-chip" onclick="emmaComidasSetFiltro(this,'activas')">Solo activas</button>
       <button class="comidas-chip" onclick="emmaComidasSetFiltro(this,'deshabilitadas')">Deshabilitadas</button>
+    </div>
+
+    <div id="bulk-bar-comidas" class="bulk-bar">
+      <button id="bulk-btn-comidas" class="bulk-btn bulk-btn-disable" disabled onclick="emmaBulkDesactivar('comidas')">Deshabilitar (0)</button>
+      <button class="bulk-btn bulk-btn-cancel" onclick="emmaBulkToggle('comidas')">Cancelar</button>
     </div>
 
     <div id="comidas-lista"></div>
@@ -1222,7 +1286,11 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
         </button>
       </div>
       <div class="screen-title-wrap"><span class="screen-title">Rutinas</span></div>
-      <div class="screen-topbar-right"></div>
+      <div class="screen-topbar-right">
+        <button class="icon-btn" onclick="emmaActualizarTodo()" title="Actualizar">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/><path d="M13.5 2v4h-4"/></svg>
+        </button>
+      </div>
     </div>
   </div>
   <div class="main" style="padding-top:8px;">
@@ -1235,6 +1303,11 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
       <button class="rutinas-chip active" onclick="emmaRutinasSetFiltro(this,'todas')">Todas</button>
       <button class="rutinas-chip" onclick="emmaRutinasSetFiltro(this,'activas')">Solo activas</button>
       <button class="rutinas-chip" onclick="emmaRutinasSetFiltro(this,'deshabilitadas')">Deshabilitadas</button>
+    </div>
+
+    <div id="bulk-bar-rutinas" class="bulk-bar">
+      <button id="bulk-btn-rutinas" class="bulk-btn bulk-btn-disable" disabled onclick="emmaBulkDesactivar('rutinas')">Deshabilitar (0)</button>
+      <button class="bulk-btn bulk-btn-cancel" onclick="emmaBulkToggle('rutinas')">Cancelar</button>
     </div>
 
     <div id="rutinas-lista"></div>
@@ -1273,6 +1346,11 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
             <div class="rutinas-tipo-icon">🔢</div>
             <div class="rutinas-tipo-lbl">Cantidad</div>
             <div class="rutinas-tipo-sub">Número de veces</div>
+          </div>
+          <div class="rutinas-tipo-opt" onclick="emmaRutinasSelTipo(this)">
+            <div class="rutinas-tipo-icon">⏱️</div>
+            <div class="rutinas-tipo-lbl">Tiempo</div>
+            <div class="rutinas-tipo-sub">Duración en min</div>
           </div>
         </div>
       </div>
@@ -1314,6 +1392,11 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
             <div class="rutinas-tipo-lbl">Cantidad</div>
             <div class="rutinas-tipo-sub">Número de veces</div>
           </div>
+          <div class="rutinas-tipo-opt" onclick="emmaRutinasSelTipo(this)">
+            <div class="rutinas-tipo-icon">⏱️</div>
+            <div class="rutinas-tipo-lbl">Tiempo</div>
+            <div class="rutinas-tipo-sub">Duración en min</div>
+          </div>
         </div>
       </div>
       <div class="rutinas-modal-divider"></div>
@@ -1345,7 +1428,11 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
           </button>
         </div>
         <div class="screen-title-wrap"><span class="screen-title">Planes</span></div>
-        <div class="screen-topbar-right"></div>
+        <div class="screen-topbar-right">
+          <button class="icon-btn" onclick="emmaActualizarTodo()" title="Actualizar">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/><path d="M13.5 2v4h-4"/></svg>
+          </button>
+        </div>
       </div>
     </div>
     <div class="main" style="padding-top:8px;overflow-y:auto;flex:1;">
@@ -1460,9 +1547,9 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
           </div>
           <div class="planes-time-sep">:</div>
           <div class="planes-time-col">
-            <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin('add-comida')">▲</div>
+            <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin(1,'add-comida')">▲</div>
             <div class="planes-time-val" id="planes-add-comida-m">00</div>
-            <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin('add-comida')">▼</div>
+            <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin(-1,'add-comida')">▼</div>
             <div class="planes-time-unit">MIN</div>
           </div>
         </div>
@@ -1509,9 +1596,9 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
           </div>
           <div class="planes-time-sep">:</div>
           <div class="planes-time-col">
-            <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin('add-rutina')">▲</div>
+            <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin(1,'add-rutina')">▲</div>
             <div class="planes-time-val" id="planes-add-rutina-m">00</div>
-            <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin('add-rutina')">▼</div>
+            <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin(-1,'add-rutina')">▼</div>
             <div class="planes-time-unit">MIN</div>
           </div>
         </div>
@@ -1538,9 +1625,9 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
         </div>
         <div class="planes-time-sep">:</div>
         <div class="planes-time-col">
-          <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin('edit-hora')">▲</div>
+          <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin(1,'edit-hora')">▲</div>
           <div class="planes-time-val" id="planes-edit-hora-m">30</div>
-          <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin('edit-hora')">▼</div>
+          <div class="planes-time-arrow" onclick="emmaPlanesCambiarMin(-1,'edit-hora')">▼</div>
           <div class="planes-time-unit">MIN</div>
         </div>
       </div>
@@ -1630,6 +1717,11 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
 <div class="loading-overlay" id="emma-loading">
   <div style="width:36px;height:36px;border:3px solid #e0e0e0;border-top-color:var(--emma-accent);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
   <div style="font-size:14px;color:#666;">Cargando...</div>
+</div>
+
+<div id="emma-loading-overlay" style="display:none;position:fixed;inset:0;background:rgba(245,244,251,0.92);z-index:500;flex-direction:column;align-items:center;justify-content:center;gap:12px;">
+  <div style="width:36px;height:36px;border:3px solid var(--emma-accent-light);border-top-color:var(--emma-accent);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+  <div id="emma-loading-text" style="font-size:14px;color:var(--emma-muted);font-family:-apple-system,sans-serif;">Cargando datos...</div>
 </div>
   `
 

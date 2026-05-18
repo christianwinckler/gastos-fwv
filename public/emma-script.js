@@ -98,24 +98,31 @@ function emmaMostrarToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500)
 }
 
-// ── LOADING ───────────────────────────────────────────────
-function emmaMostrarLoading() {
-  const el = document.getElementById('emma-loading')
-  if (el) el.style.display = 'flex'
-}
-function emmaOcultarLoading() {
-  const el = document.getElementById('emma-loading')
-  if (el) el.style.display = 'none'
-}
-
 // ── DATOS ─────────────────────────────────────────────────
 let emmaDataCargada = false
 let emmaComidasData = []
 let emmaRutinasData = []
 let emmaPlanesData  = []
 
+function emmaMostrarLoading(msg) {
+  const el = document.getElementById('emma-loading-overlay')
+  if (!el) return
+  el.style.display = 'flex'
+  const txt = document.getElementById('emma-loading-text')
+  if (txt) txt.textContent = msg || 'Cargando datos...'
+}
+
+function emmaOcultarLoading() {
+  const el = document.getElementById('emma-loading-overlay')
+  if (el) el.style.display = 'none'
+}
+
+window.emmaMostrarLoading = emmaMostrarLoading
+window.emmaOcultarLoading = emmaOcultarLoading
+
 async function emmaCargarDatos() {
   try {
+    emmaMostrarLoading('Cargando datos...')
     const res = await fetch('/api/emma/datos')
     if (!res.ok) throw new Error('Error ' + res.status)
     const data = await res.json()
@@ -200,6 +207,7 @@ async function emmaCargarDatos() {
     emmaPlanesData = planesBase
     emmaDataCargada = true
 
+    emmaOcultarLoading()
     const screenActiva = document.querySelector('.screen.active')?.id
     if (screenActiva === 'screen-home')       emmaHomeRender()
     if (screenActiva === 'screen-comidas')    emmaComidasRender()
@@ -208,6 +216,7 @@ async function emmaCargarDatos() {
     if (screenActiva === 'screen-calendario') emmaCalRender()
 
   } catch (err) {
+    emmaOcultarLoading()
     console.error('[Emma] emmaCargarDatos error:', err)
   }
 }
@@ -248,6 +257,7 @@ function emmaRenderDonut() {
 // ── ACCIONES ──────────────────────────────────────────────
 async function emmaActualizarTodo() {
   emmaDataCargada = false
+  emmaMostrarLoading('Actualizando datos...')
   await emmaCargarDatos()
 }
 
@@ -321,6 +331,8 @@ window.emmaHomeRender = emmaHomeRender
 // ── COMIDAS ───────────────────────────────────────────────
 let emmaComidasFiltro = 'todas'
 let emmaComidasEditandoId = null
+const emmaBulkModo = { comidas: false, rutinas: false }
+const emmaBulkSeleccionados = { comidas: new Set(), rutinas: new Set() }
 
 function emmaComidasRender() {
   const lista = document.getElementById('comidas-lista')
@@ -338,11 +350,22 @@ function emmaComidasRender() {
     grupos[c.categoria].push(c)
   })
 
-  lista.innerHTML = Object.entries(grupos).map(([cat, items]) => `
-    <div class="comidas-section-hdr">${cat.toUpperCase()}</div>
+  const esModo = emmaBulkModo['comidas']
+  const selBtnHtml = `<button class="bulk-sel-btn${esModo ? ' active' : ''}" onclick="emmaBulkToggle('comidas')">${esModo ? 'Cancelar' : 'Seleccionar'}</button>`
+
+  lista.innerHTML = Object.entries(grupos).map(([cat, items], idx) => `
+    <div class="comidas-section-row">
+      <div class="comidas-section-hdr">${cat.toUpperCase()}</div>
+      ${idx === 0 ? selBtnHtml : ''}
+    </div>
     <div class="comidas-card">
       ${items.map(c => `
         <div class="comidas-row${c.activo ? '' : ' disabled'}">
+          <div class="bulk-select-check${emmaBulkSeleccionados['comidas'].has(c.id) ? ' checked' : ''}"
+               style="display:${esModo ? 'flex' : 'none'}"
+               onclick="event.stopPropagation();emmaBulkCheck('comidas',${c.id},this)">
+            ${emmaBulkSeleccionados['comidas'].has(c.id) ? '✓' : ''}
+          </div>
           <div class="comidas-emoji">${c.emoji}</div>
           <div class="comidas-info">
             <div class="comidas-name${c.activo ? '' : ' disabled-text'}">${c.nombre}</div>
@@ -352,7 +375,8 @@ function emmaComidasRender() {
             <div class="comidas-val" style="${c.activo ? '' : 'color:var(--emma-muted);'}">${c.tamano}</div>
             <div class="comidas-unit">${c.unidad}</div>
           </div>
-          <div class="comidas-edit-btn" onclick="emmaComidasAbrirEditar(${c.id})">✏️</div>
+          <div class="comidas-edit-btn" style="display:${esModo ? 'none' : 'flex'}"
+               onclick="emmaComidasAbrirEditar(${c.id})">✏️</div>
         </div>
       `).join('')}
     </div>
@@ -535,7 +559,6 @@ window.emmaComidasMostrarNuevaCat = emmaComidasMostrarNuevaCat
 // ── RUTINAS ───────────────────────────────────────────────
 let emmaRutinasFiltro = 'todas'
 let emmaRutinasEditandoId = null
-
 function emmaRutinasRender() {
   const lista = document.getElementById('rutinas-lista')
   if (!lista) return
@@ -546,32 +569,55 @@ function emmaRutinasRender() {
   })
   const activas = filtradas.filter(r => r.activo)
   const deshabilitadas = filtradas.filter(r => !r.activo)
+  const esModo = emmaBulkModo['rutinas']
+  const selBtnHtml = `<button class="bulk-sel-btn${esModo ? ' active' : ''}" onclick="emmaBulkToggle('rutinas')">${esModo ? 'Cancelar' : 'Seleccionar'}</button>`
+
   let html = ''
   if (activas.length) {
-    html += '<div class="rutinas-section-hdr">RUTINAS ACTIVAS</div><div class="rutinas-card">'
+    html += `<div class="rutinas-section-row">
+      <div class="rutinas-section-hdr">RUTINAS ACTIVAS</div>
+      ${selBtnHtml}
+    </div>
+    <div class="rutinas-card">`
     html += activas.map(r => `
       <div class="rutinas-row">
+        <div class="bulk-select-check${emmaBulkSeleccionados['rutinas'].has(r.id) ? ' checked' : ''}"
+             style="display:${esModo ? 'flex' : 'none'}"
+             onclick="event.stopPropagation();emmaBulkCheck('rutinas',${r.id},this)">
+          ${emmaBulkSeleccionados['rutinas'].has(r.id) ? '✓' : ''}
+        </div>
         <div class="rutinas-emoji">${r.emoji}</div>
         <div class="rutinas-info">
           <div class="rutinas-name">${r.nombre}</div>
           <div class="rutinas-sub">${r.desc}</div>
         </div>
-        <span class="rutinas-tipo-badge ${r.tipo}">${r.tipo === 'binario' ? 'Sí / No' : 'Cantidad'}</span>
-        <div class="rutinas-edit-btn" onclick="emmaRutinasAbrirEditar(${r.id})">✏️</div>
+        <span class="rutinas-tipo-badge ${r.tipo}">${r.tipo === 'binario' ? 'Sí / No' : r.tipo === 'cantidad' ? 'Cantidad' : 'Tiempo'}</span>
+        <div class="rutinas-edit-btn" style="display:${esModo ? 'none' : 'flex'}"
+             onclick="emmaRutinasAbrirEditar(${r.id})">✏️</div>
       </div>`).join('')
     html += '</div>'
   }
   if (deshabilitadas.length) {
-    html += '<div class="rutinas-section-hdr" style="margin-top:6px;">DESHABILITADAS</div><div class="rutinas-card">'
+    html += `<div class="rutinas-section-row" style="margin-top:6px;">
+      <div class="rutinas-section-hdr">DESHABILITADAS</div>
+      ${!activas.length ? selBtnHtml : ''}
+    </div>
+    <div class="rutinas-card">`
     html += deshabilitadas.map(r => `
       <div class="rutinas-row disabled">
+        <div class="bulk-select-check${emmaBulkSeleccionados['rutinas'].has(r.id) ? ' checked' : ''}"
+             style="display:${esModo ? 'flex' : 'none'}"
+             onclick="event.stopPropagation();emmaBulkCheck('rutinas',${r.id},this)">
+          ${emmaBulkSeleccionados['rutinas'].has(r.id) ? '✓' : ''}
+        </div>
         <div class="rutinas-emoji">${r.emoji}</div>
         <div class="rutinas-info">
           <div class="rutinas-name dis">${r.nombre}</div>
           <div class="rutinas-sub">${r.desc} · Deshabilitada</div>
         </div>
-        <span class="rutinas-tipo-badge ${r.tipo}" style="opacity:0.5;">${r.tipo === 'binario' ? 'Sí / No' : 'Cantidad'}</span>
-        <div class="rutinas-edit-btn" onclick="emmaRutinasAbrirEditar(${r.id})">✏️</div>
+        <span class="rutinas-tipo-badge ${r.tipo}" style="opacity:0.5;">${r.tipo === 'binario' ? 'Sí / No' : r.tipo === 'cantidad' ? 'Cantidad' : 'Tiempo'}</span>
+        <div class="rutinas-edit-btn" style="display:${esModo ? 'none' : 'flex'}"
+             onclick="emmaRutinasAbrirEditar(${r.id})">✏️</div>
       </div>`).join('')
     html += '</div>'
   }
@@ -608,8 +654,11 @@ function emmaRutinasAbrirEditar(id) {
   document.getElementById('rutina-editar-desc').value = r.desc
   document.getElementById('rutina-editar-emoji').value = r.emoji
   document.querySelectorAll('#rutina-editar-tipo .rutinas-tipo-opt').forEach(o => {
-    const esBinario = o.querySelector('.rutinas-tipo-lbl').textContent.includes('Sí')
-    o.classList.toggle('active', (r.tipo === 'binario') === esBinario)
+    const lbl = o.querySelector('.rutinas-tipo-lbl')?.textContent || ''
+    const esteEs = (r.tipo === 'binario' && lbl.includes('Sí'))
+      || (r.tipo === 'cantidad' && lbl.includes('Cantidad'))
+      || (r.tipo === 'tiempo'   && lbl.includes('Tiempo'))
+    o.classList.toggle('active', esteEs)
   })
   const sw = document.getElementById('rutina-editar-switch')
   sw.classList.toggle('on', r.activo)
@@ -620,7 +669,8 @@ function emmaRutinasGuardarNueva() {
   const nombre = document.getElementById('rutina-nueva-nombre').value.trim()
   if (!nombre) return
   const tipoActivo = document.querySelector('#rutina-nueva-tipo .rutinas-tipo-opt.active .rutinas-tipo-lbl')
-  const tipo = tipoActivo?.textContent.includes('Sí') ? 'binario' : 'cantidad'
+  const tipoTxt = tipoActivo?.textContent || ''
+  const tipo = tipoTxt.includes('Sí') ? 'binario' : tipoTxt.includes('Tiempo') ? 'tiempo' : 'cantidad'
   fetch('/api/emma/rutinas', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -644,6 +694,8 @@ function emmaRutinasGuardarEdicion() {
   const r = emmaRutinasData.find(x => x.id === emmaRutinasEditandoId)
   if (!r) return
   const tipoActivo = document.querySelector('#rutina-editar-tipo .rutinas-tipo-opt.active .rutinas-tipo-lbl')
+  const tipoTxtEd = tipoActivo?.textContent || ''
+  const tipoEd = tipoTxtEd.includes('Sí') ? 'binario' : tipoTxtEd.includes('Tiempo') ? 'tiempo' : 'cantidad'
   fetch('/api/emma/rutinas', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -652,7 +704,7 @@ function emmaRutinasGuardarEdicion() {
       nombre:      document.getElementById('rutina-editar-nombre').value.trim() || r.nombre,
       descripcion: document.getElementById('rutina-editar-desc').value.trim(),
       emoji:       document.getElementById('rutina-editar-emoji').value.trim() || r.emoji,
-      tipo:        tipoActivo?.textContent.includes('Sí') ? 'binario' : 'cantidad',
+      tipo:        tipoEd,
       activo:      document.getElementById('rutina-editar-switch').classList.contains('on'),
     })
   })
@@ -683,6 +735,57 @@ function emmaRutinasEliminar() {
 function emmaRutinasCerrar(id) { document.getElementById(id)?.classList.remove('open') }
 function emmaRutinasCerrarSiOverlay(e, id) { if (e.target === document.getElementById(id)) emmaRutinasCerrar(id) }
 
+// ── BULK SELECTION ────────────────────────────────────────
+function emmaBulkToggle(modulo) {
+  emmaBulkModo[modulo] = !emmaBulkModo[modulo]
+  emmaBulkSeleccionados[modulo].clear()
+  const bar = document.getElementById('bulk-bar-' + modulo)
+  if (bar) bar.classList.toggle('visible', emmaBulkModo[modulo])
+  emmaBulkActualizarBtn(modulo)
+  if (modulo === 'comidas') emmaComidasRender()
+  if (modulo === 'rutinas') emmaRutinasRender()
+}
+
+function emmaBulkCheck(modulo, id, el) {
+  el.classList.toggle('checked')
+  el.textContent = el.classList.contains('checked') ? '✓' : ''
+  if (el.classList.contains('checked')) emmaBulkSeleccionados[modulo].add(id)
+  else emmaBulkSeleccionados[modulo].delete(id)
+  emmaBulkActualizarBtn(modulo)
+}
+
+function emmaBulkActualizarBtn(modulo) {
+  const n = emmaBulkSeleccionados[modulo].size
+  const btn = document.getElementById('bulk-btn-' + modulo)
+  if (!btn) return
+  btn.textContent = n > 0 ? `Deshabilitar (${n})` : 'Deshabilitar (0)'
+  btn.disabled = n === 0
+}
+
+function emmaBulkDesactivar(modulo) {
+  const ids = [...emmaBulkSeleccionados[modulo]]
+  if (!ids.length) return
+  const data     = modulo === 'comidas' ? emmaComidasData : emmaRutinasData
+  const endpoint = '/api/emma/' + modulo
+  const promises = ids.map(id => {
+    const item = data.find(x => x.id === id)
+    if (!item) return Promise.resolve()
+    const body = modulo === 'comidas'
+      ? { rowIndex: item._row, nombre: item.nombre, categoria: item.categoria,
+          tamano: item.tamano, unidad: item.unidad, emoji: item.emoji, activo: false }
+      : { rowIndex: item._row, nombre: item.nombre, descripcion: item.desc,
+          emoji: item.emoji, tipo: item.tipo, activo: false }
+    return fetch(endpoint, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+  })
+  Promise.all(promises)
+    .then(() => { emmaBulkToggle(modulo); emmaCargarDatos() })
+    .catch(err => console.error('[Emma] bulk error:', err))
+}
+
 window.emmaRutinasRender = emmaRutinasRender
 window.emmaRutinasAbrirNueva = emmaRutinasAbrirNueva
 window.emmaRutinasAbrirEditar = emmaRutinasAbrirEditar
@@ -693,6 +796,10 @@ window.emmaRutinasSetFiltro = emmaRutinasSetFiltro
 window.emmaRutinasSelTipo = emmaRutinasSelTipo
 window.emmaRutinasCerrar = emmaRutinasCerrar
 window.emmaRutinasCerrarSiOverlay = emmaRutinasCerrarSiOverlay
+window.emmaBulkToggle = emmaBulkToggle
+window.emmaBulkCheck = emmaBulkCheck
+window.emmaBulkActualizarBtn = emmaBulkActualizarBtn
+window.emmaBulkDesactivar = emmaBulkDesactivar
 
 // ── PLANES ────────────────────────────────────────────────
 let emmaPlanesEditandoPlanId = null
@@ -992,15 +1099,41 @@ function emmaPlaneAbrirAddComida() {
   emmaPlanesActualizarPicker('add-comida')
   document.getElementById('planes-add-comida-etiqueta').value = ''
   document.getElementById('planes-add-comida-cantidad').value = ''
+  // Populate category picker from data; disable categories with no active comidas
+  const cats = [...new Set(emmaComidasData.map(c => c.categoria))]
+  const emojiCat = { 'Leche': '🍼', 'Sólidos': '🥕', 'Postre': '🍌' }
+  const catContainer = document.getElementById('planes-add-comida-cat')
+  if (catContainer && cats.length) {
+    let firstActive = true
+    catContainer.innerHTML = cats.map(cat => {
+      const tieneActivas = emmaComidasData.some(c => c.categoria === cat && c.activo)
+      const emoji = emojiCat[cat] || '🍽️'
+      const dis = tieneActivas ? '' : ' planes-seg-opt-disabled'
+      const active = (tieneActivas && firstActive) ? ' active' : ''
+      if (tieneActivas && firstActive) firstActive = false
+      return `<button class="planes-seg-opt${active}${dis}" onclick="emmaPlaneSelSeg(this,'planes-add-comida-cat')">${emoji} ${cat}</button>`
+    }).join('')
+  }
   document.getElementById('planes-modal-add-comida').classList.add('open')
 }
 
 function emmaPlaneAbrirAddRutina() {
-  const rutinasDisponibles = typeof emmaRutinasData !== 'undefined' ? emmaRutinasData.filter(r => r.activo) : []
+  const todasRutinas = typeof emmaRutinasData !== 'undefined' ? emmaRutinasData : []
+  const activas = todasRutinas.filter(r => r.activo)
+  const inactivas = todasRutinas.filter(r => !r.activo)
+  const ordenadas = [...activas, ...inactivas]
   const container = document.getElementById('planes-add-rutina-sel')
-  container.innerHTML = rutinasDisponibles.map((r,i) =>
-    `<button class="planes-seg-opt${i===0?' active':''}" onclick="emmaPlaneSelSeg(this,'planes-add-rutina-sel')">${r.emoji} ${r.nombre}</button>`
-  ).join('') || '<span style="font-size:13px;color:var(--emma-muted);">No hay rutinas activas</span>'
+  if (ordenadas.length === 0) {
+    container.innerHTML = '<span style="font-size:13px;color:var(--emma-muted);">No hay rutinas</span>'
+  } else {
+    let firstActive = true
+    container.innerHTML = ordenadas.map(r => {
+      const dis = r.activo ? '' : ' planes-seg-opt-disabled'
+      const active = (r.activo && firstActive) ? ' active' : ''
+      if (r.activo && firstActive) firstActive = false
+      return `<button class="planes-seg-opt${active}${dis}" onclick="emmaPlaneSelSeg(this,'planes-add-rutina-sel')">${r.emoji} ${r.nombre}</button>`
+    }).join('')
+  }
   emmaPlanesPickerH['add-rutina'] = 6
   emmaPlanesPickerM['add-rutina'] = 0
   emmaPlanesActualizarPicker('add-rutina')
@@ -1172,8 +1305,12 @@ function emmaPlanesCambiarHora(delta, ctx) {
   if (ctx === 'edit-hora') emmaPlanesSyncQuick()
 }
 
-function emmaPlanesCambiarMin(ctx) {
-  emmaPlanesPickerM[ctx] = emmaPlanesPickerM[ctx] === 0 ? 30 : 0
+function emmaPlanesCambiarMin(delta, ctx) {
+  const pasos = [0, 15, 30, 45]
+  const cur = emmaPlanesPickerM[ctx] ?? 0
+  const idx = pasos.indexOf(cur)
+  const base = idx >= 0 ? idx : 0
+  emmaPlanesPickerM[ctx] = pasos[(base + delta + pasos.length) % pasos.length]
   emmaPlanesActualizarPicker(ctx)
   if (ctx === 'edit-hora') emmaPlanesSyncQuick()
 }
@@ -1408,6 +1545,30 @@ function emmaCalItemHtml(item, hora) {
   const itemClass = estado === 'completo' ? 'done' : estado === 'parcial' ? 'parcial' : ''
   const compareBadge = emmaCalCompareBadgeHtml(item.id, item)
 
+  if (item.tipo === 'rutina' && item.registroTipo === 'tiempo') {
+    const totalMin = reg?.cantidad || 0
+    const hReg = Math.floor(totalMin / 60)
+    const mReg = totalMin % 60
+    const subText = totalMin > 0
+      ? hReg + 'h ' + String(mReg).padStart(2,'0') + 'min'
+      : 'Pendiente'
+    const tEstado = totalMin > 0 ? 'completo' : 'pendiente'
+    const checkClass = totalMin > 0 ? 'checked' : ''
+    const checkIcon = totalMin > 0 ? '✓' : '○'
+    const tItemClass = totalMin > 0 ? 'done' : ''
+    return `<div class="cal-item ${tItemClass}">
+      <div class="cal-item-emoji">${item.emoji}</div>
+      <div class="cal-item-info">
+        <div class="cal-item-name">${item.nombre}</div>
+        <div class="cal-item-sub">${subText}</div>
+      </div>
+      ${compareBadge}
+      <div class="cal-check-btn ${checkClass}"
+           onclick="emmaCalAbrirModalTiempo(${item.id},'${hora}')"
+           style="margin-left:4px;">${checkIcon}</div>
+    </div>`
+  }
+
   if (item.tipo === 'rutina' && item.registroTipo === 'cantidad') {
     const cnt = reg?.cantidad || 0
     return `<div class="cal-item ${itemClass}">
@@ -1454,6 +1615,29 @@ function emmaCalItemHtml(item, hora) {
 function emmaCalFlexItemHtml(item) {
   const reg = emmaCalGetRegistro(item.id)
   const compareBadge = emmaCalCompareBadgeHtml(item.id, item)
+
+  if (item.tipo === 'rutina' && item.registroTipo === 'tiempo') {
+    const totalMin = reg?.cantidad || 0
+    const hReg = Math.floor(totalMin / 60)
+    const mReg = totalMin % 60
+    const subText = totalMin > 0
+      ? hReg + 'h ' + String(mReg).padStart(2,'0') + 'min'
+      : 'Pendiente'
+    const checkClass = totalMin > 0 ? 'checked' : ''
+    const checkIcon = totalMin > 0 ? '✓' : '○'
+    return `<div class="cal-flex-item">
+      <span class="cal-flex-badge">flex</span>
+      <div class="cal-item-emoji">${item.emoji}</div>
+      <div class="cal-item-info">
+        <div class="cal-item-name">${item.nombre}</div>
+        <div class="cal-item-sub">${subText}</div>
+      </div>
+      ${emmaCalCompareBadgeHtml(item.id, item)}
+      <div class="cal-check-btn ${checkClass}"
+           onclick="emmaCalAbrirModalTiempo(${item.id},'flex')"
+           style="margin-left:4px;">${checkIcon}</div>
+    </div>`
+  }
 
   if (item.tipo === 'rutina' && item.registroTipo === 'cantidad') {
     const cnt = reg?.cantidad || 0
@@ -1593,6 +1777,177 @@ function emmaCalAbrirModal(itemId, hora) {
 
   overlay.classList.add('open')
 }
+
+let emmaCalTiempoH = 0
+let emmaCalTiempoM = 0
+
+function emmaCalAbrirModalTiempo(itemId, hora) {
+  const plan = emmaPlanesData?.find(p => p.activo)
+  const item = plan?.items.find(i => i.id === itemId)
+  if (!item) return
+  emmaCalItemActual = item
+  emmaCalQtyMax = null
+
+  const reg = emmaCalGetRegistro(itemId)
+  const totalMin = reg?.cantidad || 0
+  emmaCalTiempoH = Math.floor(totalMin / 60)
+  emmaCalTiempoM = totalMin % 60
+
+  const ayer = emmaCalGetRegistroAyer(itemId)
+  let compareHtml = '<span class="cal-compare-val same">sin registro ayer</span>'
+  if (ayer?.cantidad) {
+    const ayerH = Math.floor(ayer.cantidad / 60)
+    const ayerM = ayer.cantidad % 60
+    const diff = totalMin - ayer.cantidad
+    const diffAbs = Math.abs(diff)
+    const diffH = Math.floor(diffAbs / 60)
+    const diffM = diffAbs % 60
+    const diffStr = diffH > 0
+      ? diffH + 'h ' + String(diffM).padStart(2,'0') + 'min'
+      : diffM + 'min'
+    if (diff > 0) compareHtml = `<span class="cal-compare-val up">${ayerH}h${String(ayerM).padStart(2,'0')}min ayer · ↑ +${diffStr}</span>`
+    else if (diff < 0) compareHtml = `<span class="cal-compare-val down">${ayerH}h${String(ayerM).padStart(2,'0')}min ayer · ↓ −${diffStr}</span>`
+    else compareHtml = `<span class="cal-compare-val same">${ayerH}h${String(ayerM).padStart(2,'0')}min ayer · igual</span>`
+  }
+
+  const overlay = document.getElementById('cal-modal-registro')
+  if (!overlay) return
+
+  overlay.innerHTML = `
+    <div class="cal-modal-sheet" onclick="event.stopPropagation()">
+      <div class="cal-modal-handle"></div>
+      <div class="cal-modal-header">
+        <div class="cal-modal-hora">${hora === 'flex' ? 'Flexible' : hora}</div>
+        <div class="cal-modal-name">${item.emoji} ${item.nombre}</div>
+        <div class="cal-modal-sub">¿Cuánto tiempo duró?</div>
+      </div>
+      <div class="cal-modal-body">
+
+        <div class="cal-tiempo-picker">
+          <div class="cal-tiempo-col">
+            <div class="cal-tiempo-arrow" onclick="emmaCalTiempoCambiar('h',1)">▲</div>
+            <div class="cal-tiempo-val" id="cal-t-h">${emmaCalTiempoH}</div>
+            <div class="cal-tiempo-arrow" onclick="emmaCalTiempoCambiar('h',-1)">▼</div>
+            <div class="cal-tiempo-unit">HORA</div>
+          </div>
+          <div class="cal-tiempo-sep">:</div>
+          <div class="cal-tiempo-col">
+            <div class="cal-tiempo-arrow" onclick="emmaCalTiempoCambiar('m',1)">▲</div>
+            <div class="cal-tiempo-val" id="cal-t-m">${String(emmaCalTiempoM).padStart(2,'0')}</div>
+            <div class="cal-tiempo-arrow" onclick="emmaCalTiempoCambiar('m',-1)">▼</div>
+            <div class="cal-tiempo-unit">MIN</div>
+          </div>
+        </div>
+
+        <div class="cal-tiempo-quick">
+          <button class="cal-tiempo-pill${emmaCalTiempoH===0&&emmaCalTiempoM===15?' active':''}"
+                  onclick="emmaCalTiempoSetQuick(0,15,this)">0:15</button>
+          <button class="cal-tiempo-pill${emmaCalTiempoH===0&&emmaCalTiempoM===30?' active':''}"
+                  onclick="emmaCalTiempoSetQuick(0,30,this)">0:30</button>
+          <button class="cal-tiempo-pill${emmaCalTiempoH===0&&emmaCalTiempoM===45?' active':''}"
+                  onclick="emmaCalTiempoSetQuick(0,45,this)">0:45</button>
+          <button class="cal-tiempo-pill${emmaCalTiempoH===1&&emmaCalTiempoM===0?' active':''}"
+                  onclick="emmaCalTiempoSetQuick(1,0,this)">1:00</button>
+          <button class="cal-tiempo-pill${emmaCalTiempoH===1&&emmaCalTiempoM===30?' active':''}"
+                  onclick="emmaCalTiempoSetQuick(1,30,this)">1:30</button>
+          <button class="cal-tiempo-pill${emmaCalTiempoH===2&&emmaCalTiempoM===0?' active':''}"
+                  onclick="emmaCalTiempoSetQuick(2,0,this)">2:00</button>
+        </div>
+
+        <div class="cal-compare-row">
+          <span>vs ayer</span>
+          ${compareHtml}
+        </div>
+
+        <div>
+          <div class="cal-nota-lbl">NOTA (opcional)</div>
+          <textarea class="cal-nota-input" id="cal-nota-input" rows="2"
+                    placeholder="Opcional...">${reg?.nota || ''}</textarea>
+        </div>
+
+        <button class="cal-btn-save" onclick="emmaCalGuardarTiempo()">Guardar</button>
+        <button class="cal-btn-cancel" onclick="emmaCalCerrar('cal-modal-registro')">Cancelar</button>
+      </div>
+    </div>`
+
+  overlay.classList.add('open')
+}
+
+function emmaCalTiempoCambiar(campo, delta) {
+  if (campo === 'h') {
+    emmaCalTiempoH = Math.max(0, Math.min(23, emmaCalTiempoH + delta))
+  } else {
+    const totalMin = emmaCalTiempoH * 60 + emmaCalTiempoM + delta * 15
+    if (totalMin < 0) return
+    emmaCalTiempoH = Math.floor(totalMin / 60)
+    emmaCalTiempoM = totalMin % 60
+  }
+  const hEl = document.getElementById('cal-t-h')
+  const mEl = document.getElementById('cal-t-m')
+  if (hEl) hEl.textContent = emmaCalTiempoH
+  if (mEl) mEl.textContent = String(emmaCalTiempoM).padStart(2,'0')
+  document.querySelectorAll('.cal-tiempo-pill').forEach(p => {
+    const [ph, pm] = p.textContent.split(':').map(Number)
+    p.classList.toggle('active', ph === emmaCalTiempoH && pm === emmaCalTiempoM)
+  })
+}
+
+function emmaCalTiempoSetQuick(h, m, btn) {
+  emmaCalTiempoH = h; emmaCalTiempoM = m
+  const hEl = document.getElementById('cal-t-h')
+  const mEl = document.getElementById('cal-t-m')
+  if (hEl) hEl.textContent = h
+  if (mEl) mEl.textContent = String(m).padStart(2,'0')
+  document.querySelectorAll('.cal-tiempo-pill').forEach(p => p.classList.remove('active'))
+  btn.classList.add('active')
+}
+
+function emmaCalGuardarTiempo() {
+  if (!emmaCalItemActual) return
+  const totalMin = emmaCalTiempoH * 60 + emmaCalTiempoM
+  if (totalMin <= 0) {
+    emmaCalCerrar('cal-modal-registro')
+    return
+  }
+  const nota   = document.getElementById('cal-nota-input')?.value.trim() || ''
+  const fecha  = emmaCalFechaKey(emmaCalDiaOffset)
+  const item   = emmaCalItemActual
+  const horaStr = item.flexible ? ''
+    : item.hora + ':' + String(item.min).padStart(2,'0')
+
+  fetch('/api/emma/registro', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      fecha,
+      tipoRegistro: 'rutina',
+      hora: horaStr,
+      cantidad: totalMin,
+      unidad: 'min',
+      estado: 'completo',
+      solidoNombre: '',
+      nota,
+      planItemId: item.id,
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok) {
+      if (!emmaCalRegistros[fecha]) emmaCalRegistros[fecha] = {}
+      emmaCalRegistros[fecha][item.id] = { cantidad: totalMin, nota, estado: 'completo' }
+      emmaCalCerrar('cal-modal-registro')
+      emmaCalRender()
+    } else {
+      console.error('[Emma] Error guardando tiempo:', data.error)
+    }
+  })
+  .catch(err => console.error('[Emma] fetch error:', err))
+}
+
+window.emmaCalAbrirModalTiempo = emmaCalAbrirModalTiempo
+window.emmaCalTiempoCambiar = emmaCalTiempoCambiar
+window.emmaCalTiempoSetQuick = emmaCalTiempoSetQuick
+window.emmaCalGuardarTiempo = emmaCalGuardarTiempo
 
 function emmaCalSelSolido(solidoId, btn) {
   btn.closest('.cal-solido-chips, #cal-solido-chips-inner')
