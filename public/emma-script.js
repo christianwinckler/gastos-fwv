@@ -1,3 +1,19 @@
+// ── ESTADO GLOBAL ─────────────────────────────────────────
+// Declaradas aquí (antes de cualquier IIFE o listener) para evitar TDZ.
+let emmaDataCargada = false
+let emmaComidasData = []
+let emmaRutinasData = []
+let emmaPlanData    = []
+
+let emmaCalDiaOffset = 0
+const emmaCalMeses = ['enero','febrero','marzo','abril','mayo','junio',
+  'julio','agosto','septiembre','octubre','noviembre','diciembre']
+const emmaCalDow = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
+const emmaCalRegistros = {}
+let emmaCalItemActual = null
+let emmaCalQtyMax = null
+let emmaCalQtyStep = 1
+
 // ── EXPONER FUNCIONES GLOBALES ────────────────────────────
 // Mover asignaciones al final del archivo para garantizar que las funciones
 // ya están definidas en el momento de la asignación (evita dependencia del hoisting).
@@ -98,11 +114,6 @@ function emmaMostrarToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500)
 }
 
-// ── DATOS ─────────────────────────────────────────────────
-let emmaDataCargada = false
-let emmaComidasData = []
-let emmaRutinasData = []
-let emmaPlanesData  = []
 
 function emmaMostrarLoading(msg) {
   const el = document.getElementById('emma-loading-overlay')
@@ -129,60 +140,47 @@ async function emmaCargarDatos() {
     if (!data.ok) throw new Error(data.error || 'Error desconocido')
 
     emmaComidasData = (data.comidas || []).slice(1).map(r => ({
-      id:        parseInt(r[0]),
-      nombre:    r[1] || '',
-      categoria: r[2] || '',
-      tamano:    parseFloat(r[3]) || 0,
-      unidad:    r[4] || 'cc',
-      emoji:     r[5] || '🍽️',
-      activo:    r[6] === 'TRUE' || r[6] === true,
+      nombre:    r[0] || '',
+      categoria: r[1] || '',
+      tamano:    parseFloat(r[2]) || 0,
+      unidad:    r[3] || 'cc',
+      emoji:     r[4] || '🍽️',
+      activo:    r[5] === 'TRUE' || r[5] === true,
       _row:      (data.comidas || []).indexOf(r) + 1,
     }))
 
     emmaRutinasData = (data.rutinas || []).slice(1).map(r => ({
-      id:           parseInt(r[0]),
-      nombre:       r[1] || '',
-      desc:         r[2] || '',
-      emoji:        r[3] || '📋',
-      tipo:         r[4] || 'binario',
-      registroTipo: r[4] || 'binario',
-      activo:       r[5] === 'TRUE' || r[5] === true,
+      nombre:       r[0] || '',
+      desc:         r[1] || '',
+      emoji:        r[2] || '📋',
+      tipo:         r[3] || 'binario',
+      registroTipo: r[3] || 'binario',
+      activo:       r[4] === 'TRUE' || r[4] === true,
       _row:         (data.rutinas || []).indexOf(r) + 1,
     }))
 
-    const planesBase = (data.planes || []).slice(1).map(r => ({
-      id:            parseInt(r[0]),
-      nombre:        r[1] || '',
-      activo:        r[2] === 'TRUE' || r[2] === true,
-      fechaCreacion: r[3] || '',
-      _row:          (data.planes || []).indexOf(r) + 1,
-      items:         [],
+    emmaPlanData = (data.plan || []).slice(1).map(r => ({
+      nombre:   r[0] || '',
+      cat:      r[1] || '',
+      etiqueta: r[2] || '',
+      hora:     parseInt(r[3]) || 0,
+      min:      parseInt(r[4]) || 0,
+      flexible: r[5] === 'TRUE' || r[5] === true,
+      orden:    parseInt(r[6]) || 1,
+      _row:     (data.plan || []).indexOf(r) + 1,
+      tipo:     r[1] === 'Rutina' ? 'rutina' : 'comida',
+      emoji:    '', tamano: 0, unidad: '', sub: '',
     }))
 
-    const allItems = (data.planesItems || []).slice(1).map(r => ({
-      id:           parseInt(r[0]),
-      planId:       parseInt(r[1]),
-      tipo:         r[2] || 'comida',
-      referenciaId: parseInt(r[3]),
-      nombre:       r[4] || '',
-      emoji:        r[5] || '🍽️',
-      cat:          r[6] || '',
-      etiqueta:     r[7] || '',
-      hora:         parseInt(r[8]) || 0,
-      min:          parseInt(r[9]) || 0,
-      flexible:     r[10] === 'TRUE' || r[10] === true,
-      orden:        parseInt(r[11]) || 1,
-      _row:         (data.planesItems || []).indexOf(r) + 1,
-    }))
-
-    allItems.forEach(item => {
-      if (item.tipo === 'comida') {
-        const comida = emmaComidasData.find(c => c.id === item.referenciaId)
-        if (comida) { item.tamano = comida.tamano; item.unidad = comida.unidad }
-      }
+    emmaPlanData.forEach(item => {
       if (item.tipo === 'rutina') {
-        const rutina = emmaRutinasData.find(r => r.id === item.referenciaId)
+        const rutina = emmaRutinasData.find(r => r.nombre === item.nombre)
+        item.emoji = rutina?.emoji || '📋'
         if (rutina) item.registroTipo = rutina.tipo
+      } else {
+        const comida = emmaComidasData.find(c => c.nombre === item.nombre)
+        item.emoji = comida?.emoji || '🍽️'
+        if (comida) { item.tamano = comida.tamano; item.unidad = comida.unidad }
       }
       if (item.tipo === 'rutina') {
         item.sub = item.etiqueta || 'Rutina'
@@ -193,18 +191,13 @@ async function emmaCargarDatos() {
       }
     })
 
-    planesBase.forEach(plan => {
-      plan.items = allItems
-        .filter(i => i.planId === plan.id)
-        .sort((a, b) => {
-          if (a.flexible !== b.flexible) return a.flexible ? 1 : -1
-          const tA = a.hora * 60 + a.min
-          const tB = b.hora * 60 + b.min
-          return tA !== tB ? tA - tB : a.orden - b.orden
-        })
+    emmaPlanData.sort((a, b) => {
+      if (a.flexible !== b.flexible) return a.flexible ? 1 : -1
+      const tA = a.hora * 60 + a.min
+      const tB = b.hora * 60 + b.min
+      return tA !== tB ? tA - tB : a.orden - b.orden
     })
 
-    emmaPlanesData = planesBase
     emmaDataCargada = true
 
     emmaOcultarLoading()
@@ -280,21 +273,21 @@ async function emmaHomeRender() {
   const fechaHoy = emmaCalFechaKey(0)
   if (!emmaCalRegistros[fechaHoy]) await emmaCalCargarFecha(fechaHoy)
 
-  const plan = emmaPlanesData.find(p => p.activo)
+  const plan = { items: emmaPlanData }
   const regs = emmaCalRegistros[fechaHoy] || {}
 
   const lecheItems  = plan ? plan.items.filter(i => i.cat === 'Leche')   : []
-  const lecheTotal  = lecheItems.reduce((s, i) => s + (regs[i.id]?.cantidad || 0), 0)
+  const lecheTotal  = lecheItems.reduce((s, i) => s + (regs[emmaCalItemKey(fechaHoy, i)]?.cantidad || 0), 0)
   const lechePlan   = lecheItems.reduce((s, i) => s + (i.tamano || 0), 0)
 
   const solidoItems = plan ? plan.items.filter(i => i.cat === 'Sólidos') : []
-  const solidoTotal = solidoItems.reduce((s, i) => s + (regs[i.id]?.cantidad || 0), 0)
+  const solidoTotal = solidoItems.reduce((s, i) => s + (regs[emmaCalItemKey(fechaHoy, i)]?.cantidad || 0), 0)
 
   const ahora       = new Date()
   const minActual   = ahora.getHours() * 60 + ahora.getMinutes()
   const proximaToma = plan
     ? plan.items
-        .filter(i => !i.flexible && i.cat === 'Leche' && !regs[i.id])
+        .filter(i => !i.flexible && i.cat === 'Leche' && !regs[emmaCalItemKey(fechaHoy, i)])
         .sort((a, b) => (a.hora * 60 + a.min) - (b.hora * 60 + b.min))
         .find(i => i.hora * 60 + i.min >= minActual)
     : null
@@ -304,12 +297,12 @@ async function emmaHomeRender() {
 
   const totalItems  = plan ? plan.items.length : 0
   const completados = plan
-    ? plan.items.filter(i => regs[i.id]?.estado === 'completo' || regs[i.id]?.cantidad > 0).length
+    ? plan.items.filter(i => regs[emmaCalItemKey(fechaHoy, i)]?.estado === 'completo' || regs[emmaCalItemKey(fechaHoy, i)]?.cantidad > 0).length
     : 0
 
   const panales      = regs['_panales'] || { pipi: 0, popo: 0 }
   const rutinasItems = plan ? plan.items.filter(i => i.tipo === 'rutina') : []
-  const rutinasHechas = rutinasItems.filter(i => regs[i.id]?.cantidad > 0).length
+  const rutinasHechas = rutinasItems.filter(i => regs[emmaCalItemKey(fechaHoy, i)]?.cantidad > 0).length
 
   const set = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val }
 
@@ -361,10 +354,10 @@ function emmaComidasRender() {
     <div class="comidas-card">
       ${items.map(c => `
         <div class="comidas-row${c.activo ? '' : ' disabled'}">
-          <div class="bulk-select-check${emmaBulkSeleccionados['comidas'].has(c.id) ? ' checked' : ''}"
+          <div class="bulk-select-check${emmaBulkSeleccionados['comidas'].has(c._row) ? ' checked' : ''}"
                style="display:${esModo ? 'flex' : 'none'}"
-               onclick="event.stopPropagation();emmaBulkCheck('comidas',${c.id},this)">
-            ${emmaBulkSeleccionados['comidas'].has(c.id) ? '✓' : ''}
+               onclick="event.stopPropagation();emmaBulkCheck('comidas',${c._row},this)">
+            ${emmaBulkSeleccionados['comidas'].has(c._row) ? '✓' : ''}
           </div>
           <div class="comidas-emoji">${c.emoji}</div>
           <div class="comidas-info">
@@ -376,7 +369,7 @@ function emmaComidasRender() {
             <div class="comidas-unit">${c.unidad}</div>
           </div>
           <div class="comidas-edit-btn" style="display:${esModo ? 'none' : 'flex'}"
-               onclick="emmaComidasAbrirEditar(${c.id})">✏️</div>
+               onclick="emmaComidasAbrirEditar(${c._row})">✏️</div>
         </div>
       `).join('')}
     </div>
@@ -450,7 +443,7 @@ function emmaComidasAbrirNueva() {
 }
 
 function emmaComidasAbrirEditar(id) {
-  const c = emmaComidasData.find(x => x.id === id)
+  const c = emmaComidasData.find(x => x._row === id)
   if (!c) return
   emmaComidasEditandoId = id
   emmaComidasRenderCatChips('editar-cat-chips', 'editar-cat-row', c.categoria)
@@ -488,7 +481,7 @@ function emmaComidasGuardarNueva() {
 }
 
 function emmaComidasGuardarEdicion() {
-  const c = emmaComidasData.find(x => x.id === emmaComidasEditandoId)
+  const c = emmaComidasData.find(x => x._row === emmaComidasEditandoId)
   if (!c) return
   const catEl  = document.querySelector('#editar-cat-chips .comidas-cat-chip.active:not(.add-cat)')
   const nombre = document.getElementById('editar-nombre').value.trim() || c.nombre
@@ -511,7 +504,7 @@ function emmaComidasGuardarEdicion() {
 }
 
 function emmaComidasEliminar() {
-  const c = emmaComidasData.find(x => x.id === emmaComidasEditandoId)
+  const c = emmaComidasData.find(x => x._row === emmaComidasEditandoId)
   if (!c) return
   fetch('/api/emma/comidas', {
     method: 'DELETE',
@@ -581,10 +574,10 @@ function emmaRutinasRender() {
     <div class="rutinas-card">`
     html += activas.map(r => `
       <div class="rutinas-row">
-        <div class="bulk-select-check${emmaBulkSeleccionados['rutinas'].has(r.id) ? ' checked' : ''}"
+        <div class="bulk-select-check${emmaBulkSeleccionados['rutinas'].has(r._row) ? ' checked' : ''}"
              style="display:${esModo ? 'flex' : 'none'}"
-             onclick="event.stopPropagation();emmaBulkCheck('rutinas',${r.id},this)">
-          ${emmaBulkSeleccionados['rutinas'].has(r.id) ? '✓' : ''}
+             onclick="event.stopPropagation();emmaBulkCheck('rutinas',${r._row},this)">
+          ${emmaBulkSeleccionados['rutinas'].has(r._row) ? '✓' : ''}
         </div>
         <div class="rutinas-emoji">${r.emoji}</div>
         <div class="rutinas-info">
@@ -593,7 +586,7 @@ function emmaRutinasRender() {
         </div>
         <span class="rutinas-tipo-badge ${r.tipo}">${r.tipo === 'binario' ? 'Sí / No' : r.tipo === 'cantidad' ? 'Cantidad' : 'Tiempo'}</span>
         <div class="rutinas-edit-btn" style="display:${esModo ? 'none' : 'flex'}"
-             onclick="emmaRutinasAbrirEditar(${r.id})">✏️</div>
+             onclick="emmaRutinasAbrirEditar(${r._row})">✏️</div>
       </div>`).join('')
     html += '</div>'
   }
@@ -605,10 +598,10 @@ function emmaRutinasRender() {
     <div class="rutinas-card">`
     html += deshabilitadas.map(r => `
       <div class="rutinas-row disabled">
-        <div class="bulk-select-check${emmaBulkSeleccionados['rutinas'].has(r.id) ? ' checked' : ''}"
+        <div class="bulk-select-check${emmaBulkSeleccionados['rutinas'].has(r._row) ? ' checked' : ''}"
              style="display:${esModo ? 'flex' : 'none'}"
-             onclick="event.stopPropagation();emmaBulkCheck('rutinas',${r.id},this)">
-          ${emmaBulkSeleccionados['rutinas'].has(r.id) ? '✓' : ''}
+             onclick="event.stopPropagation();emmaBulkCheck('rutinas',${r._row},this)">
+          ${emmaBulkSeleccionados['rutinas'].has(r._row) ? '✓' : ''}
         </div>
         <div class="rutinas-emoji">${r.emoji}</div>
         <div class="rutinas-info">
@@ -617,7 +610,7 @@ function emmaRutinasRender() {
         </div>
         <span class="rutinas-tipo-badge ${r.tipo}" style="opacity:0.5;">${r.tipo === 'binario' ? 'Sí / No' : r.tipo === 'cantidad' ? 'Cantidad' : 'Tiempo'}</span>
         <div class="rutinas-edit-btn" style="display:${esModo ? 'none' : 'flex'}"
-             onclick="emmaRutinasAbrirEditar(${r.id})">✏️</div>
+             onclick="emmaRutinasAbrirEditar(${r._row})">✏️</div>
       </div>`).join('')
     html += '</div>'
   }
@@ -647,7 +640,7 @@ function emmaRutinasAbrirNueva() {
 }
 
 function emmaRutinasAbrirEditar(id) {
-  const r = emmaRutinasData.find(x => x.id === id)
+  const r = emmaRutinasData.find(x => x._row === id)
   if (!r) return
   emmaRutinasEditandoId = id
   document.getElementById('rutina-editar-nombre').value = r.nombre
@@ -691,7 +684,7 @@ function emmaRutinasGuardarNueva() {
 }
 
 function emmaRutinasGuardarEdicion() {
-  const r = emmaRutinasData.find(x => x.id === emmaRutinasEditandoId)
+  const r = emmaRutinasData.find(x => x._row === emmaRutinasEditandoId)
   if (!r) return
   const tipoActivo = document.querySelector('#rutina-editar-tipo .rutinas-tipo-opt.active .rutinas-tipo-lbl')
   const tipoTxtEd = tipoActivo?.textContent || ''
@@ -717,7 +710,7 @@ function emmaRutinasGuardarEdicion() {
 }
 
 function emmaRutinasEliminar() {
-  const r = emmaRutinasData.find(x => x.id === emmaRutinasEditandoId)
+  const r = emmaRutinasData.find(x => x._row === emmaRutinasEditandoId)
   if (!r) return
   fetch('/api/emma/rutinas', {
     method: 'DELETE',
@@ -768,7 +761,7 @@ function emmaBulkDesactivar(modulo) {
   const data     = modulo === 'comidas' ? emmaComidasData : emmaRutinasData
   const endpoint = '/api/emma/' + modulo
   const promises = ids.map(id => {
-    const item = data.find(x => x.id === id)
+    const item = data.find(x => x._row === id)
     if (!item) return Promise.resolve()
     const body = modulo === 'comidas'
       ? { rowIndex: item._row, nombre: item.nombre, categoria: item.categoria,
@@ -802,7 +795,6 @@ window.emmaBulkActualizarBtn = emmaBulkActualizarBtn
 window.emmaBulkDesactivar = emmaBulkDesactivar
 
 // ── PLANES ────────────────────────────────────────────────
-let emmaPlanesEditandoPlanId = null
 let emmaPlanesEditandoItemId = null
 let emmaPlanesPickerH = { 'add-comida': 6, 'add-rutina': 6, 'edit-hora': 9 }
 let emmaPlanesPickerM = { 'add-comida': 0, 'add-rutina': 0, 'edit-hora': 30 }
@@ -810,48 +802,11 @@ let emmaPlanesModoCambioHora = 'fija'
 let emmaPlanesSortables = []
 
 function emmaPlanesRenderLista() {
-  const c = document.getElementById('planes-lista-container')
-  if (!c) return
-  c.innerHTML = emmaPlanesData.map(p => {
-    const fijos = p.items.filter(i => !i.flexible)
-    const preview = fijos.slice(0,4).map(i =>
-      `<span class="planes-preview-pill">${i.emoji} ${i.hora}:${String(i.min).padStart(2,'0')} ${i.nombre.split(' — ')[0]}</span>`
-    ).join('')
-    const extras = p.items.length > 4 ? `<span class="planes-preview-pill">+ ${p.items.length - 4} más</span>` : ''
-    return `
-      <div class="planes-plan-card" onclick="emmaPlanesVerDetalle(${p.id})">
-        <div class="planes-plan-header">
-          <div class="${p.activo ? 'planes-dot-activo' : 'planes-dot-inactivo'}"></div>
-          <div style="flex:1;">
-            <div class="planes-plan-name">${p.nombre}</div>
-            <div class="planes-plan-meta">${p.items.length} ítems · ${fijos.length} fijos, ${p.items.filter(i=>i.flexible).length} flexibles</div>
-          </div>
-          <div class="${p.activo ? 'planes-badge-activo' : 'planes-badge-inactivo'}">${p.activo ? 'ACTIVO' : 'INACTIVO'}</div>
-        </div>
-        ${p.items.length ? `<div class="planes-preview">${preview}${extras}</div>` : ''}
-      </div>`
-  }).join('')
-}
+  const area = document.getElementById('planes-lista-container')
+  if (!area) return
 
-function emmaPlanesVerDetalle(planId) {
-  emmaPlanesEditandoPlanId = planId
-  const plan = emmaPlanesData.find(p => p.id === planId)
-  if (!plan) return
-  document.getElementById('planes-detail-title').textContent = plan.nombre
-  document.getElementById('planes-detail-badge').textContent = plan.activo ? '● PLAN ACTIVO' : '○ PLAN INACTIVO'
-  document.getElementById('planes-vista-lista').style.display = 'none'
-  document.getElementById('planes-vista-detalle').style.display = 'flex'
-  emmaPlanesRenderDetalle()
-}
-
-function emmaPlanesRenderDetalle() {
-  const plan = emmaPlanesData.find(p => p.id === emmaPlanesEditandoPlanId)
-  if (!plan) return
-  document.getElementById('planes-detail-count').textContent = plan.items.length + ' ítems en total'
-
-  const area = document.getElementById('planes-scroll-area')
-  const fijos = plan.items.filter(i => !i.flexible)
-  const flexibles = plan.items.filter(i => i.flexible)
+  const fijos = emmaPlanData.filter(i => !i.flexible)
+  const flexibles = emmaPlanData.filter(i => i.flexible)
 
   const grupos = {}
   fijos.forEach(item => {
@@ -883,7 +838,7 @@ function emmaPlanesRenderDetalle() {
         </div>
         <div class="planes-items-in-hour" data-hora="${hora}" data-sortable>
           ${grupos[hora].map(i => `
-            <div class="planes-item" data-item-id="${i.id}">
+            <div class="planes-item" data-item-id="${i._row}">
               <div class="planes-drag-handle">
                 <div class="planes-drag-dot"></div><div class="planes-drag-dot"></div>
                 <div class="planes-drag-dot"></div><div class="planes-drag-dot"></div>
@@ -896,8 +851,8 @@ function emmaPlanesRenderDetalle() {
               </div>
               <span class="planes-item-badge ${badgeClass(i)}">${badgeLabel(i)}</span>
               <div class="planes-item-actions">
-                <button class="planes-time-btn" onclick="emmaPlaneAbrirCambiarHora(${i.id})">${hora}</button>
-                <button class="planes-del-btn" onclick="emmaPlaneEliminarItem(${i.id})">×</button>
+                <button class="planes-time-btn" onclick="emmaPlaneAbrirCambiarHora(${i._row})">${hora}</button>
+                <button class="planes-del-btn" onclick="emmaPlaneEliminarItem(${i._row})">×</button>
               </div>
             </div>`).join('')}
         </div>
@@ -908,7 +863,7 @@ function emmaPlanesRenderDetalle() {
   if (flexibles.length) {
     html += '<div class="planes-flex-section" id="planes-flex-list">'
     html += flexibles.map(i => `
-      <div class="planes-item" data-item-id="${i.id}"
+      <div class="planes-item" data-item-id="${i._row}"
            style="background:transparent;border-color:rgba(127,119,221,0.15);">
         <div class="planes-drag-handle">
           <div class="planes-drag-dot"></div><div class="planes-drag-dot"></div>
@@ -921,8 +876,8 @@ function emmaPlanesRenderDetalle() {
           <div class="planes-item-sub">${i.sub}</div>
         </div>
         <div class="planes-item-actions">
-          <button class="planes-move-btn" onclick="emmaPlaneAbrirCambiarHora(${i.id})">Fijar hora</button>
-          <button class="planes-del-btn" onclick="emmaPlaneEliminarItem(${i.id})">×</button>
+          <button class="planes-move-btn" onclick="emmaPlaneAbrirCambiarHora(${i._row})">Fijar hora</button>
+          <button class="planes-del-btn" onclick="emmaPlaneEliminarItem(${i._row})">×</button>
         </div>
       </div>`).join('')
     html += '</div>'
@@ -932,165 +887,79 @@ function emmaPlanesRenderDetalle() {
 
   area.innerHTML = html
 
-  // Destruir sortables anteriores
   emmaPlanesSortables.forEach(s => s.destroy())
   emmaPlanesSortables = []
 
   if (typeof Sortable === 'undefined') return
 
-  const GROUP_NAME = 'planes-items-' + emmaPlanesEditandoPlanId
-
-  // Sortable en cada bloque horario — permite recibir ítems de otros bloques
   area.querySelectorAll('[data-sortable]').forEach(el => {
     const horaDestino = el.dataset.hora
     const s = Sortable.create(el, {
-      group: GROUP_NAME,
+      group: 'planes-items',
       animation: 150,
       ghostClass: 'sortable-ghost',
       dragClass: 'sortable-drag',
       handle: '.planes-drag-handle',
       onAdd(evt) {
-        // Ítem llegó desde otro bloque (horario distinto o flexible)
         const itemId = parseInt(evt.item.dataset.itemId)
-        const plan = emmaPlanesData.find(p => p.id === emmaPlanesEditandoPlanId)
-        const item = plan?.items.find(i => i.id === itemId)
+        const item = emmaPlanData.find(i => i._row === itemId)
         if (!item) return
         const [h, m] = horaDestino.split(':').map(Number)
         item.hora = h
         item.min = m
         item.flexible = false
-        // Actualizar el botón de hora del ítem arrastrado
-        const timeBtn = evt.item.querySelector('.planes-time-btn')
-        if (timeBtn) timeBtn.textContent = horaDestino
-        // Re-render para consistencia (tras pequeño delay para que Sortable termine)
-        setTimeout(() => emmaPlanesRenderDetalle(), 50)
+        setTimeout(() => emmaPlanesRenderLista(), 50)
       },
       onEnd(evt) {
         if (evt.from === evt.to) {
-          // Reordenamiento dentro del mismo bloque — actualizar orden en data
-          const plan = emmaPlanesData.find(p => p.id === emmaPlanesEditandoPlanId)
-          if (!plan) return
           const newOrder = [...el.querySelectorAll('[data-item-id]')]
             .map(n => parseInt(n.dataset.itemId))
-          const enEsteBloque = plan.items.filter(
+          const enEsteBloque = emmaPlanData.filter(
             i => !i.flexible && i.hora + ':' + String(i.min).padStart(2,'0') === horaDestino
           )
-          const otros = plan.items.filter(
+          const otros = emmaPlanData.filter(
             i => i.flexible || i.hora + ':' + String(i.min).padStart(2,'0') !== horaDestino
           )
           const reordenado = newOrder
-            .map(id => enEsteBloque.find(i => i.id === id))
+            .map(id => enEsteBloque.find(i => i._row === id))
             .filter(Boolean)
-          plan.items = [...otros, ...reordenado]
+          emmaPlanData.splice(0, emmaPlanData.length, ...otros, ...reordenado)
         }
       }
     })
     emmaPlanesSortables.push(s)
   })
 
-  // Sortable en sección flexible — permite recibir ítems fijos y reordenar
   const flexList = document.getElementById('planes-flex-list')
   if (flexList) {
     const s = Sortable.create(flexList, {
-      group: GROUP_NAME,
+      group: 'planes-items',
       animation: 150,
       ghostClass: 'sortable-ghost',
       handle: '.planes-drag-handle',
       onAdd(evt) {
-        // Ítem llegó desde un bloque horario fijo
         const itemId = parseInt(evt.item.dataset.itemId)
-        const plan = emmaPlanesData.find(p => p.id === emmaPlanesEditandoPlanId)
-        const item = plan?.items.find(i => i.id === itemId)
+        const item = emmaPlanData.find(i => i._row === itemId)
         if (!item) return
         item.flexible = true
         item.hora = 0
         item.min = 0
-        // Ocultar el botón de hora y mostrar "Fijar hora" en el ítem arrastrado
-        setTimeout(() => emmaPlanesRenderDetalle(), 50)
+        setTimeout(() => emmaPlanesRenderLista(), 50)
       },
       onEnd(evt) {
         if (evt.from === evt.to) {
-          // Reordenamiento dentro de flexibles
-          const plan = emmaPlanesData.find(p => p.id === emmaPlanesEditandoPlanId)
-          if (!plan) return
           const newOrder = [...flexList.querySelectorAll('[data-item-id]')]
             .map(n => parseInt(n.dataset.itemId))
-          const fijos = plan.items.filter(i => !i.flexible)
+          const fijos = emmaPlanData.filter(i => !i.flexible)
           const flexReord = newOrder
-            .map(id => plan.items.find(i => i.id === id))
+            .map(id => emmaPlanData.find(i => i._row === id))
             .filter(Boolean)
-          plan.items = [...fijos, ...flexReord]
+          emmaPlanData.splice(0, emmaPlanData.length, ...fijos, ...flexReord)
         }
       }
     })
     emmaPlanesSortables.push(s)
   }
-}
-
-function emmaPlaneVolverLista() {
-  emmaPlanesEditandoPlanId = null
-  document.getElementById('planes-vista-detalle').style.display = 'none'
-  document.getElementById('planes-vista-lista').style.display = 'flex'
-  emmaPlanesRenderLista()
-}
-
-function emmaPlaneAbrirNuevo() {
-  document.getElementById('planes-nuevo-nombre').value = ''
-  emmaPlanesCerrar('planes-modal-nuevo')
-  document.getElementById('planes-modal-nuevo').classList.add('open')
-}
-
-function emmaPlaneGuardarNuevo() {
-  const nombre = document.getElementById('planes-nuevo-nombre').value.trim()
-  if (!nombre) return
-  fetch('/api/emma/planes', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nombre })
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.ok) { emmaCargarDatos(); emmaPlanesCerrar('planes-modal-nuevo') }
-    else console.error('[Emma] Error guardando plan:', data.error)
-  })
-  .catch(err => console.error('[Emma] fetch error:', err))
-}
-
-function emmaPlaneAbrirEditarNombre() {
-  const plan = emmaPlanesData.find(p => p.id === emmaPlanesEditandoPlanId)
-  if (!plan) return
-  document.getElementById('planes-editar-nombre-input').value = plan.nombre
-  const sw = document.getElementById('planes-activo-switch')
-  sw.classList.toggle('on', plan.activo)
-  document.getElementById('planes-modal-editar-nombre').classList.add('open')
-}
-
-function emmaPlaneGuardarEdicionNombre() {
-  const plan = emmaPlanesData.find(p => p.id === emmaPlanesEditandoPlanId)
-  if (!plan) return
-  const nombre   = document.getElementById('planes-editar-nombre-input').value.trim() || plan.nombre
-  const esActivo = document.getElementById('planes-activo-switch').classList.contains('on')
-
-  const doUpdate = () => fetch('/api/emma/planes', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ rowIndex: plan._row, nombre, activo: esActivo })
-  })
-  const doActivar = () => fetch('/api/emma/planes', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ activar: true, planId: emmaPlanesEditandoPlanId })
-  })
-
-  const chain = esActivo ? doActivar().then(doUpdate) : doUpdate()
-  chain
-    .then(() => emmaCargarDatos())
-    .then(() => {
-      document.getElementById('planes-detail-title').textContent = nombre
-      document.getElementById('planes-detail-badge').textContent = esActivo ? '● PLAN ACTIVO' : '○ PLAN INACTIVO'
-      emmaPlanesCerrar('planes-modal-editar-nombre')
-    })
-    .catch(err => console.error('[Emma] fetch error:', err))
 }
 
 function emmaPlaneAbrirAddComida() {
@@ -1142,27 +1011,18 @@ function emmaPlaneAbrirAddRutina() {
 }
 
 function emmaPlaneGuardarComida() {
-  const plan = emmaPlanesData.find(p => p.id === emmaPlanesEditandoPlanId)
-  if (!plan) return
   const catEl    = document.querySelector('#planes-add-comida-cat .planes-seg-opt.active')
   const etiqueta = document.getElementById('planes-add-comida-etiqueta').value.trim()
   const cat      = catEl ? catEl.textContent.replace(/^[^\s]+\s/,'').trim() : 'Leche'
-  const emoji    = cat === 'Leche' ? '🍼' : cat === 'Sólidos' ? '🥕' : '🍌'
   const nombre   = etiqueta ? cat + ' — ' + etiqueta : cat
-  const comida   = emmaComidasData.find(c => c.categoria === cat && c.nombre === nombre)
-  const referenciaId = comida?.id || 0
-  const itemsEnHora  = plan.items.filter(i =>
+  const itemsEnHora = emmaPlanData.filter(i =>
     !i.flexible && i.hora === emmaPlanesPickerH['add-comida'] && i.min === emmaPlanesPickerM['add-comida']
   )
   fetch('/api/emma/planes-items', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      planId: emmaPlanesEditandoPlanId,
-      tipo: 'comida',
-      referenciaId,
       nombre,
-      emoji,
       categoria: cat,
       etiqueta,
       hora: emmaPlanesPickerH['add-comida'],
@@ -1174,7 +1034,7 @@ function emmaPlaneGuardarComida() {
   .then(r => r.json())
   .then(data => {
     if (data.ok) {
-      emmaCargarDatos().then(() => emmaPlanesRenderDetalle())
+      emmaCargarDatos().then(() => emmaPlanesRenderLista())
       emmaPlanesCerrar('planes-modal-add-comida')
     } else {
       console.error('[Emma] Error guardando comida en plan:', data.error)
@@ -1184,29 +1044,19 @@ function emmaPlaneGuardarComida() {
 }
 
 function emmaPlaneGuardarRutina() {
-  const plan = emmaPlanesData.find(p => p.id === emmaPlanesEditandoPlanId)
-  if (!plan) return
   const rutinaEl = document.querySelector('#planes-add-rutina-sel .planes-seg-opt.active')
   if (!rutinaEl) return
-  const texto      = rutinaEl.textContent
-  const emoji      = texto.match(/\p{Emoji}/u)?.[0] || '📋'
-  const nombre     = texto.replace(/^\S+\s/,'').trim()
+  const nombre     = rutinaEl.textContent.replace(/^\S+\s/,'').trim()
   const esFlexible = document.getElementById('planes-opt-flexible').classList.contains('active')
-  const rutina     = emmaRutinasData.find(r => r.nombre === nombre)
-  const referenciaId = rutina?.id || 0
   const hora = esFlexible ? 0 : emmaPlanesPickerH['add-rutina']
   const min  = esFlexible ? 0 : emmaPlanesPickerM['add-rutina']
-  const itemsEnHora = esFlexible ? [] : plan.items.filter(i => !i.flexible && i.hora === hora && i.min === min)
+  const itemsEnHora = esFlexible ? [] : emmaPlanData.filter(i => !i.flexible && i.hora === hora && i.min === min)
   fetch('/api/emma/planes-items', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      planId: emmaPlanesEditandoPlanId,
-      tipo: 'rutina',
-      referenciaId,
       nombre,
-      emoji,
-      categoria: 'rutina',
+      categoria: 'Rutina',
       etiqueta: '',
       hora,
       min,
@@ -1217,7 +1067,7 @@ function emmaPlaneGuardarRutina() {
   .then(r => r.json())
   .then(data => {
     if (data.ok) {
-      emmaCargarDatos().then(() => emmaPlanesRenderDetalle())
+      emmaCargarDatos().then(() => emmaPlanesRenderLista())
       emmaPlanesCerrar('planes-modal-add-rutina')
     } else {
       console.error('[Emma] Error guardando rutina en plan:', data.error)
@@ -1228,8 +1078,7 @@ function emmaPlaneGuardarRutina() {
 
 function emmaPlaneAbrirCambiarHora(itemId) {
   emmaPlanesEditandoItemId = itemId
-  const plan = emmaPlanesData.find(p => p.id === emmaPlanesEditandoPlanId)
-  const item = plan?.items.find(i => i.id === itemId)
+  const item = emmaPlanData.find(i => i._row === itemId)
   if (!item) return
   document.getElementById('planes-cambiar-hora-sub').textContent = item.nombre
   emmaPlanesPickerH['edit-hora'] = item.flexible ? 6 : item.hora
@@ -1241,33 +1090,28 @@ function emmaPlaneAbrirCambiarHora(itemId) {
 }
 
 function emmaPlaneGuardarHora() {
-  const plan = emmaPlanesData.find(p => p.id === emmaPlanesEditandoPlanId)
-  const item = plan?.items.find(i => i.id === emmaPlanesEditandoItemId)
+  const item = emmaPlanData.find(i => i._row === emmaPlanesEditandoItemId)
   if (!item) return
   const esFlexible = emmaPlanesModoCambioHora === 'flexible'
   fetch('/api/emma/planes-items', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      rowIndex:     item._row,
-      planId:       item.planId,
-      tipo:         item.tipo,
-      referenciaId: item.referenciaId,
-      nombre:       item.nombre,
-      emoji:        item.emoji,
-      categoria:    item.cat,
-      etiqueta:     item.etiqueta || '',
-      hora:         esFlexible ? 0 : emmaPlanesPickerH['edit-hora'],
-      min:          esFlexible ? 0 : emmaPlanesPickerM['edit-hora'],
-      flexible:     esFlexible,
-      orden:        item.orden,
+      rowIndex:  item._row,
+      nombre:    item.nombre,
+      categoria: item.cat,
+      etiqueta:  item.etiqueta || '',
+      hora:      esFlexible ? 0 : emmaPlanesPickerH['edit-hora'],
+      min:       esFlexible ? 0 : emmaPlanesPickerM['edit-hora'],
+      flexible:  esFlexible,
+      orden:     item.orden,
     })
   })
   .then(r => r.json())
   .then(data => {
     if (data.ok) {
       emmaPlanesCerrar('planes-modal-cambiar-hora')
-      emmaCargarDatos().then(() => emmaPlanesRenderDetalle())
+      emmaCargarDatos().then(() => emmaPlanesRenderLista())
     } else {
       console.error('[Emma] Error actualizando hora:', data.error)
     }
@@ -1276,9 +1120,7 @@ function emmaPlaneGuardarHora() {
 }
 
 function emmaPlaneEliminarItem(itemId) {
-  const plan = emmaPlanesData.find(p => p.id === emmaPlanesEditandoPlanId)
-  if (!plan) return
-  const item = plan.items.find(i => i.id === itemId)
+  const item = emmaPlanData.find(i => i._row === itemId)
   if (!item) return
   fetch('/api/emma/planes-items', {
     method: 'DELETE',
@@ -1287,7 +1129,7 @@ function emmaPlaneEliminarItem(itemId) {
   })
   .then(r => r.json())
   .then(data => {
-    if (data.ok) emmaCargarDatos().then(() => emmaPlanesRenderDetalle())
+    if (data.ok) emmaCargarDatos().then(() => emmaPlanesRenderLista())
     else console.error('[Emma] Error eliminando item:', data.error)
   })
   .catch(err => console.error('[Emma] fetch error:', err))
@@ -1351,25 +1193,17 @@ function emmaPlanesCerrar(id) { document.getElementById(id)?.classList.remove('o
 function emmaPlanesCerrarSiOverlay(e, id) { if (e.target === document.getElementById(id)) emmaPlanesCerrar(id) }
 
 window.emmaPlanesRenderLista = emmaPlanesRenderLista
-window.emmaPlanesVerDetalle = emmaPlanesVerDetalle
 
 // ── CALENDARIO ────────────────────────────────────────────
-let emmaCalDiaOffset = 0
-const emmaCalMeses = ['enero','febrero','marzo','abril','mayo','junio',
-  'julio','agosto','septiembre','octubre','noviembre','diciembre']
-const emmaCalDow = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
-
 // Registros por fecha: { 'YYYY-MM-DD': { itemId: { cantidad, nota, solidoNombre, estado } } }
-const emmaCalRegistros = {}
-
-// Ítem actualmente abierto en modal
-let emmaCalItemActual = null
-let emmaCalQtyMax = null
-let emmaCalQtyStep = 1
 
 function emmaCalFechaKey(offset) {
   const d = new Date(); d.setDate(d.getDate() + offset)
   return d.toISOString().slice(0, 10)
+}
+
+function emmaCalItemKey(fecha, item) {
+  return fecha + '_' + item.nombre + '_' + item.hora + '_' + item.min
 }
 
 async function emmaCalCargarFecha(fecha) {
@@ -1385,16 +1219,31 @@ async function emmaCalCargarFecha(fecha) {
 
     if (regData.ok) {
       regData.rows.forEach(row => {
-        // row: ID|Fecha|TipoRegistro|Hora|Cantidad|Unidad|Estado|SolidoNombre|Nota|FechaHoraRegistro|PlanItemID
-        const planItemId = row[10] ? parseInt(row[10]) : null
-        const key = planItemId ?? (row[2] + '_' + row[3])
+        const tipoReg = row[1] || ''
+        const horaStr = row[2] || ''
+        let matchHora = -1, matchMin = -1
+        if (horaStr) {
+          const parts = horaStr.split(':')
+          matchHora = parseInt(parts[0]) || 0
+          matchMin  = parseInt(parts[1]) || 0
+        }
+        const item = emmaPlanData.find(i => {
+          if (tipoReg === 'rutina' && i.tipo !== 'rutina') return false
+          if (tipoReg !== 'rutina' && i.tipo !== 'comida') return false
+          if (tipoReg === 'leche'  && i.cat !== 'Leche')   return false
+          if (tipoReg === 'sólido' && i.cat !== 'Sólidos') return false
+          if (tipoReg === 'postre' && i.cat !== 'Postre')  return false
+          if (horaStr) return i.hora === matchHora && i.min === matchMin
+          return i.flexible
+        })
+        if (!item) return
+        const key = emmaCalItemKey(fecha, item)
         emmaCalRegistros[fecha][key] = {
-          cantidad:     parseFloat(row[4]) || 0,
-          unidad:       row[5] || '',
-          estado:       row[6] || 'pendiente',
-          solidoNombre: row[7] || '',
-          nota:         row[8] || '',
-          planItemId,
+          cantidad:     parseFloat(row[3]) || 0,
+          unidad:       row[4] || '',
+          estado:       row[5] || 'pendiente',
+          solidoNombre: row[6] || '',
+          nota:         row[7] || '',
         }
       })
     }
@@ -1422,13 +1271,15 @@ async function emmaCalCambiarDia(delta) {
   emmaCalRender()
 }
 
-function emmaCalGetRegistro(itemId) {
-  const key = emmaCalFechaKey(emmaCalDiaOffset)
-  return emmaCalRegistros[key]?.[itemId] || null
+function emmaCalGetRegistro(item) {
+  const fecha = emmaCalFechaKey(emmaCalDiaOffset)
+  const key = emmaCalItemKey(fecha, item)
+  return emmaCalRegistros[fecha]?.[key] || null
 }
-function emmaCalGetRegistroAyer(itemId) {
-  const key = emmaCalFechaKey(emmaCalDiaOffset - 1)
-  return emmaCalRegistros[key]?.[itemId] || null
+function emmaCalGetRegistroAyer(item) {
+  const fecha = emmaCalFechaKey(emmaCalDiaOffset - 1)
+  const key = emmaCalItemKey(fecha, item)
+  return emmaCalRegistros[fecha]?.[key] || null
 }
 function emmaCalSetRegistro(itemId, data) {
   const key = emmaCalFechaKey(emmaCalDiaOffset)
@@ -1442,10 +1293,10 @@ function emmaCalEstado(cantidad, max) {
   return 'parcial'
 }
 
-function emmaCalCompareBadgeHtml(itemId, item) {
-  const hoy = emmaCalGetRegistro(itemId)
-  const ayer = emmaCalGetRegistroAyer(itemId)
-  if (!ayer) return '<span class="cal-compare-badge cal-cb-na">sin ayer</span>'
+function emmaCalCompareBadgeHtml(item) {
+  const hoy = emmaCalGetRegistro(item)
+  const ayer = emmaCalGetRegistroAyer(item)
+  if (!ayer) return '<span class="cal-compare-badge cal-cb-na">no aplica</span>'
   if (item.tipo === 'rutina' && item.registroTipo === 'binario') {
     return ayer.cantidad
       ? '<span class="cal-compare-badge cal-cb-ok">✓ ayer</span>'
@@ -1459,11 +1310,81 @@ function emmaCalCompareBadgeHtml(itemId, item) {
 }
 
 function emmaCalRender() {
+  if (!emmaDataCargada) return
   const lista = document.getElementById('cal-lista')
   if (!lista) return
-  const plan = emmaPlanesData?.find(p => p.activo)
+  const plan = { items: emmaPlanData }
   if (!plan) {
     lista.innerHTML = '<div style="padding:24px;text-align:center;color:var(--emma-muted);font-size:14px;">No hay plan activo.<br>Configura uno en Administrador → Planes.</div>'
+    return
+  }
+
+  const fecha = emmaCalFechaKey(emmaCalDiaOffset)
+  const regs  = emmaCalRegistros[fecha] || {}
+
+  // Vista histórica (días pasados): solo ítems con registro, sin botones de acción
+  if (emmaCalDiaOffset < 0) {
+    const registrados = plan.items.filter(i => {
+      const r = regs[emmaCalItemKey(fecha, i)]
+      return r && (r.cantidad > 0 || r.estado === 'completo')
+    })
+    let html = ''
+    if (!registrados.length) {
+      html = '<div style="padding:32px 24px;text-align:center;color:var(--emma-muted);font-size:14px;">Sin registros para este día.</div>'
+    } else {
+      const fijosReg = registrados.filter(i => !i.flexible).sort((a,b) => a.hora*60+a.min - (b.hora*60+b.min))
+      const flexReg  = registrados.filter(i => i.flexible)
+      if (fijosReg.length) {
+        html += '<div class="cal-section-hdr">REGISTRADO</div>'
+        fijosReg.forEach(item => {
+          const r = regs[emmaCalItemKey(fecha, item)]
+          const hora = item.hora + ':' + String(item.min).padStart(2,'0')
+          const valStr = r.solidoNombre ? r.solidoNombre + ' · ' + r.cantidad + (item.unidad || '')
+                       : r.cantidad + ' ' + (item.unidad || '')
+          html += `<div class="cal-item done" style="pointer-events:none;opacity:0.85;">
+            <div class="cal-check checked">✓</div>
+            <div class="cal-item-emoji">${item.emoji}</div>
+            <div class="cal-item-info">
+              <div class="cal-item-name">${item.nombre}</div>
+              <div class="cal-item-sub">${valStr.trim()}${r.nota ? ' · ' + r.nota : ''}</div>
+            </div>
+            <div class="cal-item-hora">${hora}</div>
+          </div>`
+        })
+      }
+      if (flexReg.length) {
+        html += '<div class="cal-section-hdr" style="margin-top:14px;">FLEXIBLES REGISTRADOS</div>'
+        html += '<div class="cal-flex-wrap">'
+        flexReg.forEach(item => {
+          const r = regs[emmaCalItemKey(fecha, item)]
+          const valStr = r.cantidad + ' ' + (item.unidad || '')
+          html += `<div class="cal-flex-item done" style="pointer-events:none;opacity:0.85;">
+            <div class="cal-flex-emoji">${item.emoji}</div>
+            <div class="cal-flex-name">${item.nombre}</div>
+            <div class="cal-flex-val">${valStr.trim()}</div>
+          </div>`
+        })
+        html += '</div>'
+      }
+    }
+    const panales = regs['_panales'] || { pipi: 0, popo: 0 }
+    html += `
+    <div class="cal-section-hdr" style="margin-top:16px;">PAÑALES</div>
+    <div style="background:#fff;border:0.5px solid rgba(127,119,221,0.18);
+                border-radius:14px;padding:12px 14px;
+                display:flex;align-items:center;gap:16px;">
+      <div style="flex:1;text-align:center;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.07em;color:#AFA9EC;margin-bottom:6px;">PIPÍ</div>
+        <div style="font-size:22px;font-weight:700;color:#7B75DD;">${panales.pipi}</div>
+      </div>
+      <div style="width:1px;height:40px;background:rgba(127,119,221,0.15);"></div>
+      <div style="flex:1;text-align:center;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.07em;color:#AFA9EC;margin-bottom:6px;">POPÓ</div>
+        <div style="font-size:22px;font-weight:700;color:#7B75DD;">${panales.popo}</div>
+      </div>
+    </div>`
+    lista.innerHTML = html
+    emmaCalActualizarKPIs(plan)
     return
   }
 
@@ -1502,7 +1423,6 @@ function emmaCalRender() {
     html += '</div>'
   }
 
-  const regs    = emmaCalRegistros[emmaCalFechaKey(emmaCalDiaOffset)] || {}
   const panales = regs['_panales'] || { pipi: 0, popo: 0 }
   html += `
   <div class="cal-section-hdr" style="margin-top:16px;">PAÑALES</div>
@@ -1535,7 +1455,7 @@ function emmaCalRender() {
 }
 
 function emmaCalItemHtml(item, hora) {
-  const reg = emmaCalGetRegistro(item.id)
+  const reg = emmaCalGetRegistro(item)
   const estado = reg ? emmaCalEstado(reg.cantidad, item.tamano) : 'pendiente'
   const subText = reg
     ? (reg.solidoNombre ? reg.solidoNombre + ' · ' + reg.cantidad + (item.unidad || '') : reg.cantidad + ' ' + (item.unidad || '') + (reg.nota ? ' · ' + reg.nota : ''))
@@ -1543,7 +1463,7 @@ function emmaCalItemHtml(item, hora) {
   const checkClass = estado === 'completo' ? 'checked' : estado === 'parcial' ? 'parcial' : ''
   const checkIcon = estado === 'completo' ? '✓' : estado === 'parcial' ? '~' : '○'
   const itemClass = estado === 'completo' ? 'done' : estado === 'parcial' ? 'parcial' : ''
-  const compareBadge = emmaCalCompareBadgeHtml(item.id, item)
+  const compareBadge = emmaCalCompareBadgeHtml(item)
 
   if (item.tipo === 'rutina' && item.registroTipo === 'tiempo') {
     const totalMin = reg?.cantidad || 0
@@ -1564,7 +1484,7 @@ function emmaCalItemHtml(item, hora) {
       </div>
       ${compareBadge}
       <div class="cal-check-btn ${checkClass}"
-           onclick="emmaCalAbrirModalTiempo(${item.id},'${hora}')"
+           onclick="emmaCalAbrirModalTiempo(${item._row},'${hora}')"
            style="margin-left:4px;">${checkIcon}</div>
     </div>`
   }
@@ -1579,9 +1499,9 @@ function emmaCalItemHtml(item, hora) {
       </div>
       ${compareBadge}
       <div class="cal-cnt-wrap" style="margin-left:4px;">
-        <div class="cal-cnt-btn" onclick="emmaCalCnt(${item.id},-1)">−</div>
-        <div class="cal-cnt-val" id="cal-cnt-${item.id}">${cnt}</div>
-        <div class="cal-cnt-btn" onclick="emmaCalCnt(${item.id},1)">+</div>
+        <div class="cal-cnt-btn" onclick="emmaCalCnt(${item._row},-1)">−</div>
+        <div class="cal-cnt-val" id="cal-cnt-${item._row}">${cnt}</div>
+        <div class="cal-cnt-btn" onclick="emmaCalCnt(${item._row},1)">+</div>
       </div>
     </div>`
   }
@@ -1596,7 +1516,7 @@ function emmaCalItemHtml(item, hora) {
       </div>
       ${compareBadge}
       <div class="cal-check-btn ${hecho ? 'checked' : ''}"
-           onclick="emmaCalToggleBinario(${item.id},this)" style="margin-left:4px;">${hecho ? '✓' : '○'}</div>
+           onclick="emmaCalToggleBinario(${item._row},this)" style="margin-left:4px;">${hecho ? '✓' : '○'}</div>
     </div>`
   }
 
@@ -1608,13 +1528,13 @@ function emmaCalItemHtml(item, hora) {
     </div>
     ${compareBadge}
     <div class="cal-check-btn ${checkClass}"
-         onclick="emmaCalAbrirModal(${item.id},'${hora}')" style="margin-left:4px;">${checkIcon}</div>
+         onclick="emmaCalAbrirModal(${item._row},'${hora}')" style="margin-left:4px;">${checkIcon}</div>
   </div>`
 }
 
 function emmaCalFlexItemHtml(item) {
-  const reg = emmaCalGetRegistro(item.id)
-  const compareBadge = emmaCalCompareBadgeHtml(item.id, item)
+  const reg = emmaCalGetRegistro(item)
+  const compareBadge = emmaCalCompareBadgeHtml(item)
 
   if (item.tipo === 'rutina' && item.registroTipo === 'tiempo') {
     const totalMin = reg?.cantidad || 0
@@ -1632,9 +1552,9 @@ function emmaCalFlexItemHtml(item) {
         <div class="cal-item-name">${item.nombre}</div>
         <div class="cal-item-sub">${subText}</div>
       </div>
-      ${emmaCalCompareBadgeHtml(item.id, item)}
+      ${emmaCalCompareBadgeHtml(item)}
       <div class="cal-check-btn ${checkClass}"
-           onclick="emmaCalAbrirModalTiempo(${item.id},'flex')"
+           onclick="emmaCalAbrirModalTiempo(${item._row},'flex')"
            style="margin-left:4px;">${checkIcon}</div>
     </div>`
   }
@@ -1650,9 +1570,9 @@ function emmaCalFlexItemHtml(item) {
       </div>
       ${compareBadge}
       <div class="cal-cnt-wrap" style="margin-left:4px;">
-        <div class="cal-cnt-btn" onclick="emmaCalCnt(${item.id},-1)">−</div>
-        <div class="cal-cnt-val" id="cal-cnt-${item.id}">${cnt}</div>
-        <div class="cal-cnt-btn" onclick="emmaCalCnt(${item.id},1)">+</div>
+        <div class="cal-cnt-btn" onclick="emmaCalCnt(${item._row},-1)">−</div>
+        <div class="cal-cnt-val" id="cal-cnt-${item._row}">${cnt}</div>
+        <div class="cal-cnt-btn" onclick="emmaCalCnt(${item._row},1)">+</div>
       </div>
     </div>`
   }
@@ -1668,7 +1588,7 @@ function emmaCalFlexItemHtml(item) {
       </div>
       ${compareBadge}
       <div class="cal-check-btn ${hecho ? 'checked' : ''}"
-           onclick="emmaCalToggleBinario(${item.id},this)" style="margin-left:4px;">${hecho ? '✓' : '○'}</div>
+           onclick="emmaCalToggleBinario(${item._row},this)" style="margin-left:4px;">${hecho ? '✓' : '○'}</div>
     </div>`
   }
 
@@ -1684,13 +1604,13 @@ function emmaCalFlexItemHtml(item) {
     </div>
     ${compareBadge}
     <div class="cal-check-btn ${checkClass}"
-         onclick="emmaCalAbrirModal(${item.id},'flex')" style="margin-left:4px;">${checkIcon}</div>
+         onclick="emmaCalAbrirModal(${item._row},'flex')" style="margin-left:4px;">${checkIcon}</div>
   </div>`
 }
 
 function emmaCalAbrirModal(itemId, hora) {
-  const plan = emmaPlanesData?.find(p => p.activo)
-  const item = plan?.items.find(i => i.id === itemId)
+  const plan = { items: emmaPlanData }
+  const item = plan?.items.find(i => i._row === itemId)
   if (!item) return
   emmaCalItemActual = item
 
@@ -1703,21 +1623,21 @@ function emmaCalAbrirModal(itemId, hora) {
 
   let solidoChipsHtml = ''
   if (esSolido && typeof emmaComidasData !== 'undefined') {
-    const reg = emmaCalGetRegistro(itemId)
+    const reg = emmaCalGetRegistro(item)
     solidoChipsHtml = emmaComidasData
       .filter(c => c.categoria === 'Sólidos' && c.activo)
-      .map(c => `<button class="cal-solido-chip${reg?.solidoId === c.id ? ' active' : ''}"
-        onclick="emmaCalSelSolido(${c.id},this)"
-        data-id="${c.id}" data-tamano="${c.tamano}">
+      .map(c => `<button class="cal-solido-chip${reg?.solidoId === c._row ? ' active' : ''}"
+        onclick="emmaCalSelSolido(${c._row},this)"
+        data-id="${c._row}" data-tamano="${c.tamano}">
         ${c.emoji} ${c.nombre} · ${c.tamano}${c.unidad}
       </button>`).join('')
   }
 
-  const reg = emmaCalGetRegistro(itemId)
+  const reg = emmaCalGetRegistro(item)
   const qtyVal = reg?.cantidad || 0
   const notaVal = reg?.nota || ''
 
-  const ayer = emmaCalGetRegistroAyer(itemId)
+  const ayer = emmaCalGetRegistroAyer(item)
   let compareHtml = '<span class="cal-compare-val same">sin registro ayer</span>'
   if (ayer?.cantidad) {
     const diff = qtyVal - ayer.cantidad
@@ -1782,18 +1702,18 @@ let emmaCalTiempoH = 0
 let emmaCalTiempoM = 0
 
 function emmaCalAbrirModalTiempo(itemId, hora) {
-  const plan = emmaPlanesData?.find(p => p.activo)
-  const item = plan?.items.find(i => i.id === itemId)
+  const plan = { items: emmaPlanData }
+  const item = plan?.items.find(i => i._row === itemId)
   if (!item) return
   emmaCalItemActual = item
   emmaCalQtyMax = null
 
-  const reg = emmaCalGetRegistro(itemId)
+  const reg = emmaCalGetRegistro(item)
   const totalMin = reg?.cantidad || 0
   emmaCalTiempoH = Math.floor(totalMin / 60)
   emmaCalTiempoM = totalMin % 60
 
-  const ayer = emmaCalGetRegistroAyer(itemId)
+  const ayer = emmaCalGetRegistroAyer(item)
   let compareHtml = '<span class="cal-compare-val same">sin registro ayer</span>'
   if (ayer?.cantidad) {
     const ayerH = Math.floor(ayer.cantidad / 60)
@@ -1927,14 +1847,13 @@ function emmaCalGuardarTiempo() {
       estado: 'completo',
       solidoNombre: '',
       nota,
-      planItemId: item.id,
     })
   })
   .then(r => r.json())
   .then(data => {
     if (data.ok) {
       if (!emmaCalRegistros[fecha]) emmaCalRegistros[fecha] = {}
-      emmaCalRegistros[fecha][item.id] = { cantidad: totalMin, nota, estado: 'completo' }
+      emmaCalRegistros[fecha][emmaCalItemKey(fecha, item)] = { cantidad: totalMin, nota, estado: 'completo' }
       emmaCalCerrar('cal-modal-registro')
       emmaCalRender()
     } else {
@@ -1996,7 +1915,7 @@ function emmaCalActualizarEstado() {
 }
 
 function emmaCalActualizarCompareModal(item) {
-  const ayer = emmaCalGetRegistroAyer(item.id)
+  const ayer = emmaCalGetRegistroAyer(item)
   const el = document.getElementById('cal-compare-val')
   if (!el) return
   if (!ayer || !ayer.cantidad) {
@@ -2037,14 +1956,13 @@ function emmaCalGuardarRegistro() {
       estado,
       solidoNombre,
       nota,
-      planItemId:  item.id,
     })
   })
   .then(r => r.json())
   .then(data => {
     if (data.ok) {
       if (!emmaCalRegistros[fecha]) emmaCalRegistros[fecha] = {}
-      emmaCalRegistros[fecha][item.id] = { cantidad: val, nota, solidoNombre, estado }
+      emmaCalRegistros[fecha][emmaCalItemKey(fecha, item)] = { cantidad: val, nota, solidoNombre, estado }
       emmaCalCerrar('cal-modal-registro')
       emmaCalRender()
     } else {
@@ -2055,11 +1973,11 @@ function emmaCalGuardarRegistro() {
 }
 
 function emmaCalToggleBinario(itemId, btn) {
-  const plan  = emmaPlanesData?.find(p => p.activo)
-  const item  = plan?.items.find(i => i.id === itemId)
+  const plan  = { items: emmaPlanData }
+  const item  = plan?.items.find(i => i._row === itemId)
   if (!item) return
   const fecha = emmaCalFechaKey(emmaCalDiaOffset)
-  const reg   = emmaCalGetRegistro(itemId)
+  const reg   = emmaCalGetRegistro(item)
   const nuevo = reg?.cantidad === 1 ? 0 : 1
   fetch('/api/emma/registro', {
     method: 'POST',
@@ -2073,14 +1991,13 @@ function emmaCalToggleBinario(itemId, btn) {
       estado: nuevo === 1 ? 'completo' : 'pendiente',
       solidoNombre: '',
       nota: '',
-      planItemId: itemId,
     })
   })
   .then(r => r.json())
   .then(data => {
     if (data.ok) {
       if (!emmaCalRegistros[fecha]) emmaCalRegistros[fecha] = {}
-      emmaCalRegistros[fecha][itemId] = { cantidad: nuevo, estado: nuevo === 1 ? 'completo' : 'pendiente' }
+      emmaCalRegistros[fecha][emmaCalItemKey(fecha, item)] = { cantidad: nuevo, estado: nuevo === 1 ? 'completo' : 'pendiente' }
       emmaCalRender()
     }
   })
@@ -2088,18 +2005,18 @@ function emmaCalToggleBinario(itemId, btn) {
 }
 
 function emmaCalCnt(itemId, delta) {
-  const plan  = emmaPlanesData?.find(p => p.activo)
-  const item  = plan?.items.find(i => i.id === itemId)
+  const plan  = { items: emmaPlanData }
+  const item  = plan?.items.find(i => i._row === itemId)
   if (!item) return
   const fecha = emmaCalFechaKey(emmaCalDiaOffset)
-  const reg   = emmaCalGetRegistro(itemId) || { cantidad: 0 }
+  const reg   = emmaCalGetRegistro(item) || { cantidad: 0 }
   const nuevo = Math.max(0, (reg.cantidad || 0) + delta)
 
   const el = document.getElementById('cal-cnt-' + itemId)
   if (el) el.textContent = nuevo
 
   if (!emmaCalRegistros[fecha]) emmaCalRegistros[fecha] = {}
-  emmaCalRegistros[fecha][itemId] = { ...reg, cantidad: nuevo, estado: nuevo > 0 ? 'completo' : 'pendiente' }
+  emmaCalRegistros[fecha][emmaCalItemKey(fecha, item)] = { ...reg, cantidad: nuevo, estado: nuevo > 0 ? 'completo' : 'pendiente' }
 
   fetch('/api/emma/registro', {
     method: 'POST',
@@ -2113,7 +2030,6 @@ function emmaCalCnt(itemId, delta) {
       estado: nuevo > 0 ? 'completo' : 'pendiente',
       solidoNombre: '',
       nota: '',
-      planItemId: itemId,
     })
   })
   .catch(err => console.error('[Emma] fetch error:', err))
@@ -2141,17 +2057,17 @@ window.emmaCalPanalesCnt = emmaCalPanalesCnt
 function emmaCalActualizarKPIs(plan) {
   const todos = plan.items
   const completados = todos.filter(i => {
-    const r = emmaCalGetRegistro(i.id)
+    const r = emmaCalGetRegistro(i)
     return r && r.estado !== 'pendiente' && r.cantidad > 0
   }).length
   const pctComp = todos.length ? Math.round(completados / todos.length * 100) : 0
 
   const lecheItems = todos.filter(i => i.cat === 'Leche')
-  const lecheTotal = lecheItems.reduce((s,i) => s + (emmaCalGetRegistro(i.id)?.cantidad || 0), 0)
+  const lecheTotal = lecheItems.reduce((s,i) => s + (emmaCalGetRegistro(i)?.cantidad || 0), 0)
   const lechePlan = lecheItems.reduce((s,i) => s + (i.tamano || 0), 0)
 
   const solidoItems = todos.filter(i => i.cat === 'Sólidos')
-  const solidoTotal = solidoItems.reduce((s,i) => s + (emmaCalGetRegistro(i.id)?.cantidad || 0), 0)
+  const solidoTotal = solidoItems.reduce((s,i) => s + (emmaCalGetRegistro(i)?.cantidad || 0), 0)
   const solidoPlan = solidoItems.reduce((s,i) => s + (i.tamano || 0), 0)
 
   const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v }

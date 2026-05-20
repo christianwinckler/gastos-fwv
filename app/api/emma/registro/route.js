@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../auth/[...nextauth]/route'
-import { getRegistroPorFecha, addRegistro, updateRegistro, findRegistroRow } from '@/lib/emmaService'
+import { getRegistroPorFecha, addRegistro, updateRegistro } from '@/lib/emmaService'
 
 export async function GET(req) {
   const session = await getServerSession(authOptions)
@@ -20,13 +20,6 @@ export async function POST(req) {
   if (!session) return Response.json({ error: 'No autorizado' }, { status: 401 })
   try {
     const body = await req.json()
-    if (body.planItemId) {
-      const rowIndex = await findRegistroRow(body.fecha, body.planItemId)
-      if (rowIndex) {
-        await updateRegistro(rowIndex, body)
-        return Response.json({ ok: true, rowIndex })
-      }
-    }
     const id = await addRegistro(body)
     return Response.json({ ok: true, id })
   } catch (e) {
