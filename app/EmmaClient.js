@@ -677,14 +677,16 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
 .cal-item-name { font-size:13px;font-weight:500;color:var(--emma-fg); }
 .cal-item-sub { font-size:11px;color:var(--emma-muted);margin-top:2px; }
 .cal-compare-badge { font-size:10px;font-weight:600;padding:3px 7px;border-radius:20px;flex-shrink:0; }
-.cal-cb-plus { background:#E1F5EE;color:#0F6E56; }
-.cal-cb-minus { background:#FFECEC;color:#C02929; }
-.cal-cb-equal { background:var(--emma-bg);color:var(--emma-muted);border:0.5px solid rgba(127,119,221,0.2); }
-.cal-cb-na { background:var(--emma-bg);color:var(--emma-accent-light);font-size:9px;border:0.5px solid rgba(127,119,221,0.1); }
-.cal-cb-ok { background:#E1F5EE;color:#0F6E56; }
+.cal-cb-plus { background:#E6F4EC;color:#1D9E75;cursor:pointer; }
+.cal-cb-minus { background:var(--emma-red-soft);color:var(--emma-red);cursor:pointer; }
+.cal-cb-equal { background:#E6F4EC;color:#1D9E75;cursor:pointer; }
+.cal-cb-na { background:var(--emma-bg);color:var(--emma-accent-light);font-size:9px;border:0.5px solid rgba(127,119,221,0.1);cursor:pointer; }
+.cal-cb-ok { background:#E1F5EE;color:#0F6E56;cursor:pointer; }
 .cal-check-btn { width:34px;height:34px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(127,119,221,0.25);background:var(--emma-bg);cursor:pointer;font-size:16px;color:var(--emma-accent-light); }
 .cal-check-btn.checked { background:var(--emma-accent);border-color:var(--emma-accent);color:#fff; }
-.cal-check-btn.parcial { background:var(--emma-accent-soft);border-color:var(--emma-accent);color:var(--emma-accent-mid);font-size:13px;font-weight:700; }
+.cal-check-btn.parcial { background:var(--emma-accent-soft);color:var(--emma-accent);border-color:var(--emma-accent-light); }
+.accounts-grid.historico .acc-card { min-height:80px;padding:10px 12px; }
+.accounts-grid.historico .acc-value { font-size:16px; }
 .cal-cnt-wrap { display:flex;align-items:center;gap:0;flex-shrink:0; }
 .cal-cnt-btn { width:28px;height:28px;border-radius:8px;border:1px solid rgba(127,119,221,0.25);background:var(--emma-bg);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--emma-accent);cursor:pointer;user-select:none; }
 .cal-cnt-val { min-width:28px;text-align:center;font-size:15px;font-weight:600;color:var(--emma-fg);padding:0 4px; }
@@ -704,12 +706,31 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
 .cal-qty-btn { width:48px;height:48px;border-radius:14px;background:var(--emma-accent-soft);border:none;color:var(--emma-accent-mid);font-size:26px;font-weight:300;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;flex-shrink:0; }
 .cal-qty-btn:active { background:var(--emma-accent-light); }
 .cal-qty-btn:disabled { opacity:0.3;cursor:not-allowed; }
+.cal-qty-max { background:var(--emma-accent-soft);color:var(--emma-accent-mid);font-size:11px;font-weight:600;letter-spacing:0.03em;min-width:44px; }
+.cal-qty-max:disabled { opacity:0.35;cursor:default; }
 .cal-qty-input { width:100px;text-align:center;font-size:36px;font-weight:300;color:var(--emma-fg);border:none;background:transparent;outline:none;font-family:inherit;border-bottom:2px solid rgba(127,119,221,0.3);padding-bottom:4px; }
 .cal-qty-unit { font-size:16px;color:var(--emma-muted);font-weight:400; }
 .cal-auto-estado { display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;font-size:13px;font-weight:500; }
 .cal-auto-estado.completo { background:#E1F5EE;color:#0F6E56; }
 .cal-auto-estado.parcial { background:var(--emma-accent-soft);color:var(--emma-accent-mid); }
 .cal-auto-estado.pendiente { background:var(--emma-bg);color:var(--emma-muted); }
+.cal-picker-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:300;align-items:flex-end;justify-content:center; }
+.cal-picker-overlay.open { display:flex; }
+.cal-picker-sheet { background:var(--emma-card);border-radius:20px 20px 0 0;padding:12px 16px 32px;width:100%;max-width:480px; }
+.cal-picker-handle { width:36px;height:4px;border-radius:2px;background:var(--emma-border);margin:0 auto 16px; }
+.cal-picker-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:12px; }
+.cal-picker-nav { width:36px;height:36px;border-radius:10px;border:1px solid var(--emma-border-soft);background:transparent;color:var(--emma-accent);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center; }
+.cal-picker-nav:disabled { opacity:0.3;cursor:default; }
+.cal-picker-mes-label { font-size:15px;font-weight:600;color:var(--emma-fg); }
+.cal-picker-dow { display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:6px; }
+.cal-picker-dow span { font-size:11px;font-weight:600;color:var(--emma-muted);padding:4px 0; }
+.cal-picker-grid { display:grid;grid-template-columns:repeat(7,1fr);gap:2px; }
+.cal-picker-day { aspect-ratio:1;border-radius:50%;border:none;background:transparent;font-size:13px;color:var(--emma-fg);cursor:pointer;display:flex;align-items:center;justify-content:center; }
+.cal-picker-day:hover:not(:disabled) { background:var(--emma-accent-soft); }
+.cal-picker-day-today { color:var(--emma-accent);font-weight:700; }
+.cal-picker-day-active { background:var(--emma-accent) !important;color:#fff !important;font-weight:700; }
+.cal-picker-day-disabled { opacity:0.2;cursor:default; }
+.cal-picker-day-empty { background:transparent;cursor:default; }
 .cal-compare-row { display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--emma-bg);border-radius:10px;font-size:12px;color:var(--emma-muted); }
 .cal-compare-val { font-weight:600; }
 .cal-compare-val.up { color:#0F6E56; }
@@ -1042,7 +1063,7 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
    <div class="cal-date-arrow" onclick="emmaCalCambiarDia(-1)">‹</div>
    <div class="cal-date-center">
      <span>📅</span>
-     <span class="cal-date-text" id="cal-fecha-display">Hoy · —</span>
+     <span class="cal-date-text" id="cal-fecha-display" onclick="emmaCalAbrirPicker()" style="cursor:pointer;">Hoy · —</span>
      <span style="font-size:10px;color:var(--emma-muted);">▼</span>
    </div>
    <div class="cal-date-arrow" onclick="emmaCalCambiarDia(1)">›</div>
@@ -1052,7 +1073,7 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
    <div class="cal-kpi">
      <div class="cal-kpi-label">COMPLETADO</div>
      <div class="cal-kpi-val" id="cal-kpi-comp">0/0</div>
-     <div class="cal-kpi-sub">ítems del plan</div>
+     <div class="cal-kpi-sub" id="cal-kpi-comp-sub">ítems del plan</div>
      <div class="cal-kpi-prog"><div class="cal-kpi-prog-fill" id="cal-kpi-comp-fill" style="width:0%"></div></div>
    </div>
    <div class="cal-kpi">
@@ -1070,6 +1091,23 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
  </div>
 
  <div class="main" id="cal-lista" style="padding-top:4px;overflow-y:auto;flex:1;"></div>
+
+ <div class="cal-picker-overlay" id="cal-picker-overlay"
+      onclick="emmaCalCerrarPickerSiOverlay(event)">
+   <div class="cal-picker-sheet" id="cal-picker-sheet">
+     <div class="cal-picker-handle"></div>
+     <div class="cal-picker-header">
+       <button class="cal-picker-nav" onclick="emmaCalPickerNavMes(-1)">‹</button>
+       <div class="cal-picker-mes-label" id="cal-picker-mes-label"></div>
+       <button class="cal-picker-nav" onclick="emmaCalPickerNavMes(1)">›</button>
+     </div>
+     <div class="cal-picker-dow">
+       <span>Dom</span><span>Lun</span><span>Mar</span>
+       <span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
+     </div>
+     <div class="cal-picker-grid" id="cal-picker-grid"></div>
+   </div>
+ </div>
 </div>
 
 <!-- MODAL REGISTRO CALENDARIO -->

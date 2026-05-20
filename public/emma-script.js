@@ -14,6 +14,15 @@ let emmaCalItemActual = null
 let emmaCalQtyMax = null
 let emmaCalQtyStep = 1
 
+const EMMA_FECHA_MIN = new Date('2025-07-07')
+const EMMA_FECHA_MAX = () => {
+  const d = new Date()
+  d.setDate(d.getDate() + 10)
+  return d
+}
+let emmaCalPickerMes = null
+let emmaCalPickerVisible = false
+
 // ── EXPONER FUNCIONES GLOBALES ────────────────────────────
 // Mover asignaciones al final del archivo para garantizar que las funciones
 // ya están definidas en el momento de la asignación (evita dependencia del hoisting).
@@ -163,13 +172,15 @@ async function emmaCargarDatos() {
       nombre:   r[0] || '',
       cat:      r[1] || '',
       etiqueta: r[2] || '',
-      hora:     parseInt(r[3]) || 0,
-      min:      parseInt(r[4]) || 0,
-      flexible: r[5] === 'TRUE' || r[5] === true,
-      orden:    parseInt(r[6]) || 1,
+      tamano:   parseFloat(r[3]) || 0,
+      unidad:   r[4] || '',
+      hora:     parseInt(r[5]) || 0,
+      min:      parseInt(r[6]) || 0,
+      flexible: r[7] === 'TRUE' || r[7] === true,
+      orden:    parseInt(r[8]) || 1,
       _row:     (data.plan || []).indexOf(r) + 1,
       tipo:     r[1] === 'Rutina' ? 'rutina' : 'comida',
-      emoji:    '', tamano: 0, unidad: '', sub: '',
+      emoji:    '', sub: '',
     }))
 
     emmaPlanData.forEach(item => {
@@ -180,14 +191,13 @@ async function emmaCargarDatos() {
       } else {
         const comida = emmaComidasData.find(c => c.nombre === item.nombre)
         item.emoji = comida?.emoji || '🍽️'
-        if (comida) { item.tamano = comida.tamano; item.unidad = comida.unidad }
       }
       if (item.tipo === 'rutina') {
         item.sub = item.etiqueta || 'Rutina'
-      } else if (item.tamano && item.unidad) {
-        item.sub = item.tamano + ' ' + item.unidad + (item.etiqueta ? ' · ' + item.etiqueta : ' · cualquier tipo')
       } else {
-        item.sub = item.etiqueta || 'Categoría ' + item.cat
+        item.sub = item.tamano && item.unidad
+          ? item.tamano + ' ' + item.unidad + (item.etiqueta ? ' · ' + item.etiqueta : '')
+          : item.etiqueta || 'Categoría ' + item.cat
       }
     })
 
@@ -211,6 +221,12 @@ async function emmaCargarDatos() {
   } catch (err) {
     emmaOcultarLoading()
     console.error('[Emma] emmaCargarDatos error:', err)
+    if (!emmaDataCargada) {
+      setTimeout(() => {
+        console.log('[Emma] Reintentando carga de datos...')
+        emmaCargarDatos()
+      }, 2000)
+    }
   }
 }
 
@@ -267,7 +283,15 @@ window.emmaActualizarTodo = emmaActualizarTodo
 window.emmaAbrirNuevaComida = emmaAbrirNuevaComida
 window.emmaCargarDatos = emmaCargarDatos
 
-emmaCargarDatos()
+function emmaIniciarCarga() {
+  const overlay = document.getElementById('emma-loading-overlay')
+  if (!overlay) {
+    setTimeout(emmaIniciarCarga, 100)
+    return
+  }
+  emmaCargarDatos()
+}
+emmaIniciarCarga()
 
 async function emmaHomeRender() {
   const fechaHoy = emmaCalFechaKey(0)
@@ -1293,20 +1317,22 @@ function emmaCalEstado(cantidad, max) {
   return 'parcial'
 }
 
-function emmaCalCompareBadgeHtml(item) {
+function emmaCalCompareBadgeHtml(item, hora) {
   const hoy = emmaCalGetRegistro(item)
   const ayer = emmaCalGetRegistroAyer(item)
-  if (!ayer) return '<span class="cal-compare-badge cal-cb-na">no aplica</span>'
+  const openFn = item.registroTipo === 'tiempo'
+    ? `emmaCalAbrirModalTiempo(${item._row},'${hora}')`
+    : `emmaCalAbrirModal(${item._row},'${hora}')`
+  if (!ayer) return `<span class="cal-compare-badge cal-cb-na" onclick="${openFn}">no aplica</span>`
   if (item.tipo === 'rutina' && item.registroTipo === 'binario') {
     return ayer.cantidad
-      ? '<span class="cal-compare-badge cal-cb-ok">✓ ayer</span>'
-      : '<span class="cal-compare-badge cal-cb-na">✗ ayer</span>'
+      ? `<span class="cal-compare-badge cal-cb-ok" onclick="${openFn}">✓ ayer</span>`
+      : `<span class="cal-compare-badge cal-cb-na" onclick="${openFn}">✗ ayer</span>`
   }
   const diff = (hoy?.cantidad || 0) - (ayer.cantidad || 0)
-  const unidad = item.unidad || ''
-  if (diff > 0) return `<span class="cal-compare-badge cal-cb-plus">+${diff}${unidad}</span>`
-  if (diff < 0) return `<span class="cal-compare-badge cal-cb-minus">${diff}${unidad}</span>`
-  return `<span class="cal-compare-badge cal-cb-equal">= ${ayer.cantidad}${unidad}</span>`
+  if (diff > 0) return `<span class="cal-compare-badge cal-cb-plus" onclick="${openFn}">+</span>`
+  if (diff < 0) return `<span class="cal-compare-badge cal-cb-minus" onclick="${openFn}">−</span>`
+  return `<span class="cal-compare-badge cal-cb-equal" onclick="${openFn}">＝</span>`
 }
 
 function emmaCalRender() {
@@ -1321,72 +1347,6 @@ function emmaCalRender() {
 
   const fecha = emmaCalFechaKey(emmaCalDiaOffset)
   const regs  = emmaCalRegistros[fecha] || {}
-
-  // Vista histórica (días pasados): solo ítems con registro, sin botones de acción
-  if (emmaCalDiaOffset < 0) {
-    const registrados = plan.items.filter(i => {
-      const r = regs[emmaCalItemKey(fecha, i)]
-      return r && (r.cantidad > 0 || r.estado === 'completo')
-    })
-    let html = ''
-    if (!registrados.length) {
-      html = '<div style="padding:32px 24px;text-align:center;color:var(--emma-muted);font-size:14px;">Sin registros para este día.</div>'
-    } else {
-      const fijosReg = registrados.filter(i => !i.flexible).sort((a,b) => a.hora*60+a.min - (b.hora*60+b.min))
-      const flexReg  = registrados.filter(i => i.flexible)
-      if (fijosReg.length) {
-        html += '<div class="cal-section-hdr">REGISTRADO</div>'
-        fijosReg.forEach(item => {
-          const r = regs[emmaCalItemKey(fecha, item)]
-          const hora = item.hora + ':' + String(item.min).padStart(2,'0')
-          const valStr = r.solidoNombre ? r.solidoNombre + ' · ' + r.cantidad + (item.unidad || '')
-                       : r.cantidad + ' ' + (item.unidad || '')
-          html += `<div class="cal-item done" style="pointer-events:none;opacity:0.85;">
-            <div class="cal-check checked">✓</div>
-            <div class="cal-item-emoji">${item.emoji}</div>
-            <div class="cal-item-info">
-              <div class="cal-item-name">${item.nombre}</div>
-              <div class="cal-item-sub">${valStr.trim()}${r.nota ? ' · ' + r.nota : ''}</div>
-            </div>
-            <div class="cal-item-hora">${hora}</div>
-          </div>`
-        })
-      }
-      if (flexReg.length) {
-        html += '<div class="cal-section-hdr" style="margin-top:14px;">FLEXIBLES REGISTRADOS</div>'
-        html += '<div class="cal-flex-wrap">'
-        flexReg.forEach(item => {
-          const r = regs[emmaCalItemKey(fecha, item)]
-          const valStr = r.cantidad + ' ' + (item.unidad || '')
-          html += `<div class="cal-flex-item done" style="pointer-events:none;opacity:0.85;">
-            <div class="cal-flex-emoji">${item.emoji}</div>
-            <div class="cal-flex-name">${item.nombre}</div>
-            <div class="cal-flex-val">${valStr.trim()}</div>
-          </div>`
-        })
-        html += '</div>'
-      }
-    }
-    const panales = regs['_panales'] || { pipi: 0, popo: 0 }
-    html += `
-    <div class="cal-section-hdr" style="margin-top:16px;">PAÑALES</div>
-    <div style="background:#fff;border:0.5px solid rgba(127,119,221,0.18);
-                border-radius:14px;padding:12px 14px;
-                display:flex;align-items:center;gap:16px;">
-      <div style="flex:1;text-align:center;">
-        <div style="font-size:10px;font-weight:700;letter-spacing:0.07em;color:#AFA9EC;margin-bottom:6px;">PIPÍ</div>
-        <div style="font-size:22px;font-weight:700;color:#7B75DD;">${panales.pipi}</div>
-      </div>
-      <div style="width:1px;height:40px;background:rgba(127,119,221,0.15);"></div>
-      <div style="flex:1;text-align:center;">
-        <div style="font-size:10px;font-weight:700;letter-spacing:0.07em;color:#AFA9EC;margin-bottom:6px;">POPÓ</div>
-        <div style="font-size:22px;font-weight:700;color:#7B75DD;">${panales.popo}</div>
-      </div>
-    </div>`
-    lista.innerHTML = html
-    emmaCalActualizarKPIs(plan)
-    return
-  }
 
   const fijos = plan.items.filter(i => !i.flexible)
   const flexibles = plan.items.filter(i => i.flexible)
@@ -1461,9 +1421,9 @@ function emmaCalItemHtml(item, hora) {
     ? (reg.solidoNombre ? reg.solidoNombre + ' · ' + reg.cantidad + (item.unidad || '') : reg.cantidad + ' ' + (item.unidad || '') + (reg.nota ? ' · ' + reg.nota : ''))
     : 'Pendiente'
   const checkClass = estado === 'completo' ? 'checked' : estado === 'parcial' ? 'parcial' : ''
-  const checkIcon = estado === 'completo' ? '✓' : estado === 'parcial' ? '~' : '○'
+  const checkIcon = estado === 'completo' ? '✓' : estado === 'parcial' ? '✏️' : '○'
   const itemClass = estado === 'completo' ? 'done' : estado === 'parcial' ? 'parcial' : ''
-  const compareBadge = emmaCalCompareBadgeHtml(item)
+  const compareBadge = emmaCalCompareBadgeHtml(item, hora)
 
   if (item.tipo === 'rutina' && item.registroTipo === 'tiempo') {
     const totalMin = reg?.cantidad || 0
@@ -1534,7 +1494,7 @@ function emmaCalItemHtml(item, hora) {
 
 function emmaCalFlexItemHtml(item) {
   const reg = emmaCalGetRegistro(item)
-  const compareBadge = emmaCalCompareBadgeHtml(item)
+  const compareBadge = emmaCalCompareBadgeHtml(item, 'flex')
 
   if (item.tipo === 'rutina' && item.registroTipo === 'tiempo') {
     const totalMin = reg?.cantidad || 0
@@ -1552,7 +1512,7 @@ function emmaCalFlexItemHtml(item) {
         <div class="cal-item-name">${item.nombre}</div>
         <div class="cal-item-sub">${subText}</div>
       </div>
-      ${emmaCalCompareBadgeHtml(item)}
+      ${compareBadge}
       <div class="cal-check-btn ${checkClass}"
            onclick="emmaCalAbrirModalTiempo(${item._row},'flex')"
            style="margin-left:4px;">${checkIcon}</div>
@@ -1594,7 +1554,7 @@ function emmaCalFlexItemHtml(item) {
 
   const estado = reg ? emmaCalEstado(reg.cantidad, item.tamano) : 'pendiente'
   const checkClass = estado === 'completo' ? 'checked' : estado === 'parcial' ? 'parcial' : ''
-  const checkIcon = estado === 'completo' ? '✓' : estado === 'parcial' ? '~' : '○'
+  const checkIcon = estado === 'completo' ? '✓' : estado === 'parcial' ? '✏️' : '○'
   return `<div class="cal-flex-item">
     <span class="cal-flex-badge">flex</span>
     <div class="cal-item-emoji">${item.emoji}</div>
@@ -1615,17 +1575,18 @@ function emmaCalAbrirModal(itemId, hora) {
   emmaCalItemActual = item
 
   const esSolido = item.tipo === 'comida' && item.cat === 'Sólidos'
+  const esPostre = item.tipo === 'comida' && item.cat === 'Postre'
   const esLeche  = item.tipo === 'comida' && item.cat === 'Leche'
   const esSiesta = item.nombre.toLowerCase().includes('siesta')
   emmaCalQtyStep = esSiesta ? 15 : 10
   item.unidad    = esLeche ? 'cc' : esSolido ? 'gr' : esSiesta ? 'min' : 'cc'
-  emmaCalQtyMax  = esSolido ? null : (item.tamano || null)
+  emmaCalQtyMax  = (esSolido || esPostre) ? null : (item.tamano || null)
 
   let solidoChipsHtml = ''
-  if (esSolido && typeof emmaComidasData !== 'undefined') {
+  if ((esSolido || esPostre) && typeof emmaComidasData !== 'undefined') {
     const reg = emmaCalGetRegistro(item)
     solidoChipsHtml = emmaComidasData
-      .filter(c => c.categoria === 'Sólidos' && c.activo)
+      .filter(c => c.categoria === (esSolido ? 'Sólidos' : 'Postre') && c.activo)
       .map(c => `<button class="cal-solido-chip${reg?.solidoId === c._row ? ' active' : ''}"
         onclick="emmaCalSelSolido(${c._row},this)"
         data-id="${c._row}" data-tamano="${c.tamano}">
@@ -1663,7 +1624,7 @@ function emmaCalAbrirModal(itemId, hora) {
         <div class="cal-modal-sub">${item.tamano ? 'Plan: ' + item.tamano + ' ' + item.unidad : 'Categoría ' + item.cat}</div>
       </div>
       <div class="cal-modal-body">
-        ${esSolido ? `
+        ${(esSolido || esPostre) ? `
           <div>
             <div class="cal-solido-hdr">¿QUÉ COMIÓ?</div>
             <div class="cal-solido-chips" id="cal-solido-chips-inner">${solidoChipsHtml}</div>
@@ -1672,10 +1633,14 @@ function emmaCalAbrirModal(itemId, hora) {
         <div class="cal-qty-row">
           <button class="cal-qty-btn" onclick="emmaCalCambiarQty(-1)">−</button>
           <input class="cal-qty-input" id="cal-qty-input" type="number" min="0"
-                 value="${qtyVal}" oninput="emmaCalActualizarEstado()">
+                 value="${qtyVal}" oninput="emmaCalActualizarEstado()"
+                 onfocus="if(this.value==='0'||this.value===0)this.value=''"
+                 onblur="if(this.value==='')this.value=0">
           <div class="cal-qty-unit">${item.unidad}</div>
           <button class="cal-qty-btn" id="cal-qty-plus" onclick="emmaCalCambiarQty(1)"
                   ${emmaCalQtyMax !== null && qtyVal >= emmaCalQtyMax ? 'disabled' : ''}>+</button>
+          <button class="cal-qty-btn cal-qty-max" onclick="emmaCalSetMax()"
+                  ${!emmaCalQtyMax ? 'disabled' : ''}>Max</button>
         </div>
         <div class="cal-auto-estado ${estadoInicial.clase}" id="cal-auto-estado">
           <span>${estadoInicial.icono}</span>
@@ -1873,11 +1838,29 @@ function emmaCalSelSolido(solidoId, btn) {
      ?.querySelectorAll('.cal-solido-chip')
      .forEach(b => b.classList.remove('active'))
   btn.classList.add('active')
-  emmaCalQtyMax = parseInt(btn.dataset.tamano)
-  const input = document.getElementById('cal-qty-input')
-  if (input && parseInt(input.value) > emmaCalQtyMax) input.value = emmaCalQtyMax
+
+  const comida = emmaComidasData.find(c => c._row === solidoId)
+  if (comida && comida.tamano > 0) {
+    emmaCalQtyMax = comida.tamano
+    const maxBtn = document.querySelector('.cal-qty-max')
+    if (maxBtn) maxBtn.disabled = false
+    const input = document.getElementById('cal-qty-input')
+    if (input && parseInt(input.value) > emmaCalQtyMax) {
+      input.value = emmaCalQtyMax
+    }
+  }
   emmaCalActualizarEstado()
 }
+
+function emmaCalSetMax() {
+  if (!emmaCalQtyMax) return
+  const input = document.getElementById('cal-qty-input')
+  if (input) {
+    input.value = emmaCalQtyMax
+    emmaCalActualizarEstado()
+  }
+}
+window.emmaCalSetMax = emmaCalSetMax
 
 function emmaCalCambiarQty(delta) {
   const input = document.getElementById('cal-qty-input')
@@ -2073,14 +2056,109 @@ function emmaCalActualizarKPIs(plan) {
   const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v }
   const setW = (id, w) => { const e = document.getElementById(id); if (e) e.style.width = w + '%' }
 
+  const subComp = document.getElementById('cal-kpi-comp-sub')
+  if (subComp) subComp.style.display = emmaCalDiaOffset !== 0 ? 'none' : ''
+  const kpiRow = document.getElementById('cal-kpi-row')
+  if (kpiRow) kpiRow.classList.toggle('historico', emmaCalDiaOffset !== 0)
+
   set('cal-kpi-comp', completados + '/' + todos.length)
   setW('cal-kpi-comp-fill', pctComp)
   set('cal-kpi-leche', lecheTotal + 'cc')
-  set('cal-kpi-leche-sub', 'de ' + lechePlan + 'cc plan')
-  setW('cal-kpi-leche-fill', lechePlan ? Math.min(100, Math.round(lecheTotal/lechePlan*100)) : 0)
   set('cal-kpi-solidos', solidoTotal + 'gr')
-  set('cal-kpi-solidos-sub', 'de ' + solidoPlan + 'gr plan')
-  setW('cal-kpi-solidos-fill', solidoPlan ? Math.min(100, Math.round(solidoTotal/solidoPlan*100)) : 0)
+  if (emmaCalDiaOffset === 0) {
+    set('cal-kpi-leche-sub', 'de ' + lechePlan + 'cc plan')
+    setW('cal-kpi-leche-fill', lechePlan ? Math.min(100, Math.round(lecheTotal/lechePlan*100)) : 0)
+    set('cal-kpi-solidos-sub', 'de ' + solidoPlan + 'gr plan')
+    setW('cal-kpi-solidos-fill', solidoPlan ? Math.min(100, Math.round(solidoTotal/solidoPlan*100)) : 0)
+  } else {
+    set('cal-kpi-leche-sub', '')
+    setW('cal-kpi-leche-fill', 0)
+    set('cal-kpi-solidos-sub', '')
+    setW('cal-kpi-solidos-fill', 0)
+  }
+}
+
+function emmaCalAbrirPicker() {
+  const d = new Date()
+  d.setDate(d.getDate() + emmaCalDiaOffset)
+  emmaCalPickerMes = { year: d.getFullYear(), month: d.getMonth() }
+  emmaCalPickerVisible = true
+  document.getElementById('cal-picker-overlay')?.classList.add('open')
+  emmaCalRenderPicker()
+}
+
+function emmaCalRenderPicker() {
+  const { year, month } = emmaCalPickerMes
+  const mesNombre = emmaCalMeses[month].charAt(0).toUpperCase() + emmaCalMeses[month].slice(1)
+  const label = document.getElementById('cal-picker-mes-label')
+  if (label) label.textContent = mesNombre + ' ' + year
+
+  const hoy = new Date(); hoy.setHours(0,0,0,0)
+  const diaActual = new Date(); diaActual.setDate(diaActual.getDate() + emmaCalDiaOffset); diaActual.setHours(0,0,0,0)
+  const fechaMin = new Date(EMMA_FECHA_MIN); fechaMin.setHours(0,0,0,0)
+  const fechaMax = EMMA_FECHA_MAX(); fechaMax.setHours(0,0,0,0)
+
+  const primerDia = new Date(year, month, 1)
+  const diasEnMes = new Date(year, month + 1, 0).getDate()
+  const offsetInicio = primerDia.getDay()
+
+  const ultimoDiaMesActual = new Date(year, month + 1, 0); ultimoDiaMesActual.setHours(0,0,0,0)
+  const primerDiaMesSig = new Date(year, month + 1, 1); primerDiaMesSig.setHours(0,0,0,0)
+
+  const sheet = document.getElementById('cal-picker-sheet')
+  if (sheet) {
+    const navBtns = sheet.querySelectorAll('.cal-picker-nav')
+    if (navBtns[0]) navBtns[0].disabled = ultimoDiaMesActual < fechaMin || new Date(year, month - 1, 1) < fechaMin && new Date(year, month, 0) < fechaMin
+    if (navBtns[1]) navBtns[1].disabled = primerDiaMesSig > fechaMax
+  }
+
+  let gridHtml = ''
+  for (let i = 0; i < offsetInicio; i++) {
+    gridHtml += '<button class="cal-picker-day cal-picker-day-empty" disabled></button>'
+  }
+  for (let d = 1; d <= diasEnMes; d++) {
+    const fecha = new Date(year, month, d); fecha.setHours(0,0,0,0)
+    const disabled = fecha < fechaMin || fecha > fechaMax
+    const isHoy    = fecha.getTime() === hoy.getTime()
+    const isActivo = fecha.getTime() === diaActual.getTime()
+    const offset   = Math.round((fecha - hoy) / 86400000)
+    const cls = ['cal-picker-day',
+      disabled ? 'cal-picker-day-disabled' : '',
+      isHoy    ? 'cal-picker-day-today'    : '',
+      isActivo ? 'cal-picker-day-active'   : '',
+    ].filter(Boolean).join(' ')
+    gridHtml += `<button class="${cls}" ${disabled ? 'disabled' : `onclick="emmaCalIrAOffset(${offset})"`}>${d}</button>`
+  }
+  const grid = document.getElementById('cal-picker-grid')
+  if (grid) grid.innerHTML = gridHtml
+}
+
+function emmaCalIrAOffset(offset) {
+  emmaCalDiaOffset = offset
+  const d = new Date(); d.setDate(d.getDate() + emmaCalDiaOffset)
+  const lbl = emmaCalDiaOffset === 0 ? 'Hoy'
+    : emmaCalDiaOffset === -1 ? 'Ayer'
+    : emmaCalDow[d.getDay()]
+  const el = document.getElementById('cal-fecha-display')
+  if (el) el.textContent = lbl + ' · ' + d.getDate() + ' ' + emmaCalMeses[d.getMonth()]
+  const fecha = emmaCalFechaKey(emmaCalDiaOffset)
+  if (!emmaCalRegistros[fecha]) emmaCalCargarFecha(fecha).then(() => emmaCalRender())
+  emmaCalCerrarPicker()
+  emmaCalRender()
+}
+
+function emmaCalCerrarPicker() {
+  document.getElementById('cal-picker-overlay')?.classList.remove('open')
+  emmaCalPickerVisible = false
+}
+
+function emmaCalPickerNavMes(delta) {
+  let { year, month } = emmaCalPickerMes
+  month += delta
+  if (month < 0) { month = 11; year-- }
+  if (month > 11) { month = 0; year++ }
+  emmaCalPickerMes = { year, month }
+  emmaCalRenderPicker()
 }
 
 function emmaCalCerrar(id) { document.getElementById(id)?.classList.remove('open') }
@@ -2088,3 +2166,10 @@ function emmaCalCerrarSiOverlay(e, id) { if (e.target === document.getElementByI
 
 window.emmaCalRender = emmaCalRender
 window.emmaCalCambiarDia = emmaCalCambiarDia
+window.emmaCalAbrirPicker = emmaCalAbrirPicker
+window.emmaCalCerrarPicker = emmaCalCerrarPicker
+window.emmaCalCerrarPickerSiOverlay = (e) => {
+  if (e.target === document.getElementById('cal-picker-overlay')) emmaCalCerrarPicker()
+}
+window.emmaCalPickerNavMes = emmaCalPickerNavMes
+window.emmaCalIrAOffset = emmaCalIrAOffset
