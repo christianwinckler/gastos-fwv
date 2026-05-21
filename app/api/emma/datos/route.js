@@ -1,17 +1,18 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../auth/[...nextauth]/route'
-import { getComidas, getRutinas, getPlan } from '@/lib/emmaService'
+import { getComidas, getRutinas, getPlan, getRegistroDiario } from '@/lib/emmaService'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session) return Response.json({ error: 'No autorizado' }, { status: 401 })
   try {
-    const [comidas, rutinas, plan] = await Promise.all([
+    const [comidas, rutinas, plan, registros] = await Promise.all([
       getComidas(),
       getRutinas(),
       getPlan(),
+      getRegistroDiario(),
     ])
-    return Response.json({ ok: true, comidas, rutinas, plan })
+    return Response.json({ ok: true, comidas, rutinas, plan, registros })
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 })
   }

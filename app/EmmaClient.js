@@ -255,10 +255,6 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
   .screen-title-wrap { flex: 1; justify-content: flex-start; }
   .screen-title { font-size: 32px; }
 }
-@media (min-width: 921px) {
-  #screen-home .screen-topbar { display: none; }
-}
-
 .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--emma-accent); color: #fff; padding: 8px 20px; border-radius: 20px; font-size: 13px; white-space: nowrap; z-index: 300; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
 .toast.show { opacity: 1; }
 
@@ -693,7 +689,7 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
 .cal-flex-wrap { background:rgba(127,119,221,0.04);border:1px dashed rgba(127,119,221,0.22);border-radius:14px;padding:8px 10px;margin-bottom:8px;display:flex;flex-direction:column;gap:5px; }
 .cal-flex-item { background:var(--emma-card);border:0.5px solid rgba(127,119,221,0.15);border-radius:10px;display:flex;align-items:center;gap:9px;padding:10px 10px 10px 12px; }
 .cal-flex-badge { font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:transparent;color:var(--emma-muted);border:0.5px solid rgba(127,119,221,0.2);flex-shrink:0; }
-.cal-modal-overlay { display:none;position:absolute;inset:0;background:rgba(31,29,58,0.45);z-index:300;align-items:flex-end;justify-content:center; }
+.cal-modal-overlay { display:none;position:fixed;inset:0;background:rgba(31,29,58,0.45);z-index:300;align-items:flex-end;justify-content:center; }
 .cal-modal-overlay.open { display:flex; }
 .cal-modal-sheet { background:#fff;border-radius:24px 24px 0 0;padding:0 0 36px;width:100%;max-width:600px;max-height:88vh;overflow-y:auto; }
 .cal-modal-handle { width:36px;height:4px;background:rgba(127,119,221,0.25);border-radius:2px;margin:14px auto 18px; }
@@ -766,6 +762,162 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
 .bulk-btn-cancel { background:var(--emma-bg);color:var(--emma-muted); }
 .bulk-btn-disable { background:var(--emma-accent-soft);color:var(--emma-accent-mid); }
 .bulk-btn-disable:disabled { opacity:0.4;cursor:not-allowed; }
+
+/* ── REGISTRO RÁPIDO (er-*) ─────────────────────────────── */
+.er-overlay {
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.35);z-index:200;
+  align-items:flex-end;justify-content:center;
+}
+.er-overlay.open { display:flex; }
+.er-sheet {
+  background:var(--emma-card);
+  border-radius:20px 20px 0 0;
+  padding:12px 20px 36px;
+  width:100%;max-width:480px;
+}
+.er-flow {
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.35);z-index:200;
+  align-items:flex-end;justify-content:center;
+}
+.er-flow.open { display:flex; }
+.er-flow-inner {
+  background:var(--emma-card);
+  border-radius:20px 20px 0 0;
+  padding:12px 20px 36px;
+  width:100%;max-width:480px;
+  max-height:85vh;overflow-y:auto;
+}
+.er-flow-header {
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:20px;
+}
+.er-flow-body { padding:0; }
+.er-handle {
+  width:36px;height:4px;border-radius:2px;
+  background:var(--emma-border);margin:0 auto 20px;
+}
+.er-title { font-size:16px;font-weight:600;color:var(--emma-fg);margin-bottom:4px; }
+.er-sub { font-size:13px;color:var(--emma-muted);margin-bottom:20px; }
+.er-section-label {
+  font-size:10px;font-weight:700;letter-spacing:0.07em;
+  color:var(--emma-muted);text-transform:uppercase;margin-bottom:10px;
+}
+.er-option-btn {
+  width:100%;padding:14px 16px;
+  border-radius:14px;border:0.5px solid var(--emma-border);
+  background:var(--emma-card);
+  display:flex;align-items:center;gap:14px;
+  cursor:pointer;margin-bottom:10px;text-align:left;
+}
+.er-option-icon {
+  width:42px;height:42px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;
+}
+.er-icon-food { background:#EEEDFE; }
+.er-icon-diaper { background:#E1F5EE; }
+.er-option-title { font-size:14px;font-weight:600;color:var(--emma-fg); }
+.er-option-sub { font-size:12px;color:var(--emma-muted);margin-top:2px; }
+.er-back-btn {
+  width:32px;height:32px;border-radius:8px;
+  background:var(--emma-bg);border:0.5px solid var(--emma-border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:18px;color:var(--emma-muted);
+}
+.er-flow-title { font-size:16px;font-weight:600;color:var(--emma-fg); }
+.er-date-row { display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap; }
+.er-date-chip {
+  padding:8px 14px;border-radius:10px;
+  border:0.5px solid var(--emma-border);
+  background:var(--emma-card);
+  font-size:13px;color:var(--emma-muted);cursor:pointer;
+}
+.er-date-chip.active { background:var(--emma-accent);color:#fff;border-color:var(--emma-accent); }
+.er-hora-grid { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px; }
+.er-hora-chip {
+  padding:14px;border-radius:12px;
+  border:0.5px solid var(--emma-border);
+  background:var(--emma-card);
+  font-size:15px;font-weight:600;color:var(--emma-fg);
+  cursor:pointer;text-align:center;
+}
+.er-hora-chip:active,.er-hora-chip.active {
+  border-color:var(--emma-accent);background:#EEEDFE;color:#534AB7;
+}
+.er-hora-back { font-size:13px;color:var(--emma-accent);cursor:pointer;margin-bottom:8px; }
+.er-hora-actual { font-size:18px;font-weight:700;color:var(--emma-fg);margin-bottom:16px; }
+.er-items-list { display:flex;flex-direction:column;gap:8px; }
+.er-item-row {
+  background:var(--emma-card);border:0.5px solid var(--emma-border);
+  border-radius:14px;padding:12px 14px;
+  display:flex;align-items:center;gap:12px;
+}
+.er-item-emoji { font-size:22px;width:32px;text-align:center; }
+.er-item-info { flex:1; }
+.er-item-name { font-size:14px;font-weight:600;color:var(--emma-fg); }
+.er-item-sub { font-size:12px;color:var(--emma-muted);margin-top:2px; }
+.er-item-check {
+  width:32px;height:32px;border-radius:50%;
+  border:1.5px solid var(--emma-border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:16px;color:transparent;flex-shrink:0;
+}
+.er-item-check.done { background:var(--emma-accent);border-color:var(--emma-accent);color:#fff; }
+.er-item-check.parcial { background:#EEEDFE;border-color:var(--emma-accent);color:var(--emma-accent); }
+.er-diaper-card {
+  background:var(--emma-card);border:0.5px solid var(--emma-border);
+  border-radius:16px;padding:20px;display:flex;margin-bottom:20px;
+}
+.er-diaper-half { flex:1;text-align:center; }
+.er-diaper-divider { width:0.5px;background:var(--emma-border);margin:0 16px; }
+.er-diaper-label {
+  font-size:10px;font-weight:700;letter-spacing:0.07em;
+  color:#AFA9EC;margin-bottom:12px;
+}
+.er-cnt-row { display:flex;align-items:center;justify-content:center; }
+.er-cnt-btn {
+  width:38px;height:38px;border-radius:10px;
+  border:0.5px solid var(--emma-border);
+  background:var(--emma-bg);font-size:22px;
+  cursor:pointer;color:var(--emma-fg);
+  display:flex;align-items:center;justify-content:center;
+}
+.er-cnt-val {
+  font-size:30px;font-weight:600;color:var(--emma-accent);
+  min-width:52px;text-align:center;
+}
+.er-save-btn {
+  width:100%;padding:14px;border-radius:14px;
+  background:var(--emma-accent);border:none;
+  color:#fff;font-size:15px;font-weight:600;
+  cursor:pointer;margin-top:8px;
+}
+.er-cancel-btn {
+  width:100%;padding:12px;border-radius:12px;
+  border:none;background:transparent;
+  font-size:14px;color:var(--emma-muted);cursor:pointer;margin-top:4px;
+}
+.er-fecha-btn {
+  width:100%;padding:10px 16px;border-radius:12px;
+  border:0.5px solid var(--emma-border);background:var(--emma-card);
+  font-size:14px;color:var(--emma-fg);text-align:left;cursor:pointer;
+  margin-bottom:20px;display:flex;align-items:center;gap:8px;
+  font-family:inherit;
+}
+.er-confirm-icon { font-size:40px;text-align:center;margin-bottom:12px; }
+.er-confirm-title {
+  font-size:18px;font-weight:700;text-align:center;
+  color:var(--emma-fg);margin-bottom:4px;
+}
+.er-confirm-sub { font-size:13px;text-align:center;color:var(--emma-muted);margin-bottom:4px; }
+@media (min-width:768px) {
+  .er-overlay { align-items:center; }
+  .er-sheet { border-radius:20px;max-width:420px;max-height:90vh;overflow-y:auto; }
+  .er-flow { align-items:center; }
+  .er-flow-inner { border-radius:20px;max-height:85vh; }
+}
   `
 
   const htmlContent = `
@@ -820,7 +972,7 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
         <button class="icon-btn" onclick="emmaActualizarTodo()" title="Actualizar">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/><path d="M13.5 2v4h-4"/></svg>
         </button>
-        <button class="icon-btn add" onclick="emmaAbrirNuevaComida()" title="Nueva comida">+</button>
+        <button class="icon-btn add" onclick="erAbrirSelector()" title="Registrar">+</button>
       </nav>
 
       <main style="width:100%;overflow-x:hidden;">
@@ -840,7 +992,7 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
                 <button class="icon-btn" onclick="emmaActualizarTodo()" title="Actualizar">
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/><path d="M13.5 2v4h-4"/></svg>
                 </button>
-                <button class="icon-btn add" onclick="emmaAbrirNuevaComida()" title="Nueva comida">+</button>
+                <button class="icon-btn add" onclick="erAbrirSelector()" title="Registrar">+</button>
               </div>
             </div>
           </div>
@@ -1760,6 +1912,153 @@ body { font-family: 'Geist', -apple-system, sans-serif; background: var(--emma-b
 <div id="emma-loading-overlay" style="display:none;position:fixed;inset:0;background:rgba(245,244,251,0.92);z-index:500;flex-direction:column;align-items:center;justify-content:center;gap:12px;">
   <div style="width:36px;height:36px;border:3px solid var(--emma-accent-light);border-top-color:var(--emma-accent);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
   <div id="emma-loading-text" style="font-size:14px;color:var(--emma-muted);font-family:-apple-system,sans-serif;">Cargando datos...</div>
+</div>
+
+<!-- ── REGISTRO RÁPIDO ──────────────────────────────────── -->
+
+<div class="er-overlay" id="er-overlay-selector"
+     onclick="erCerrarSiOverlay(event,'er-overlay-selector')">
+  <div class="er-sheet">
+    <div class="er-handle"></div>
+    <div class="er-title">¿Qué quieres ingresar?</div>
+    <div class="er-sub">Selecciona el tipo de registro</div>
+    <div class="er-option-btn" onclick="erAbrirComidas()">
+      <div class="er-option-icon er-icon-food">🍼</div>
+      <div>
+        <div class="er-option-title">Comidas y rutinas</div>
+        <div class="er-option-sub">Leche, sólidos, rutinas del plan</div>
+      </div>
+    </div>
+    <div class="er-option-btn" onclick="erAbrirPanales()">
+      <div class="er-option-icon er-icon-diaper">🩲</div>
+      <div>
+        <div class="er-option-title">Pipí y Popó</div>
+        <div class="er-option-sub">Registro de pañales del día</div>
+      </div>
+    </div>
+    <button class="er-cancel-btn" onclick="erCerrar('er-overlay-selector')">Cancelar</button>
+  </div>
+</div>
+
+<div class="er-flow" id="er-flow-comidas">
+  <div class="er-flow-inner">
+    <div class="er-flow-header">
+      <div class="er-back-btn" onclick="erCerrarComidas()">‹</div>
+      <div class="er-flow-title">Comidas y rutinas</div>
+    </div>
+    <div class="er-flow-body">
+      <div class="er-section-label">Fecha</div>
+      <button class="er-fecha-btn" id="er-fecha-btn-comidas"
+              onclick="erAbrirFechaPicker('comidas')">
+        📅 <span id="er-fecha-display-comidas">Hoy · 21 mayo</span> ▾
+      </button>
+      <div id="er-paso-hora">
+        <div class="er-section-label">Selecciona el horario</div>
+        <div class="er-hora-grid" id="er-hora-grid"></div>
+        <div id="er-paso-items" style="display:none">
+          <div class="er-hora-actual" id="er-hora-actual"
+               style="margin-top:16px;"></div>
+          <div class="er-items-list" id="er-items-list"></div>
+          <button class="er-save-btn"
+                  onclick="erGuardarComidas()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="er-flow" id="er-flow-panales">
+  <div class="er-flow-inner">
+    <div class="er-flow-header">
+      <div class="er-back-btn" onclick="erCerrarPanales()">‹</div>
+      <div class="er-flow-title">Pipí y Popó</div>
+    </div>
+    <div class="er-flow-body">
+      <div class="er-section-label">Fecha</div>
+      <button class="er-fecha-btn" id="er-fecha-btn-panales"
+              onclick="erAbrirFechaPicker('panales')">
+        📅 <span id="er-fecha-display-panales">Hoy · 21 mayo</span> ▾
+      </button>
+      <div class="er-diaper-card">
+      <div class="er-diaper-half">
+        <div class="er-diaper-label">PIPÍ</div>
+        <div class="er-cnt-row">
+          <div class="er-cnt-btn" onclick="erCambiarPanal('pipi',-1)">−</div>
+          <div class="er-cnt-val" id="er-cnt-pipi">0</div>
+          <div class="er-cnt-btn" onclick="erCambiarPanal('pipi',1)">+</div>
+        </div>
+      </div>
+      <div class="er-diaper-divider"></div>
+      <div class="er-diaper-half">
+        <div class="er-diaper-label">POPÓ</div>
+        <div class="er-cnt-row">
+          <div class="er-cnt-btn" onclick="erCambiarPanal('popo',-1)">−</div>
+          <div class="er-cnt-val" id="er-cnt-popo">0</div>
+          <div class="er-cnt-btn" onclick="erCambiarPanal('popo',1)">+</div>
+        </div>
+      </div>
+    </div>
+      <button class="er-save-btn" onclick="erGuardarPanales()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="er-overlay" id="er-overlay-tiempo"
+     onclick="erCerrarSiOverlay(event,'er-overlay-tiempo')">
+  <div class="er-sheet">
+    <div class="er-handle"></div>
+    <div class="er-title" id="er-tiempo-nombre"></div>
+    <div class="er-sub">¿Cuánto tiempo duró?</div>
+    <div class="cal-tiempo-picker">
+      <div class="cal-tiempo-col">
+        <div class="cal-tiempo-arrow" onclick="erTiempoCambiar('h',1)">▲</div>
+        <div class="cal-tiempo-val" id="er-t-h">0</div>
+        <div class="cal-tiempo-arrow" onclick="erTiempoCambiar('h',-1)">▼</div>
+        <div class="cal-tiempo-unit">HORA</div>
+      </div>
+      <div class="cal-tiempo-sep">:</div>
+      <div class="cal-tiempo-col">
+        <div class="cal-tiempo-arrow" onclick="erTiempoCambiar('m',1)">▲</div>
+        <div class="cal-tiempo-val" id="er-t-m">00</div>
+        <div class="cal-tiempo-arrow" onclick="erTiempoCambiar('m',-1)">▼</div>
+        <div class="cal-tiempo-unit">MIN</div>
+      </div>
+    </div>
+    <div class="cal-tiempo-quick">
+      <button class="cal-tiempo-pill" onclick="erTiempoSetQuick(0,15,this)">0:15</button>
+      <button class="cal-tiempo-pill" onclick="erTiempoSetQuick(0,30,this)">0:30</button>
+      <button class="cal-tiempo-pill" onclick="erTiempoSetQuick(0,45,this)">0:45</button>
+      <button class="cal-tiempo-pill" onclick="erTiempoSetQuick(1,0,this)">1:00</button>
+      <button class="cal-tiempo-pill" onclick="erTiempoSetQuick(1,30,this)">1:30</button>
+      <button class="cal-tiempo-pill" onclick="erTiempoSetQuick(2,0,this)">2:00</button>
+    </div>
+    <button class="er-save-btn" onclick="erGuardarTiempo()">Guardar</button>
+    <button class="er-cancel-btn" onclick="erCerrar('er-overlay-tiempo')">Cancelar</button>
+  </div>
+</div>
+
+<div class="er-overlay" id="er-overlay-confirm">
+  <div class="er-sheet">
+    <div class="er-handle"></div>
+    <div class="er-confirm-icon">✅</div>
+    <div class="er-confirm-title" id="er-confirm-title">¡Registrado!</div>
+    <div class="er-confirm-sub" id="er-confirm-sub"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:20px;">
+      <button class="er-save-btn" onclick="erVolverInicio()">🏠 Volver al inicio</button>
+      <button class="er-option-btn" id="er-btn-repetir" onclick="erRepetirFlujo()">
+        <span id="er-repetir-emoji" style="font-size:18px">🍼</span>
+        <div>
+          <div class="er-option-title" id="er-repetir-txt">Ingresar otra comida</div>
+        </div>
+      </button>
+      <button class="er-option-btn" id="er-btn-otro" onclick="erOtroFlujo()">
+        <span id="er-otro-emoji" style="font-size:18px">🩲</span>
+        <div>
+          <div class="er-option-title" id="er-otro-txt">Ingresar Pipí / Popó</div>
+        </div>
+      </button>
+    </div>
+  </div>
 </div>
   `
 

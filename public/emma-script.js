@@ -63,7 +63,7 @@ function emmaSwitchScreen(screen, pushHistory = true) {
     const _el = document.getElementById('cal-fecha-display')
     if (_el) _el.textContent = _lbl + ' · ' + _d.getDate() + ' ' + emmaCalMeses[_d.getMonth()]
     const _fecha = emmaCalFechaKey(emmaCalDiaOffset)
-    if (!emmaCalRegistros[_fecha]) emmaCalCargarFecha(_fecha).then(() => emmaCalRender())
+    emmaCalCargarPanales(_fecha).then(() => emmaCalRender())
   }
 
   window.scrollTo(0, 0)
@@ -208,6 +208,46 @@ async function emmaCargarDatos() {
       return tA !== tB ? tA - tB : a.orden - b.orden
     })
 
+    Object.keys(emmaCalRegistros).forEach(k => {
+      if (k !== '_panales') delete emmaCalRegistros[k]
+    })
+
+    ;(data.registros || []).slice(1).forEach(row => {
+      const fecha        = row[0]
+      const hora         = row[1] || ''
+      const tipoRegistro = row[2]
+      const detalle      = row[3] || ''
+      const cantidad     = parseFloat(row[4]) || 0
+      const unidad       = row[5] || ''
+      const estado       = row[6] || 'pendiente'
+      const nota         = row[7] || ''
+
+      if (!fecha) return
+      if (!emmaCalRegistros[fecha]) emmaCalRegistros[fecha] = {}
+
+      const [hStr, mStr] = hora ? hora.split(':') : ['0','0']
+      const h = parseInt(hStr) || 0
+      const m = parseInt(mStr) || 0
+      const tipo = tipoRegistro?.toLowerCase()
+      const itemMatch = emmaPlanData.find(i =>
+        i.hora === h && i.min === m &&
+        (
+          (tipo === 'leche'  && i.cat === 'Leche')   ||
+          (tipo === 'sólido' && i.cat === 'Sólidos') ||
+          (tipo === 'postre' && i.cat === 'Postre')  ||
+          (tipo === 'rutina' && i.tipo === 'rutina' &&
+           (detalle === '' || i.nombre === detalle || hora === ''))
+        )
+      )
+      const key = itemMatch
+        ? emmaCalItemKey(fecha, itemMatch)
+        : fecha + '_' + tipo + '_' + hora
+
+      emmaCalRegistros[fecha][key] = {
+        cantidad, unidad, estado, detalle, nota
+      }
+    })
+
     emmaDataCargada = true
 
     emmaOcultarLoading()
@@ -295,7 +335,6 @@ emmaIniciarCarga()
 
 async function emmaHomeRender() {
   const fechaHoy = emmaCalFechaKey(0)
-  if (!emmaCalRegistros[fechaHoy]) await emmaCalCargarFecha(fechaHoy)
 
   const plan = { items: emmaPlanData }
   const regs = emmaCalRegistros[fechaHoy] || {}
@@ -1219,7 +1258,7 @@ function emmaPlanesCerrarSiOverlay(e, id) { if (e.target === document.getElement
 window.emmaPlanesRenderLista = emmaPlanesRenderLista
 
 // ── CALENDARIO ────────────────────────────────────────────
-// Registros por fecha: { 'YYYY-MM-DD': { itemId: { cantidad, nota, solidoNombre, estado } } }
+// Registros por fecha: { 'YYYY-MM-DD': { itemId: { cantidad, nota, detalle, estado } } }
 
 function emmaCalFechaKey(offset) {
   const d = new Date(); d.setDate(d.getDate() + offset)
@@ -1230,53 +1269,19 @@ function emmaCalItemKey(fecha, item) {
   return fecha + '_' + item.nombre + '_' + item.hora + '_' + item.min
 }
 
-async function emmaCalCargarFecha(fecha) {
+async function emmaCalCargarPanales(fecha) {
   try {
-    const [regRes, panRes] = await Promise.all([
-      fetch('/api/emma/registro?fecha=' + fecha),
-      fetch('/api/emma/panales?fecha='  + fecha),
-    ])
-    const regData = await regRes.json()
+    const panRes = await fetch('/api/emma/panales?fecha=' + fecha)
     const panData = await panRes.json()
-
     if (!emmaCalRegistros[fecha]) emmaCalRegistros[fecha] = {}
-
-    if (regData.ok) {
-      regData.rows.forEach(row => {
-        const tipoReg = row[1] || ''
-        const horaStr = row[2] || ''
-        let matchHora = -1, matchMin = -1
-        if (horaStr) {
-          const parts = horaStr.split(':')
-          matchHora = parseInt(parts[0]) || 0
-          matchMin  = parseInt(parts[1]) || 0
-        }
-        const item = emmaPlanData.find(i => {
-          if (tipoReg === 'rutina' && i.tipo !== 'rutina') return false
-          if (tipoReg !== 'rutina' && i.tipo !== 'comida') return false
-          if (tipoReg === 'leche'  && i.cat !== 'Leche')   return false
-          if (tipoReg === 'sólido' && i.cat !== 'Sólidos') return false
-          if (tipoReg === 'postre' && i.cat !== 'Postre')  return false
-          if (horaStr) return i.hora === matchHora && i.min === matchMin
-          return i.flexible
-        })
-        if (!item) return
-        const key = emmaCalItemKey(fecha, item)
-        emmaCalRegistros[fecha][key] = {
-          cantidad:     parseFloat(row[3]) || 0,
-          unidad:       row[4] || '',
-          estado:       row[5] || 'pendiente',
-          solidoNombre: row[6] || '',
-          nota:         row[7] || '',
-        }
-      })
-    }
-
     if (panData.pipi !== undefined) {
-      emmaCalRegistros[fecha]['_panales'] = { pipi: panData.pipi, popo: panData.popo }
+      emmaCalRegistros[fecha]['_panales'] = {
+        pipi: panData.pipi,
+        popo: panData.popo
+      }
     }
   } catch (err) {
-    console.error('[Emma] emmaCalCargarFecha error:', err)
+    console.error('[Emma] emmaCalCargarPanales error:', err)
   }
 }
 
@@ -1289,9 +1294,8 @@ async function emmaCalCambiarDia(delta) {
   const el = document.getElementById('cal-fecha-display')
   if (el) el.textContent = lbl + ' · ' + d.getDate() + ' ' + emmaCalMeses[d.getMonth()]
   const fecha = emmaCalFechaKey(emmaCalDiaOffset)
-  if (!emmaCalRegistros[fecha]) await emmaCalCargarFecha(fecha)
-  const fechaAyer = emmaCalFechaKey(emmaCalDiaOffset - 1)
-  if (!emmaCalRegistros[fechaAyer]) await emmaCalCargarFecha(fechaAyer)
+  await emmaCalCargarPanales(fecha)
+  await emmaCalCargarPanales(emmaCalFechaKey(emmaCalDiaOffset - 1))
   emmaCalRender()
 }
 
@@ -1418,7 +1422,7 @@ function emmaCalItemHtml(item, hora) {
   const reg = emmaCalGetRegistro(item)
   const estado = reg ? emmaCalEstado(reg.cantidad, item.tamano) : 'pendiente'
   const subText = reg
-    ? (reg.solidoNombre ? reg.solidoNombre + ' · ' + reg.cantidad + (item.unidad || '') : reg.cantidad + ' ' + (item.unidad || '') + (reg.nota ? ' · ' + reg.nota : ''))
+    ? (reg.detalle ? reg.detalle + ' · ' + reg.cantidad + (item.unidad || '') : reg.cantidad + ' ' + (item.unidad || '') + (reg.nota ? ' · ' + reg.nota : ''))
     : 'Pendiente'
   const checkClass = estado === 'completo' ? 'checked' : estado === 'parcial' ? 'parcial' : ''
   const checkIcon = estado === 'completo' ? '✓' : estado === 'parcial' ? '✏️' : '○'
@@ -1805,12 +1809,12 @@ function emmaCalGuardarTiempo() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       fecha,
-      tipoRegistro: 'rutina',
       hora: horaStr,
+      tipoRegistro: 'Rutina',
+      detalle: item.nombre,
       cantidad: totalMin,
       unidad: 'min',
       estado: 'completo',
-      solidoNombre: '',
       nota,
     })
   })
@@ -1818,7 +1822,7 @@ function emmaCalGuardarTiempo() {
   .then(data => {
     if (data.ok) {
       if (!emmaCalRegistros[fecha]) emmaCalRegistros[fecha] = {}
-      emmaCalRegistros[fecha][emmaCalItemKey(fecha, item)] = { cantidad: totalMin, nota, estado: 'completo' }
+      emmaCalRegistros[fecha][emmaCalItemKey(fecha, item)] = { cantidad: totalMin, nota, detalle: item.nombre, estado: 'completo' }
       emmaCalCerrar('cal-modal-registro')
       emmaCalRender()
     } else {
@@ -1914,30 +1918,32 @@ function emmaCalActualizarCompareModal(item) {
 
 function emmaCalGuardarRegistro() {
   if (!emmaCalItemActual) return
-  const val          = parseInt(document.getElementById('cal-qty-input')?.value) || 0
-  const nota         = document.getElementById('cal-nota-input')?.value.trim() || ''
-  const solidoActivo = document.querySelector('.cal-solido-chip.active')
-  const solidoNombre = solidoActivo ? solidoActivo.textContent.trim().split(' · ')[0] : ''
-  const estado       = emmaCalEstado(val, emmaCalQtyMax)
-  const fecha        = emmaCalFechaKey(emmaCalDiaOffset)
-  const item         = emmaCalItemActual
-  const horaStr      = item.flexible ? '' : item.hora + ':' + String(item.min).padStart(2, '0')
+  const val       = parseInt(document.getElementById('cal-qty-input')?.value) || 0
+  const nota      = document.getElementById('cal-nota-input')?.value.trim() || ''
+  const chipActivo = document.querySelector('.cal-solido-chip.active')
+  const detalle   = chipActivo
+    ? chipActivo.textContent.trim().split(' · ')[0].replace(/^\S+\s/, '').trim()
+    : (emmaCalItemActual.tipo === 'rutina' ? emmaCalItemActual.nombre : '')
+  const estado    = emmaCalEstado(val, emmaCalQtyMax)
+  const fecha     = emmaCalFechaKey(emmaCalDiaOffset)
+  const item      = emmaCalItemActual
+  const horaStr   = item.flexible ? '' : item.hora + ':' + String(item.min).padStart(2, '0')
 
   fetch('/api/emma/registro', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       fecha,
-      tipoRegistro: item.tipo === 'rutina' ? 'rutina'
-                  : item.cat  === 'Leche'  ? 'leche'
-                  : item.cat  === 'Sólidos'? 'sólido'
-                  : item.cat  === 'Postre' ? 'postre'
-                  : 'comida',
       hora:        horaStr,
+      tipoRegistro: item.tipo === 'rutina' ? 'Rutina'
+                  : item.cat  === 'Leche'  ? 'Leche'
+                  : item.cat  === 'Sólidos'? 'Sólido'
+                  : item.cat  === 'Postre' ? 'Postre'
+                  : 'Leche',
+      detalle,
       cantidad:    val,
       unidad:      item.unidad || '',
       estado,
-      solidoNombre,
       nota,
     })
   })
@@ -1945,7 +1951,7 @@ function emmaCalGuardarRegistro() {
   .then(data => {
     if (data.ok) {
       if (!emmaCalRegistros[fecha]) emmaCalRegistros[fecha] = {}
-      emmaCalRegistros[fecha][emmaCalItemKey(fecha, item)] = { cantidad: val, nota, solidoNombre, estado }
+      emmaCalRegistros[fecha][emmaCalItemKey(fecha, item)] = { cantidad: val, nota, detalle, estado }
       emmaCalCerrar('cal-modal-registro')
       emmaCalRender()
     } else {
@@ -1967,12 +1973,12 @@ function emmaCalToggleBinario(itemId, btn) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       fecha,
-      tipoRegistro: 'rutina',
       hora: '',
+      tipoRegistro: 'Rutina',
+      detalle: item.nombre,
       cantidad: nuevo,
       unidad: '',
       estado: nuevo === 1 ? 'completo' : 'pendiente',
-      solidoNombre: '',
       nota: '',
     })
   })
@@ -1980,7 +1986,7 @@ function emmaCalToggleBinario(itemId, btn) {
   .then(data => {
     if (data.ok) {
       if (!emmaCalRegistros[fecha]) emmaCalRegistros[fecha] = {}
-      emmaCalRegistros[fecha][emmaCalItemKey(fecha, item)] = { cantidad: nuevo, estado: nuevo === 1 ? 'completo' : 'pendiente' }
+      emmaCalRegistros[fecha][emmaCalItemKey(fecha, item)] = { cantidad: nuevo, detalle: item.nombre, estado: nuevo === 1 ? 'completo' : 'pendiente' }
       emmaCalRender()
     }
   })
@@ -2006,12 +2012,12 @@ function emmaCalCnt(itemId, delta) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       fecha,
-      tipoRegistro: 'rutina',
       hora: '',
+      tipoRegistro: 'Rutina',
+      detalle: item.nombre,
       cantidad: nuevo,
       unidad: '',
       estado: nuevo > 0 ? 'completo' : 'pendiente',
-      solidoNombre: '',
       nota: '',
     })
   })
@@ -2127,13 +2133,20 @@ function emmaCalRenderPicker() {
       isHoy    ? 'cal-picker-day-today'    : '',
       isActivo ? 'cal-picker-day-active'   : '',
     ].filter(Boolean).join(' ')
-    gridHtml += `<button class="${cls}" ${disabled ? 'disabled' : `onclick="emmaCalIrAOffset(${offset})"`}>${d}</button>`
+    gridHtml += `<button class="${cls}" ${disabled ? 'disabled' : `onclick="emmaCalSeleccionarDia(${offset})"`}>${d}</button>`
   }
   const grid = document.getElementById('cal-picker-grid')
   if (grid) grid.innerHTML = gridHtml
 }
 
 function emmaCalIrAOffset(offset) {
+  if (erPickerCallback) {
+    erPickerCallback(offset)
+    erPickerCallback = null
+    erPickerContexto = null
+    emmaCalCerrarPicker()
+    return
+  }
   emmaCalDiaOffset = offset
   const d = new Date(); d.setDate(d.getDate() + emmaCalDiaOffset)
   const lbl = emmaCalDiaOffset === 0 ? 'Hoy'
@@ -2142,10 +2155,23 @@ function emmaCalIrAOffset(offset) {
   const el = document.getElementById('cal-fecha-display')
   if (el) el.textContent = lbl + ' · ' + d.getDate() + ' ' + emmaCalMeses[d.getMonth()]
   const fecha = emmaCalFechaKey(emmaCalDiaOffset)
-  if (!emmaCalRegistros[fecha]) emmaCalCargarFecha(fecha).then(() => emmaCalRender())
+  emmaCalCargarPanales(fecha).then(() => emmaCalRender())
   emmaCalCerrarPicker()
   emmaCalRender()
 }
+
+function emmaCalSeleccionarDia(offset) {
+  if (typeof erPickerCallback === 'function') {
+    erPickerCallback(offset)
+    erPickerCallback = null
+    erPickerContexto = null
+    emmaCalCerrarPicker()
+    return
+  }
+  emmaCalIrAOffset(offset)
+  emmaCalCerrarPicker()
+}
+window.emmaCalSeleccionarDia = emmaCalSeleccionarDia
 
 function emmaCalCerrarPicker() {
   document.getElementById('cal-picker-overlay')?.classList.remove('open')
@@ -2173,3 +2199,397 @@ window.emmaCalCerrarPickerSiOverlay = (e) => {
 }
 window.emmaCalPickerNavMes = emmaCalPickerNavMes
 window.emmaCalIrAOffset = emmaCalIrAOffset
+
+// ── REGISTRO RÁPIDO (er-*) ────────────────────────────────────
+let erFlujoActual   = null
+let erFechaOffset   = 0
+let erHoraActual    = null
+let erPanalesLocal  = { pipi: 0, popo: 0 }
+let erTiempoH       = 0
+let erTiempoM       = 0
+let erItemTiempoActual = null
+let erRegistrosLocales = {}
+let erPickerContexto  = null
+let erPickerCallback  = null
+
+function erAbrirSelector() {
+  document.getElementById('er-overlay-selector')?.classList.add('open')
+}
+
+function erCerrar(id) {
+  document.getElementById(id)?.classList.remove('open')
+}
+
+function erCerrarSiOverlay(e, id) {
+  if (e.target === document.getElementById(id)) erCerrar(id)
+}
+
+function erRenderDateChips(containerId) {
+  const hoy  = emmaCalFechaKey(0)
+  const ayer = emmaCalFechaKey(-1)
+  const chips = [
+    { label: 'Hoy',  offset: 0  },
+    { label: 'Ayer', offset: -1 },
+  ]
+  const html = chips.map(c =>
+    `<div class="er-date-chip${erFechaOffset === c.offset ? ' active' : ''}"
+          onclick="erSeleccionarFecha(${c.offset},'${containerId}')">${c.label}</div>`
+  ).join('')
+  const el = document.getElementById(containerId)
+  if (el) el.innerHTML = html
+}
+
+function erSeleccionarFecha(offset, containerId) {
+  erFechaOffset = offset
+  erRenderDateChips(containerId)
+}
+
+function erRenderHoraGrid() {
+  const horasMap = new Map()
+  emmaPlanData
+    .filter(i => !i.flexible)
+    .forEach(i => {
+      const label = i.hora + ':' + String(i.min).padStart(2,'0')
+      if (!horasMap.has(label)) horasMap.set(label, i.hora * 60 + i.min)
+    })
+  const horas = [...horasMap.entries()]
+    .sort((a, b) => a[1] - b[1])
+    .map(([label]) => label)
+  const el = document.getElementById('er-hora-grid')
+  if (!el) return
+  el.innerHTML = horas.map(h =>
+    `<div class="er-hora-chip" onclick="erVerItems('${h}')">${h}</div>`
+  ).join('')
+}
+
+function erVerItems(hora) {
+  erHoraActual = hora
+  document.querySelectorAll('#er-hora-grid .er-hora-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.textContent === hora)
+  })
+  const [h, m] = hora.split(':').map(Number)
+  const items = emmaPlanData.filter(i => i.hora === h && i.min === m)
+  const elTitulo = document.getElementById('er-hora-actual')
+  if (elTitulo) elTitulo.textContent = hora
+  document.getElementById('er-paso-items').style.display = 'block'
+
+  const list = document.getElementById('er-items-list')
+  if (!list) return
+  list.innerHTML = items.map(item => {
+    const reg = erRegistrosLocales[item._row]
+    const estado = reg?.estado || 'pendiente'
+    const checkClass = estado === 'completo' ? 'done' : estado === 'parcial' ? 'parcial' : ''
+    const checkIcon  = estado === 'completo' ? '✓' : estado === 'parcial' ? '✏️' : '○'
+    let onclick = ''
+    if (item.tipo === 'rutina' && item.registroTipo === 'tiempo') {
+      onclick = `erAbrirTiempo(${item._row})`
+    } else if (item.tipo === 'rutina') {
+      onclick = `erToggleBinario(${item._row})`
+    } else {
+      onclick = `emmaCalAbrirModal(${item._row},'${hora}')`
+    }
+    return `<div class="er-item-row">
+      <div class="er-item-emoji">${item.emoji}</div>
+      <div class="er-item-info">
+        <div class="er-item-name">${item.nombre}</div>
+        <div class="er-item-sub">${item.sub}</div>
+      </div>
+      <div class="er-item-check ${checkClass}" id="er-check-${item._row}"
+           onclick="${onclick}">${checkIcon}</div>
+    </div>`
+  }).join('')
+}
+
+function erToggleBinario(itemRow) {
+  const item = emmaPlanData.find(i => i._row === itemRow)
+  if (!item) return
+  const actual = erRegistrosLocales[itemRow]
+  const nuevo  = actual?.cantidad === 1 ? 0 : 1
+  erRegistrosLocales[itemRow] = {
+    cantidad: nuevo,
+    estado:   nuevo === 1 ? 'completo' : 'pendiente',
+    detalle:  item.nombre,
+  }
+  const checkEl = document.getElementById('er-check-' + itemRow)
+  if (checkEl) {
+    checkEl.className = 'er-item-check' + (nuevo === 1 ? ' done' : '')
+    checkEl.textContent = nuevo === 1 ? '✓' : '○'
+  }
+}
+
+function erVolverHoras() {
+  document.getElementById('er-paso-items').style.display = 'none'
+  document.querySelectorAll('#er-hora-grid .er-hora-chip').forEach(c => c.classList.remove('active'))
+}
+
+function erAbrirComidas() {
+  erFlujoActual = 'comida'
+  erFechaOffset = 0
+  erRegistrosLocales = {}
+  erCerrar('er-overlay-selector')
+  erActualizarFechaDisplay('comidas')
+  erRenderHoraGrid()
+  document.getElementById('er-paso-items').style.display = 'none'
+  document.querySelectorAll('#er-hora-grid .er-hora-chip').forEach(c => c.classList.remove('active'))
+  document.getElementById('er-flow-comidas')?.classList.add('open')
+}
+
+function erCerrarComidas() {
+  document.getElementById('er-flow-comidas')?.classList.remove('open')
+}
+
+function erAbrirPanales() {
+  erFlujoActual = 'panal'
+  erFechaOffset = 0
+  erCerrar('er-overlay-selector')
+  erActualizarFechaDisplay('panales')
+  erCargarPanalesParaFecha()
+  document.getElementById('er-flow-panales')?.classList.add('open')
+}
+
+function erCerrarPanales() {
+  document.getElementById('er-flow-panales')?.classList.remove('open')
+}
+
+function erActualizarFechaDisplay(contexto) {
+  const d = new Date()
+  d.setDate(d.getDate() + erFechaOffset)
+  const lbl = erFechaOffset === 0 ? 'Hoy'
+    : erFechaOffset === -1 ? 'Ayer'
+    : emmaCalDow[d.getDay()]
+  const display = lbl + ' · ' + d.getDate() + ' ' + emmaCalMeses[d.getMonth()]
+  const elId = contexto === 'comidas' ? 'er-fecha-display-comidas' : 'er-fecha-display-panales'
+  const el = document.getElementById(elId)
+  if (el) el.textContent = display
+}
+
+function erCargarPanalesParaFecha() {
+  const fecha = emmaCalFechaKey(erFechaOffset)
+  const p = emmaCalRegistros[fecha]?.['_panales'] || { pipi: 0, popo: 0 }
+  erPanalesLocal = { ...p }
+  const elPipi = document.getElementById('er-cnt-pipi')
+  const elPopo = document.getElementById('er-cnt-popo')
+  if (elPipi) elPipi.textContent = erPanalesLocal.pipi
+  if (elPopo) elPopo.textContent = erPanalesLocal.popo
+}
+
+function erAbrirFechaPicker(contexto) {
+  erPickerContexto = contexto
+  erPickerCallback = (offset) => {
+    erFechaOffset = offset
+    const d = new Date()
+    d.setDate(d.getDate() + offset)
+    const lbl = offset === 0 ? 'Hoy'
+      : offset === -1 ? 'Ayer'
+      : emmaCalDow[d.getDay()]
+    const display = lbl + ' · ' + d.getDate() + ' ' + emmaCalMeses[d.getMonth()]
+    const elId = contexto === 'comidas' ? 'er-fecha-display-comidas' : 'er-fecha-display-panales'
+    const el = document.getElementById(elId)
+    if (el) el.textContent = display
+    if (contexto === 'panales') erCargarPanalesParaFecha()
+  }
+  const d = new Date()
+  d.setDate(d.getDate() + erFechaOffset)
+  emmaCalPickerMes = { year: d.getFullYear(), month: d.getMonth() }
+  emmaCalRenderPicker()
+  document.getElementById('cal-picker-overlay')?.classList.add('open')
+}
+
+function erCambiarPanal(tipo, delta) {
+  erPanalesLocal[tipo] = Math.max(0, (erPanalesLocal[tipo] || 0) + delta)
+  const el = document.getElementById('er-cnt-' + tipo)
+  if (el) el.textContent = erPanalesLocal[tipo]
+}
+
+function erAbrirTiempo(itemRow) {
+  const item = emmaPlanData.find(i => i._row === itemRow)
+  if (!item) return
+  erItemTiempoActual = item
+  erTiempoH = 0
+  erTiempoM = 0
+  const nombreEl = document.getElementById('er-tiempo-nombre')
+  if (nombreEl) nombreEl.textContent = item.emoji + ' ' + item.nombre
+  document.querySelectorAll('.cal-tiempo-quick .cal-tiempo-pill')
+    .forEach(p => p.classList.remove('active'))
+  erActualizarPickerTiempo()
+  document.getElementById('er-overlay-tiempo')?.classList.add('open')
+}
+
+function erActualizarPickerTiempo() {
+  const hEl = document.getElementById('er-t-h')
+  const mEl = document.getElementById('er-t-m')
+  if (hEl) hEl.textContent = erTiempoH
+  if (mEl) mEl.textContent = String(erTiempoM).padStart(2, '0')
+}
+
+function erTiempoCambiar(campo, delta) {
+  if (campo === 'h') {
+    erTiempoH = Math.max(0, erTiempoH + delta)
+  } else {
+    erTiempoM = (erTiempoM + delta * 5 + 60) % 60
+  }
+  erActualizarPickerTiempo()
+  document.querySelectorAll('.cal-tiempo-quick .cal-tiempo-pill')
+    .forEach(p => p.classList.remove('active'))
+}
+
+function erTiempoSetQuick(h, m, btn) {
+  erTiempoH = h
+  erTiempoM = m
+  erActualizarPickerTiempo()
+  document.querySelectorAll('.cal-tiempo-quick .cal-tiempo-pill')
+    .forEach(p => p.classList.remove('active'))
+  btn.classList.add('active')
+}
+
+function erGuardarTiempo() {
+  if (!erItemTiempoActual) return
+  const totalMin = erTiempoH * 60 + erTiempoM
+  if (totalMin <= 0) { erCerrar('er-overlay-tiempo'); return }
+  const item = erItemTiempoActual
+  erRegistrosLocales[item._row] = {
+    cantidad: totalMin,
+    estado:   'completo',
+    detalle:  item.nombre,
+  }
+  const checkEl = document.getElementById('er-check-' + item._row)
+  if (checkEl) {
+    checkEl.className = 'er-item-check done'
+    checkEl.textContent = '✓'
+  }
+  erCerrar('er-overlay-tiempo')
+}
+
+function erGuardarComidas() {
+  const fecha = emmaCalFechaKey(erFechaOffset)
+  const entradas = Object.entries(erRegistrosLocales)
+  if (entradas.length === 0) {
+    erCerrarComidas()
+    return
+  }
+  const fetches = entradas.map(([rowStr, reg]) => {
+    const item = emmaPlanData.find(i => i._row === parseInt(rowStr))
+    if (!item) return Promise.resolve()
+    const tipoRegistro = item.tipo === 'rutina' ? 'Rutina'
+      : item.cat === 'Leche'   ? 'Leche'
+      : item.cat === 'Sólidos' ? 'Sólido'
+      : item.cat === 'Postre'  ? 'Postre'
+      : 'Leche'
+    return fetch('/api/emma/registro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fecha,
+        hora:         erHoraActual || '',
+        tipoRegistro,
+        detalle:      reg.detalle || item.nombre,
+        cantidad:     reg.cantidad,
+        unidad:       item.unidad || '',
+        estado:       reg.estado,
+        nota:         '',
+      }),
+    }).then(r => r.json())
+  })
+  Promise.all(fetches).then(() => {
+    if (!emmaCalRegistros[fecha]) emmaCalRegistros[fecha] = {}
+    entradas.forEach(([rowStr, reg]) => {
+      const item = emmaPlanData.find(i => i._row === parseInt(rowStr))
+      if (item) emmaCalRegistros[fecha][emmaCalItemKey(fecha, item)] = { ...reg }
+    })
+    emmaCargarDatos()
+    erMostrarConfirm('comida')
+  }).catch(err => console.error('[Emma] erGuardarComidas error:', err))
+}
+
+function erGuardarPanales() {
+  const fecha = emmaCalFechaKey(erFechaOffset)
+  fetch('/api/emma/panales', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fecha, pipi: erPanalesLocal.pipi, popo: erPanalesLocal.popo }),
+  })
+  .then(r => r.json())
+  .then(() => {
+    if (!emmaCalRegistros[fecha]) emmaCalRegistros[fecha] = {}
+    emmaCalRegistros[fecha]['_panales'] = { ...erPanalesLocal }
+    if (typeof emmaHomeRender === 'function') emmaHomeRender()
+    erMostrarConfirm('panal')
+  })
+  .catch(err => console.error('[Emma] erGuardarPanales error:', err))
+}
+
+function erMostrarConfirm(tipo) {
+  const titleEl   = document.getElementById('er-confirm-title')
+  const subEl     = document.getElementById('er-confirm-sub')
+  const repEmojiEl = document.getElementById('er-repetir-emoji')
+  const repTxtEl  = document.getElementById('er-repetir-txt')
+  const otroEmojiEl = document.getElementById('er-otro-emoji')
+  const otroTxtEl = document.getElementById('er-otro-txt')
+  if (tipo === 'comida') {
+    if (titleEl)    titleEl.textContent   = '¡Comida registrada!'
+    if (subEl)      subEl.textContent     = 'El registro fue guardado correctamente'
+    if (repEmojiEl) repEmojiEl.textContent = '🍼'
+    if (repTxtEl)   repTxtEl.textContent  = 'Ingresar otra comida / rutina'
+    if (otroEmojiEl) otroEmojiEl.textContent = '🩲'
+    if (otroTxtEl)  otroTxtEl.textContent = 'Ingresar Pipí / Popó'
+  } else {
+    if (titleEl)    titleEl.textContent   = '¡Pañal registrado!'
+    if (subEl)      subEl.textContent     = 'Pipí: ' + erPanalesLocal.pipi + ' · Popó: ' + erPanalesLocal.popo
+    if (repEmojiEl) repEmojiEl.textContent = '🩲'
+    if (repTxtEl)   repTxtEl.textContent  = 'Ingresar otro pañal'
+    if (otroEmojiEl) otroEmojiEl.textContent = '🍼'
+    if (otroTxtEl)  otroTxtEl.textContent = 'Ingresar comida / rutina'
+  }
+  document.getElementById('er-overlay-confirm')?.classList.add('open')
+}
+
+function erVolverInicio() {
+  erCerrar('er-overlay-confirm')
+  erCerrarComidas()
+  erCerrarPanales()
+}
+
+function erRepetirFlujo() {
+  erCerrar('er-overlay-confirm')
+  if (erFlujoActual === 'comida') {
+    erRegistrosLocales = {}
+    document.getElementById('er-paso-items').style.display = 'none'
+    document.querySelectorAll('#er-hora-grid .er-hora-chip').forEach(c => c.classList.remove('active'))
+  } else {
+    erCerrarPanales()
+    erAbrirPanales()
+  }
+}
+
+function erOtroFlujo() {
+  erCerrar('er-overlay-confirm')
+  if (erFlujoActual === 'comida') {
+    erCerrarComidas()
+    erAbrirPanales()
+  } else {
+    erCerrarPanales()
+    erAbrirComidas()
+  }
+}
+
+window.erAbrirSelector      = erAbrirSelector
+window.erCerrar             = erCerrar
+window.erCerrarSiOverlay    = erCerrarSiOverlay
+window.erAbrirComidas       = erAbrirComidas
+window.erCerrarComidas      = erCerrarComidas
+window.erAbrirPanales       = erAbrirPanales
+window.erCerrarPanales      = erCerrarPanales
+window.erAbrirFechaPicker   = erAbrirFechaPicker
+window.erSeleccionarFecha   = erSeleccionarFecha
+window.erVerItems           = erVerItems
+window.erToggleBinario      = erToggleBinario
+window.erVolverHoras        = erVolverHoras
+window.erCambiarPanal       = erCambiarPanal
+window.erGuardarPanales     = erGuardarPanales
+window.erGuardarComidas     = erGuardarComidas
+window.erTiempoCambiar      = erTiempoCambiar
+window.erTiempoSetQuick     = erTiempoSetQuick
+window.erGuardarTiempo      = erGuardarTiempo
+window.erVolverInicio       = erVolverInicio
+window.erRepetirFlujo       = erRepetirFlujo
+window.erOtroFlujo          = erOtroFlujo
